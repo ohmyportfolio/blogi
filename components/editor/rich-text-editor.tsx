@@ -7,6 +7,7 @@ import {
   $getRoot,
   $isRangeSelection,
   $isTextNode,
+  $setSelection,
   COMMAND_PRIORITY_EDITOR,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
@@ -83,6 +84,7 @@ import {
   type ImagePayload,
 } from "@/components/editor/nodes/ImageNode";
 import { $convertToMarkdownString } from "@lexical/markdown";
+import type { RangeSelection } from "lexical";
 
 interface RichTextEditorProps {
   content: string;
@@ -123,7 +125,13 @@ const Placeholder = ({ text }: { text: string }) => (
   </div>
 );
 
-const InitialContentPlugin = ({ content }: { content: string }) => {
+const InitialContentPlugin = ({
+  content,
+  initializingRef,
+}: {
+  content: string;
+  initializingRef: React.MutableRefObject<boolean>;
+}) => {
   const [editor] = useLexicalComposerContext();
   const hydratedRef = useRef(false);
 
@@ -131,21 +139,43 @@ const InitialContentPlugin = ({ content }: { content: string }) => {
     if (hydratedRef.current) return;
     if (!content) return;
 
-    hydratedRef.current = true;
+    let cancelled = false;
+    const schedule = (fn: () => void) => {
+      if (typeof queueMicrotask === "function") {
+        queueMicrotask(fn);
+      } else {
+        Promise.resolve().then(fn);
+      }
+    };
+    initializingRef.current = true;
     try {
       JSON.parse(content);
       const state = editor.parseEditorState(content);
-      editor.setEditorState(state);
+      schedule(() => {
+        if (!cancelled) {
+          editor.setEditorState(state);
+          hydratedRef.current = true;
+          initializingRef.current = false;
+        }
+      });
     } catch {
-      editor.update(() => {
-        const root = $getRoot();
-        root.clear();
-        const paragraph = $createParagraphNode();
-        paragraph.append($createTextNode(content));
-        root.append(paragraph);
+      schedule(() => {
+        if (cancelled) return;
+        editor.update(() => {
+          const root = $getRoot();
+          root.clear();
+          const paragraph = $createParagraphNode();
+          paragraph.append($createTextNode(content));
+          root.append(paragraph);
+        });
+        hydratedRef.current = true;
+        initializingRef.current = false;
       });
     }
-  }, [content, editor]);
+    return () => {
+      cancelled = true;
+    };
+  }, [content, editor, initializingRef]);
 
   return null;
 };
@@ -600,6 +630,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initializingRef = useRef(false);
 
   const initialConfig = useMemo(
     () => ({
@@ -661,28 +692,44 @@ export function RichTextEditor({
     [showToast]
   );
 
-  const handleEmojiPick = useCallback((emoji: { native: string }, editor: LexicalEditor) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        selection.insertText(emoji.native);
-      }
-    });
-  }, []);
+  const handleEmojiPick = useCallback(
+    (emoji: { native: string }, editor: LexicalEditor, savedSelection: RangeSelection | null) => {
+      editor.focus();
+      editor.update(() => {
+        let selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          if (savedSelection) {
+            $setSelection(savedSelection);
+            selection = $getSelection();
+          } else {
+            const root = $getRoot();
+            root.selectEnd();
+            selection = $getSelection();
+          }
+        }
+
+        if ($isRangeSelection(selection)) {
+          selection.insertText(emoji.native);
+        }
+      });
+    },
+    []
+  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div className={cn("border rounded-2xl overflow-hidden bg-white/90", className)}>
-      <LexicalEditorBody
-        placeholder={placeholder}
-        content={content}
-        onChange={onChange}
-        onMarkdownChange={onMarkdownChange}
-        onImageUpload={handleImageUpload}
-        onEmojiPick={handleEmojiPick}
-        onFileChange={handleFileChange}
-        fileInputRef={fileInputRef}
-      />
+        <LexicalEditorBody
+          placeholder={placeholder}
+          content={content}
+          onChange={onChange}
+          onMarkdownChange={onMarkdownChange}
+          onImageUpload={handleImageUpload}
+          onEmojiPick={handleEmojiPick}
+          onFileChange={handleFileChange}
+          fileInputRef={fileInputRef}
+          initializingRef={initializingRef}
+        />
       </div>
     </LexicalComposer>
   );
@@ -697,23 +744,37 @@ const LexicalEditorBody = ({
   onEmojiPick,
   onFileChange,
   fileInputRef,
+  initializingRef,
 }: {
   placeholder: string;
   content: string;
   onChange: (content: string) => void;
   onMarkdownChange?: (markdown: string) => void;
   onImageUpload: () => void;
-  onEmojiPick: (emoji: { native: string }, editor: LexicalEditor) => void;
+  onEmojiPick: (emoji: { native: string }, editor: LexicalEditor, selection: RangeSelection | null) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>, editor: LexicalEditor) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
+  initializingRef: React.MutableRefObject<boolean>;
 }) => {
   const [editor] = useLexicalComposerContext();
+  const lastSelectionRef = useRef<RangeSelection | null>(null);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          lastSelectionRef.current = selection.clone();
+        }
+      });
+    });
+  }, [editor]);
 
   return (
     <>
       <Toolbar
         onImageUpload={onImageUpload}
-        onEmojiPick={(emoji) => onEmojiPick(emoji, editor)}
+        onEmojiPick={(emoji) => onEmojiPick(emoji, editor, lastSelectionRef.current)}
       />
       <div className="relative">
         <RichTextPlugin
@@ -734,9 +795,10 @@ const LexicalEditorBody = ({
       <CodeHighlightingPlugin />
       <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />
       <ImagePlugin />
-      <InitialContentPlugin content={content} />
+      <InitialContentPlugin content={content} initializingRef={initializingRef} />
       <OnChangePlugin
         onChange={(editorState) => {
+          if (initializingRef.current) return;
           const json = JSON.stringify(editorState.toJSON());
           onChange(json);
           if (onMarkdownChange) {
