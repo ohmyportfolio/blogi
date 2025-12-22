@@ -141,7 +141,7 @@ export default function PostDetailPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-10 max-w-5xl">
             <Button variant="ghost" className="mb-4" asChild>
                 <Link href="/community">
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -169,9 +169,9 @@ export default function PostDetailPage() {
                 )}
             </div>
 
-            <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl mb-4">{post.title}</h1>
 
-            <div className="flex items-center text-sm text-gray-500 mb-8 border-b pb-4 gap-x-4">
+            <div className="flex flex-wrap items-center text-sm text-gray-500 mb-8 border-b pb-4 gap-x-4 gap-y-2">
                 <span>작성자: {post.author.name || "Anonymous"}</span>
                 <span>{format(new Date(post.createdAt), "yyyy.MM.dd HH:mm")}</span>
                 <span>조회수: {post.viewCount}</span>
@@ -183,7 +183,7 @@ export default function PostDetailPage() {
             />
 
             {/* Comments Section */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white/80 p-6 rounded-2xl shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]">
                 <h3 className="font-bold mb-4 flex items-center gap-2">
                     <MessageCircle className="w-5 h-5" />
                     댓글 {post.comments.length}개

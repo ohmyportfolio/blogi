@@ -24,13 +24,13 @@ export const CardWrapper = ({
     backButtonHref
 }: CardWrapperProps) => {
     return (
-        <Card className="w-full max-w-[400px] mx-4 shadow-md">
+        <Card className="w-full max-w-[420px] mx-4 shadow-[0_30px_60px_-40px_rgba(15,23,42,0.4)] border-0 bg-white/90">
             <CardHeader>
                 <div className="w-full flex flex-col gap-y-4 items-center justify-center">
-                    <h1 className={cn("text-2xl sm:text-3xl font-semibold")}>
+                    <h1 className={cn("font-display text-3xl sm:text-4xl")}>
                         다낭VIP투어
                     </h1>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-sm uppercase tracking-[0.2em]">
                         {headerLabel}
                     </p>
                 </div>

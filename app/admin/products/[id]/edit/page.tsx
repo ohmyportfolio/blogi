@@ -119,7 +119,7 @@ export default function EditProductPage() {
             </Button>
 
             <div className="bg-white p-6 md:p-8 rounded-lg shadow">
-                <h1 className="text-2xl font-bold mb-6">상품 수정</h1>
+                <h1 className="font-display text-3xl mb-6">상품 수정</h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

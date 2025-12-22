@@ -19,7 +19,7 @@ export default async function AdminUsersPage() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">User Management</h1>
+            <h1 className="font-display text-3xl mb-6">User Management</h1>
             <div className="space-y-4 md:space-y-0">
                 {/* Mobile cards */}
                 <div className="space-y-3 md:hidden">

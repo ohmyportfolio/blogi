@@ -33,10 +33,10 @@ async function PostList({ type }: { type: string }) {
                 <Link key={post.id} href={`/community/${post.id}`}>
                     <Card className="hover:bg-gray-50 transition cursor-pointer">
                         <CardHeader className="py-4">
-                            <CardTitle className="text-lg font-medium flex items-center gap-2">
+                            <CardTitle className="font-display text-lg flex items-center gap-2">
                                 {post.title}
                                 {post._count.comments > 0 && (
-                                    <span className="text-sm text-sky-500">[{post._count.comments}]</span>
+                                    <span className="text-sm text-sky-600">[{post._count.comments}]</span>
                                 )}
                             </CardTitle>
                         </CardHeader>
@@ -53,16 +53,19 @@ async function PostList({ type }: { type: string }) {
 
 export default function CommunityPage() {
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-bold">커뮤니티</h1>
+        <div className="container mx-auto px-4 py-10 max-w-5xl">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+                <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Community</p>
+                    <h1 className="font-display text-3xl sm:text-4xl">커뮤니티</h1>
+                </div>
                 <Button asChild>
                     <Link href="/community/write">글쓰기</Link>
                 </Button>
             </div>
 
             <Tabs defaultValue="REVIEW" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsList className="w-full mb-8">
                     <TabsTrigger value="REVIEW">후기</TabsTrigger>
                     <TabsTrigger value="FREE">자유게시판</TabsTrigger>
                 </TabsList>

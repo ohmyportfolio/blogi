@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 import { Header } from "@/components/layout/header";
@@ -7,13 +7,18 @@ import { Footer } from "@/components/layout/footer";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const instrumentSans = Instrument_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fraunces = Fraunces({
+  variable: "--font-head",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-code",
   subsets: ["latin"],
 });
 
@@ -30,12 +35,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${instrumentSans.variable} ${fraunces.variable} ${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <ToastProvider>
             <Header />
-            <main className="flex-1 bg-white">
+            <main className="flex-1 bg-transparent">
               {children}
             </main>
             <Footer />

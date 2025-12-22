@@ -31,8 +31,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     });
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-8 capitalize">
+        <div className="container mx-auto px-4 py-10">
+            <h1 className="font-display text-3xl sm:text-4xl mb-8 capitalize">
                 {categorySlug.replace("-", " ")}
             </h1>
 

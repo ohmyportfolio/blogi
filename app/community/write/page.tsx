@@ -84,7 +84,7 @@ export default function WritePage() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-10 max-w-5xl">
             <Button variant="ghost" className="mb-6" asChild>
                 <Link href="/community">
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -92,7 +92,7 @@ export default function WritePage() {
                 </Link>
             </Button>
 
-            <h1 className="text-2xl font-bold mb-6">글쓰기</h1>
+            <h1 className="font-display text-3xl mb-6">글쓰기</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">

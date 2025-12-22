@@ -15,8 +15,8 @@ export default async function AdminLayout({
 
     return (
         <div className="flex min-h-screen flex-col md:flex-row">
-            <div className="w-full md:w-64 bg-gray-900 text-white p-6">
-                <h2 className="text-xl font-bold mb-6 md:mb-8">Admin Dashboard</h2>
+            <div className="w-full md:w-64 bg-[#0b1320] text-white p-6">
+                <h2 className="font-display text-2xl mb-6 md:mb-8">Admin Dashboard</h2>
                 <nav className="flex flex-wrap gap-2 md:block md:space-y-4">
                     <Link href="/admin" className="block p-2 hover:bg-gray-800 rounded">
                         Overview

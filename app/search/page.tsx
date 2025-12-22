@@ -51,12 +51,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
     return (
         <div className="container mx-auto px-4 py-10 max-w-5xl">
-            <h1 className="text-2xl font-bold mb-6">
+            <h1 className="font-display text-3xl mb-6">
                 검색 결과: <span className="text-sky-600">{query}</span>
             </h1>
 
             <section className="mb-10">
-                <h2 className="text-xl font-bold mb-4">게시글</h2>
+                <h2 className="font-display text-2xl mb-4">게시글</h2>
                 {posts.length === 0 ? (
                     <div className="bg-gray-50 rounded-lg p-6 text-gray-500 text-center">
                         게시글 검색 결과가 없습니다.
@@ -88,7 +88,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </section>
 
             <section>
-                <h2 className="text-xl font-bold mb-4">상품</h2>
+                <h2 className="font-display text-2xl mb-4">상품</h2>
                 {products.length === 0 ? (
                     <div className="bg-gray-50 rounded-lg p-6 text-gray-500 text-center">
                         상품 검색 결과가 없습니다.
