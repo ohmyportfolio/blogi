@@ -12,6 +12,7 @@ import { Color } from "@tiptap/extension-color";
 import { Highlight } from "@tiptap/extension-highlight";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import {
     Bold,
     Italic,
@@ -52,6 +53,7 @@ export function RichTextEditor({
     placeholder = "내용을 입력하세요...",
     className,
 }: RichTextEditorProps) {
+    const { showToast } = useToast();
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState("");
@@ -109,24 +111,14 @@ export function RichTextEditor({
 
             if (response.ok) {
                 const { url } = await response.json();
-                editor.chain().focus().setImage({ src: url }).run();
+                editor.chain().setImage({ src: url }).run();
             } else {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const result = e.target?.result as string;
-                    editor.chain().focus().setImage({ src: result }).run();
-                };
-                reader.readAsDataURL(file);
+                showToast("이미지 업로드에 실패했습니다.", "error");
             }
         } catch (error) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const result = e.target?.result as string;
-                editor.chain().focus().setImage({ src: result }).run();
-            };
-            reader.readAsDataURL(file);
+            showToast("이미지 업로드 중 오류가 발생했습니다.", "error");
         }
-    }, [editor]);
+    }, [editor, showToast]);
 
     const handleImageUpload = () => {
         fileInputRef.current?.click();
@@ -144,9 +136,9 @@ export function RichTextEditor({
         if (!editor || !linkUrl) return;
 
         if (linkUrl === "") {
-            editor.chain().focus().unsetLink().run();
+            editor.chain().unsetLink().run();
         } else {
-            editor.chain().focus().setLink({ href: linkUrl }).run();
+            editor.chain().setLink({ href: linkUrl }).run();
         }
         setLinkUrl("");
         setShowLinkInput(false);
@@ -154,12 +146,12 @@ export function RichTextEditor({
 
     const removeLink = useCallback(() => {
         if (!editor) return;
-        editor.chain().focus().unsetLink().run();
+        editor.chain().unsetLink().run();
     }, [editor]);
 
     const addEmoji = useCallback((emoji: { native: string }) => {
         if (!editor) return;
-        editor.chain().focus().insertContent(emoji.native).run();
+        editor.chain().insertContent(emoji.native).run();
         setShowEmojiPicker(false);
     }, [editor]);
 
@@ -187,7 +179,11 @@ export function RichTextEditor({
     }) => (
         <button
             type="button"
-            onClick={onClick}
+            onClick={() => {
+                editor?.chain().focus().run();
+                onClick();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             title={title}
             className={cn(
                 "p-2 rounded hover:bg-gray-100 transition-colors",
@@ -203,10 +199,10 @@ export function RichTextEditor({
             {/* Toolbar */}
             <div className="border-b p-2 flex flex-wrap gap-1 bg-gray-50">
                 {/* Undo/Redo */}
-                <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="실행 취소">
+                <ToolbarButton onClick={() => editor.chain().undo().run()} title="실행 취소">
                     <Undo className="w-4 h-4" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().redo().run()} title="다시 실행">
+                <ToolbarButton onClick={() => editor.chain().redo().run()} title="다시 실행">
                     <Redo className="w-4 h-4" />
                 </ToolbarButton>
 
@@ -214,21 +210,21 @@ export function RichTextEditor({
 
                 {/* Headings */}
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                    onClick={() => editor.chain().toggleHeading({ level: 1 }).run()}
                     isActive={editor.isActive("heading", { level: 1 })}
                     title="제목 1"
                 >
                     <Heading1 className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    onClick={() => editor.chain().toggleHeading({ level: 2 }).run()}
                     isActive={editor.isActive("heading", { level: 2 })}
                     title="제목 2"
                 >
                     <Heading2 className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                    onClick={() => editor.chain().toggleHeading({ level: 3 }).run()}
                     isActive={editor.isActive("heading", { level: 3 })}
                     title="제목 3"
                 >
@@ -239,42 +235,42 @@ export function RichTextEditor({
 
                 {/* Text Formatting */}
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    onClick={() => editor.chain().toggleBold().run()}
                     isActive={editor.isActive("bold")}
                     title="굵게"
                 >
                     <Bold className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    onClick={() => editor.chain().toggleItalic().run()}
                     isActive={editor.isActive("italic")}
                     title="기울임"
                 >
                     <Italic className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    onClick={() => editor.chain().toggleUnderline().run()}
                     isActive={editor.isActive("underline")}
                     title="밑줄"
                 >
                     <UnderlineIcon className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                    onClick={() => editor.chain().toggleStrike().run()}
                     isActive={editor.isActive("strike")}
                     title="취소선"
                 >
                     <Strikethrough className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleHighlight({ color: "#fef08a" }).run()}
+                    onClick={() => editor.chain().toggleHighlight({ color: "#fef08a" }).run()}
                     isActive={editor.isActive("highlight")}
                     title="하이라이트"
                 >
                     <Highlighter className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleCode().run()}
+                    onClick={() => editor.chain().toggleCode().run()}
                     isActive={editor.isActive("code")}
                     title="인라인 코드"
                 >
@@ -285,21 +281,21 @@ export function RichTextEditor({
 
                 {/* Alignment */}
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().setTextAlign("left").run()}
+                    onClick={() => editor.chain().setTextAlign("left").run()}
                     isActive={editor.isActive({ textAlign: "left" })}
                     title="왼쪽 정렬"
                 >
                     <AlignLeft className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().setTextAlign("center").run()}
+                    onClick={() => editor.chain().setTextAlign("center").run()}
                     isActive={editor.isActive({ textAlign: "center" })}
                     title="가운데 정렬"
                 >
                     <AlignCenter className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().setTextAlign("right").run()}
+                    onClick={() => editor.chain().setTextAlign("right").run()}
                     isActive={editor.isActive({ textAlign: "right" })}
                     title="오른쪽 정렬"
                 >
@@ -310,21 +306,21 @@ export function RichTextEditor({
 
                 {/* Lists */}
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    onClick={() => editor.chain().toggleBulletList().run()}
                     isActive={editor.isActive("bulletList")}
                     title="글머리 기호"
                 >
                     <List className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    onClick={() => editor.chain().toggleOrderedList().run()}
                     isActive={editor.isActive("orderedList")}
                     title="번호 목록"
                 >
                     <ListOrdered className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                    onClick={() => editor.chain().toggleBlockquote().run()}
                     isActive={editor.isActive("blockquote")}
                     title="인용"
                 >
