@@ -100,7 +100,7 @@ export default function EditPage() {
             });
 
             if (res.ok) {
-                router.push(`/community/${params.id}`);
+                router.push(`/community/${id}`);
             } else {
                 const data = await res.json();
                 setError(data.error || "수정에 실패했습니다.");
