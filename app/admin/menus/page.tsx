@@ -32,10 +32,20 @@ export default async function AdminMenusPage() {
     await seedMenuItems(mainMenu.id, DEFAULT_MAIN_MENU);
   }
 
-  const mainItems = await prisma.menuItem.findMany({
+  const rawMainItems = await prisma.menuItem.findMany({
     where: { menuId: mainMenu.id },
     orderBy: { order: "asc" },
   });
+
+  const mainItems = rawMainItems.map((item) => ({
+    ...item,
+    linkType:
+      item.linkType === "category" || item.linkType === "community"
+        ? (item.linkType as "category" | "community")
+        : item.href?.startsWith("/community")
+          ? ("community" as const)
+          : ("category" as const),
+  }));
 
   return (
     <div>

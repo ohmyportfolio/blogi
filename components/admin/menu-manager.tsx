@@ -77,7 +77,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     menuKey: string,
     id: string,
     field: keyof MenuItemData,
-    value: string | boolean
+    value: string | boolean | undefined
   ) => {
     updateMenuState(menuKey, (items) =>
       items.map((item) => (item.id === id ? { ...item, [field]: value } : item))

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { lexicalJsonToPlainText } from "@/lib/lexical";
 import { useToast } from "@/components/ui/toast";
 
-export default function WritePage() {
+function WritePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session, status } = useSession();
@@ -287,5 +287,23 @@ export default function WritePage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function WritePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="container mx-auto px-4 py-8 max-w-4xl">
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+                        <div className="h-12 bg-gray-200 rounded"></div>
+                        <div className="h-64 bg-gray-200 rounded"></div>
+                    </div>
+                </div>
+            }
+        >
+            <WritePageContent />
+        </Suspense>
     );
 }

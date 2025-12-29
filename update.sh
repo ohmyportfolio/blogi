@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_NAME="danang-vip"
 PORT="${PORT:-3010}"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ensure_pm2() {
   if ! command -v pm2 >/dev/null 2>&1; then
