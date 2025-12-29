@@ -18,7 +18,7 @@ export default async function AdminUsersPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="font-display text-3xl">User Management</h1>
+            <h1 className="font-display text-3xl">사용자 관리</h1>
             <UserManager users={users} currentUserId={session?.user?.id} />
         </div>
     );

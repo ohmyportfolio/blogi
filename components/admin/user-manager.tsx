@@ -218,11 +218,11 @@ export const UserManager = ({ users, currentUserId }: UserManagerProps) => {
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="권한" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">USER</SelectItem>
-                      <SelectItem value="ADMIN">ADMIN</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <SelectContent>
+                  <SelectItem value="USER">일반</SelectItem>
+                  <SelectItem value="ADMIN">관리자</SelectItem>
+                </SelectContent>
+              </Select>
                 </td>
                 <td className="p-3">
                   <label className="flex items-center gap-2 text-xs text-gray-600">
@@ -312,11 +312,11 @@ export const UserManager = ({ users, currentUserId }: UserManagerProps) => {
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">USER</SelectItem>
-                      <SelectItem value="ADMIN">ADMIN</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SelectContent>
+                    <SelectItem value="USER">일반</SelectItem>
+                    <SelectItem value="ADMIN">관리자</SelectItem>
+                  </SelectContent>
+                </Select>
                 </td>
                 <td className="p-3">
                   <label className="flex items-center gap-2 text-xs text-gray-600">

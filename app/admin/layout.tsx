@@ -16,28 +16,28 @@ export default async function AdminLayout({
     return (
         <div className="flex min-h-screen flex-col md:flex-row">
             <div className="w-full md:w-64 bg-[#0b1320] text-white p-6">
-                <h2 className="font-display text-2xl mb-6 md:mb-8">Admin Dashboard</h2>
+                <h2 className="font-display text-2xl mb-6 md:mb-8">관리자 대시보드</h2>
                 <nav className="flex flex-wrap gap-2 md:block md:space-y-4">
                     <Link href="/admin" className="block p-2 hover:bg-gray-800 rounded">
-                        Overview
+                        개요
                     </Link>
                     <Link href="/admin/users" className="block p-2 hover:bg-gray-800 rounded">
-                        Users
+                        사용자 관리
                     </Link>
                     <Link href="/admin/products" className="block p-2 hover:bg-gray-800 rounded">
-                        Products
+                        상품 관리
                     </Link>
                     <Link href="/admin/menus" className="block p-2 hover:bg-gray-800 rounded">
-                        Menus
+                        메뉴 관리
                     </Link>
                     <Link href="/admin/site-settings" className="block p-2 hover:bg-gray-800 rounded">
-                        Site Settings
+                        사이트 설정
                     </Link>
                     <Link href="/admin/footer" className="block p-2 hover:bg-gray-800 rounded">
-                        Footer
+                        푸터 설정
                     </Link>
                     <Link href="/" className="block p-2 text-gray-400 hover:text-white md:mt-8">
-                        Back to Site
+                        사이트로 돌아가기
                     </Link>
                 </nav>
             </div>

@@ -62,9 +62,9 @@ export default async function AdminProductsPage() {
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="font-display text-3xl">Product Management</h1>
+                <h1 className="font-display text-3xl">상품 관리</h1>
                 <Button asChild>
-                    <Link href="/admin/products/new">Add Product</Link>
+                    <Link href="/admin/products/new">상품 추가</Link>
                 </Button>
             </div>
 
@@ -79,7 +79,7 @@ export default async function AdminProductsPage() {
                                     <div className="text-sm text-gray-500">{product.category}</div>
                                 </div>
                                 <div className="text-sm font-medium">
-                                    {product.isVisible ? "Visible" : "Hidden"}
+                                    {product.isVisible ? "노출" : "숨김"}
                                 </div>
                             </div>
                             <div className="mt-2 text-sm text-gray-500">
@@ -87,7 +87,7 @@ export default async function AdminProductsPage() {
                             </div>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <Button size="sm" variant="outline" asChild>
-                                    <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+                                    <Link href={`/admin/products/${product.id}/edit`}>수정</Link>
                                 </Button>
                                 <ConfirmForm
                                     action={toggleVisibility}
@@ -98,7 +98,7 @@ export default async function AdminProductsPage() {
                                     }}
                                 >
                                     <Button size="sm" variant="secondary">
-                                        {product.isVisible ? "Hide" : "Show"}
+                                        {product.isVisible ? "숨김" : "노출"}
                                     </Button>
                                 </ConfirmForm>
                                 <ConfirmForm
@@ -107,7 +107,7 @@ export default async function AdminProductsPage() {
                                     hiddenFields={{ productId: product.id }}
                                 >
                                     <Button size="sm" variant="destructive">
-                                        Delete
+                                        삭제
                                     </Button>
                                 </ConfirmForm>
                             </div>
@@ -118,29 +118,29 @@ export default async function AdminProductsPage() {
                 {/* Desktop table */}
                 <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
                     <table className="w-full min-w-[800px]">
-                    <thead>
-                        <tr className="bg-gray-50 text-left">
-                            <th className="p-4">Title</th>
-                            <th className="p-4">Category</th>
-                            <th className="p-4">Visible</th>
-                            <th className="p-4">Created At</th>
-                            <th className="p-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((product) => (
-                            <tr key={product.id} className="border-t">
-                                <td className="p-4 font-medium">{product.title}</td>
-                                <td className="p-4">{product.category}</td>
-                                <td className="p-4">{product.isVisible ? "Yes" : "No"}</td>
-                                <td className="p-4">{format(product.createdAt, "yyyy-MM-dd")}</td>
-                                <td className="p-4">
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" asChild>
-                                            <Link href={`/admin/products/${product.id}/edit`}>
-                                                Edit
-                                            </Link>
-                                        </Button>
+                        <thead>
+                            <tr className="bg-gray-50 text-left">
+                                <th className="p-4">상품명</th>
+                                <th className="p-4">카테고리</th>
+                                <th className="p-4">노출</th>
+                                <th className="p-4">등록일</th>
+                                <th className="p-4">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.map((product) => (
+                                <tr key={product.id} className="border-t">
+                                    <td className="p-4 font-medium">{product.title}</td>
+                                    <td className="p-4">{product.category}</td>
+                                    <td className="p-4">{product.isVisible ? "노출" : "숨김"}</td>
+                                    <td className="p-4">{format(product.createdAt, "yyyy-MM-dd")}</td>
+                                    <td className="p-4">
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="outline" asChild>
+                                                <Link href={`/admin/products/${product.id}/edit`}>
+                                                    수정
+                                                </Link>
+                                            </Button>
                                         <ConfirmForm
                                             action={toggleVisibility}
                                             message={`상품을 ${product.isVisible ? "숨김" : "노출"} 처리할까요?`}
@@ -150,7 +150,7 @@ export default async function AdminProductsPage() {
                                             }}
                                         >
                                             <Button size="sm" variant="secondary">
-                                                {product.isVisible ? "Hide" : "Show"}
+                                                {product.isVisible ? "숨김" : "노출"}
                                             </Button>
                                         </ConfirmForm>
                                         <ConfirmForm
@@ -159,7 +159,7 @@ export default async function AdminProductsPage() {
                                             hiddenFields={{ productId: product.id }}
                                         >
                                             <Button size="sm" variant="destructive">
-                                                Delete
+                                                삭제
                                             </Button>
                                         </ConfirmForm>
                                     </div>

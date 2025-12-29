@@ -232,7 +232,10 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
 
   const renderMenuSection = (menu: MenuSection) => {
     return (
-      <section key={menu.key} className="space-y-4">
+      <section
+        key={menu.key}
+        className="space-y-4 rounded-2xl border border-black/5 bg-slate-50/70 p-4 md:p-6"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-2xl">{menu.name}</h2>
@@ -263,10 +266,10 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
                 if (Number.isNaN(fromIndex)) return;
                 moveItem(menu.key, fromIndex, index);
               }}
-              className="rounded-xl border border-black/5 bg-white p-4 shadow-sm"
+              className="rounded-xl border border-black/5 bg-white p-4 shadow-sm overflow-hidden"
             >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex-1 space-y-3">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+                <div className="flex-1 min-w-0 space-y-3">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <Input
                       value={item.label}
@@ -369,11 +372,12 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
 
                 </div>
 
-                <div className="flex flex-row gap-2 md:flex-col md:items-end">
+                <div className="flex flex-row flex-wrap gap-2 shrink-0 lg:flex-col lg:items-stretch">
                   <div className="flex gap-2">
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => moveItem(menu.key, index, Math.max(0, index - 1))}
                     >
                       ↑
@@ -381,6 +385,7 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => moveItem(menu.key, index, Math.min(menu.items.length - 1, index + 1))}
                     >
                       ↓
@@ -389,6 +394,7 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
                   <div className="flex gap-2">
                     <Button
                       type="button"
+                      size="sm"
                       onClick={() => handleSave(menu.key, item)}
                       disabled={isPending}
                     >
@@ -397,6 +403,7 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
                     <Button
                       type="button"
                       variant="destructive"
+                      size="sm"
                       onClick={() => handleDelete(menu.key, item.id)}
                       disabled={isPending}
                     >

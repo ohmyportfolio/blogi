@@ -9,7 +9,7 @@ export default async function AdminFooterPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="font-display text-3xl">Footer Settings</h1>
+        <h1 className="font-display text-3xl">푸터 설정</h1>
         <p className="text-sm text-gray-500 mt-2">
           이용약관/개인정보처리방침 링크와 사업자 정보, 소셜 링크를 관리합니다.
         </p>
