@@ -111,16 +111,17 @@ async function PostList({
 }
 
 interface CommunityPageProps {
-    searchParams: {
+    searchParams: Promise<{
         q?: string;
         page?: string;
-    };
+    }>;
 }
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
     const session = await auth();
-    const query = (searchParams.q || "").trim();
-    const page = Math.max(1, Number(searchParams.page || 1));
+    const params = await searchParams;
+    const query = (params.q || "").trim();
+    const page = Math.max(1, Number(params.page || 1));
     const pageSize = 10;
     return (
         <div className="container mx-auto px-4 py-10 max-w-5xl">

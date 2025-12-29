@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -49,6 +50,8 @@ export async function POST(req: NextRequest) {
         badgeText: data.badgeText || null,
       },
     });
+    revalidatePath("/admin/menus");
+    revalidatePath("/", "layout");
     return NextResponse.json(item, { status: 201 });
   }
 
@@ -69,6 +72,8 @@ export async function POST(req: NextRequest) {
         badgeText: data.badgeText || null,
       },
     });
+    revalidatePath("/admin/menus");
+    revalidatePath("/", "layout");
     return NextResponse.json(item);
   }
 
@@ -78,6 +83,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "ID가 필요합니다" }, { status: 400 });
     }
     await prisma.menuItem.delete({ where: { id } });
+    revalidatePath("/admin/menus");
+    revalidatePath("/", "layout");
     return NextResponse.json({ success: true });
   }
 
@@ -95,6 +102,8 @@ export async function POST(req: NextRequest) {
         })
       )
     );
+    revalidatePath("/admin/menus");
+    revalidatePath("/", "layout");
     return NextResponse.json({ success: true });
   }
 
