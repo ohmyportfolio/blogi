@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductCard } from "@/components/products/product-card";
 import { auth } from "@/auth";
+import { getBoardMapByKeys } from "@/lib/community";
 
 interface SearchPageProps {
     searchParams: {
@@ -55,6 +56,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         }),
     ]);
 
+    const boardMap = await getBoardMapByKeys(posts.map((post) => post.type));
+
     return (
         <div className="container mx-auto px-4 py-10 max-w-5xl">
             <h1 className="font-display text-3xl mb-6">
@@ -69,8 +72,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {posts.map((post) => (
-                            <Link key={post.id} href={`/community/${post.id}`}>
+                        {posts.map((post) => {
+                            const boardInfo = boardMap.get(post.type);
+                            const href = boardInfo ? `${boardInfo.href}/${post.id}` : `/community/${post.id}`;
+                            return (
+                            <Link key={post.id} href={href}>
                                 <Card className="hover:bg-gray-50 transition cursor-pointer">
                                     <CardHeader className="py-4">
                                         <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -88,7 +94,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                                     </CardContent>
                                 </Card>
                             </Link>
-                        ))}
+                        )})}
                     </div>
                 )}
             </section>

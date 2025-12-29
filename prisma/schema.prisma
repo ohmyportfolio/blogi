@@ -129,6 +129,7 @@ model MenuItem {
   linkType     String   @default("category")
   linkedId     String?
   menu         Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  boards       Board[]
 
   @@index([menuId, order])
 }
@@ -171,10 +172,15 @@ model Category {
 model Board {
   id          String   @id @default(cuid())
   key         String   @unique
+  slug        String
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   name        String
   description String?
   order       Int      @default(0)
   isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([menuItemId, slug])
 }

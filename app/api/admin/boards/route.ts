@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { normalizeBoardKey } from "@/lib/boards";
+import { buildBoardKey } from "@/lib/boards";
+import { extractCommunitySlug } from "@/lib/community";
 import { revalidatePath } from "next/cache";
 
 const requireAdmin = async () => {
@@ -10,6 +11,19 @@ const requireAdmin = async () => {
     return null;
   }
   return session;
+};
+
+const getNextBoardSlug = async (menuItemId: string) => {
+  const boards = await prisma.board.findMany({
+    where: { menuItemId },
+    select: { slug: true },
+  });
+  const max = boards.reduce((acc, board) => {
+    const match = board.slug?.match(/^board-(\d+)$/);
+    if (!match) return acc;
+    return Math.max(acc, Number(match[1]));
+  }, 0);
+  return `board-${max + 1}`;
 };
 
 export async function POST(req: NextRequest) {
@@ -23,21 +37,30 @@ export async function POST(req: NextRequest) {
 
   if (action === "create") {
     const { data } = body;
-    if (!data?.name) {
-      return NextResponse.json({ error: "게시판 이름이 필요합니다" }, { status: 400 });
+    if (!data?.name || !data?.menuItemId) {
+      return NextResponse.json({ error: "게시판 이름과 그룹 정보가 필요합니다" }, { status: 400 });
     }
-    const key = normalizeBoardKey(data.key ?? "", data.name);
-    if (!key) {
-      return NextResponse.json({ error: "게시판 키가 필요합니다" }, { status: 400 });
+    const menuItem = await prisma.menuItem.findUnique({ where: { id: data.menuItemId } });
+    if (!menuItem || menuItem.linkType !== "community") {
+      return NextResponse.json({ error: "커뮤니티 메뉴를 찾을 수 없습니다" }, { status: 404 });
     }
-    const exists = await prisma.board.findUnique({ where: { key } });
+    const groupSlug = extractCommunitySlug(menuItem.href, menuItem.label);
+    const slug = await getNextBoardSlug(menuItem.id);
+    if (!slug) {
+      return NextResponse.json({ error: "게시판 슬러그를 생성할 수 없습니다" }, { status: 400 });
+    }
+    const exists = await prisma.board.findFirst({
+      where: { menuItemId: menuItem.id, slug },
+    });
     if (exists) {
-      return NextResponse.json({ error: "이미 존재하는 게시판 키입니다" }, { status: 400 });
+      return NextResponse.json({ error: "이미 존재하는 게시판입니다" }, { status: 400 });
     }
-    const count = await prisma.board.count();
+    const count = await prisma.board.count({ where: { menuItemId: menuItem.id } });
     const board = await prisma.board.create({
       data: {
-        key,
+        key: buildBoardKey(groupSlug, slug),
+        slug,
+        menuItemId: menuItem.id,
         name: data.name,
         description: data.description || null,
         isVisible: data.isVisible ?? true,
@@ -58,25 +81,11 @@ export async function POST(req: NextRequest) {
     if (!existing) {
       return NextResponse.json({ error: "게시판을 찾을 수 없습니다" }, { status: 404 });
     }
-    const nextKey = normalizeBoardKey(data?.key ?? existing.key, data?.name ?? existing.name);
-    if (!nextKey) {
-      return NextResponse.json({ error: "게시판 키가 필요합니다" }, { status: 400 });
-    }
-    if (nextKey !== existing.key) {
-      const duplicate = await prisma.board.findUnique({ where: { key: nextKey } });
-      if (duplicate) {
-        return NextResponse.json({ error: "이미 존재하는 게시판 키입니다" }, { status: 400 });
-      }
-      await prisma.post.updateMany({
-        where: { type: { equals: existing.key, mode: "insensitive" } },
-        data: { type: nextKey },
-      });
-    }
+    const nextName = data?.name ?? existing.name;
     const board = await prisma.board.update({
       where: { id },
       data: {
-        key: nextKey,
-        name: data?.name ?? existing.name,
+        name: nextName,
         description: typeof data?.description === "string" ? data.description : existing.description,
         isVisible: typeof data?.isVisible === "boolean" ? data.isVisible : existing.isVisible,
       },
@@ -95,15 +104,6 @@ export async function POST(req: NextRequest) {
     if (!existing) {
       return NextResponse.json({ error: "게시판을 찾을 수 없습니다" }, { status: 404 });
     }
-    const postCount = await prisma.post.count({
-      where: { type: { equals: existing.key, mode: "insensitive" } },
-    });
-    if (postCount > 0) {
-      return NextResponse.json(
-        { error: "게시글이 있는 게시판은 삭제할 수 없습니다. 먼저 게시글을 정리해주세요." },
-        { status: 400 }
-      );
-    }
     await prisma.board.delete({ where: { id } });
     revalidatePath("/", "layout");
     revalidatePath("/community");
@@ -111,17 +111,27 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "reorder") {
-    const { items } = body;
+    const { items, menuItemId } = body;
     if (!Array.isArray(items)) {
       return NextResponse.json({ error: "정렬 정보가 필요합니다" }, { status: 400 });
     }
+    if (!menuItemId) {
+      return NextResponse.json({ error: "그룹 정보가 필요합니다" }, { status: 400 });
+    }
+    const validIds = await prisma.board.findMany({
+      where: { menuItemId },
+      select: { id: true },
+    });
+    const idSet = new Set(validIds.map((item) => item.id));
     await prisma.$transaction(
-      items.map((item: { id: string; order: number }) =>
-        prisma.board.update({
-          where: { id: item.id },
-          data: { order: item.order },
-        })
-      )
+      items
+        .filter((item: { id: string; order: number }) => idSet.has(item.id))
+        .map((item: { id: string; order: number }) =>
+          prisma.board.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
     );
     revalidatePath("/", "layout");
     revalidatePath("/community");

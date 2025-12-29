@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
-import { slugify } from "@/lib/slug";
-
 export type BoardItem = {
   id: string;
   key: string;
+  slug: string;
+  menuItemId: string;
   name: string;
   description?: string | null;
   order: number;
@@ -18,22 +18,41 @@ export type BoardItem = {
 
 const blankBoard = {
   name: "",
-  key: "",
   description: "",
   isVisible: true,
 };
 
 interface BoardManagerProps {
   boards: BoardItem[];
+  menuItemId: string;
+  groupSlug: string;
   disabled?: boolean;
 }
 
-export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) => {
+export const BoardManager = ({
+  boards,
+  menuItemId,
+  groupSlug,
+  disabled = false,
+}: BoardManagerProps) => {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [boardState, setBoardState] = useState<BoardItem[]>(boards);
+  const [boardState, setBoardState] = useState<BoardItem[]>(boards.filter(Boolean));
   const [draft, setDraft] = useState<typeof blankBoard>(blankBoard);
   const [orderDirty, setOrderDirty] = useState(false);
+
+  useEffect(() => {
+    setBoardState(boards.filter(Boolean));
+  }, [boards]);
+
+  const nextBoardSlug = () => {
+    const max = boardState.reduce((acc, item) => {
+      const match = item.slug?.match(/^board-(\d+)$/);
+      if (!match) return acc;
+      return Math.max(acc, Number(match[1]));
+    }, 0);
+    return `board-${max + 1}`;
+  };
 
   const updateBoardState = (updater: (items: BoardItem[]) => BoardItem[]) => {
     setBoardState((prev) => updater(prev));
@@ -44,15 +63,14 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
       showToast("게시판 이름을 입력해주세요.", "error");
       return;
     }
-    const payload = {
-      ...draft,
-      key: draft.key.trim() || slugify(draft.name),
-    };
     startTransition(async () => {
       const res = await fetch("/api/admin/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", data: payload }),
+        body: JSON.stringify({
+          action: "create",
+          data: { ...draft, menuItemId },
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -71,7 +89,16 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
       const res = await fetch("/api/admin/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update", id: item.id, data: item }),
+        body: JSON.stringify({
+          action: "update",
+          id: item.id,
+          data: {
+            name: item.name,
+            description: item.description,
+            isVisible: item.isVisible,
+            menuItemId,
+          },
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -92,7 +119,7 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
       const res = await fetch("/api/admin/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", id }),
+        body: JSON.stringify({ action: "delete", id, menuItemId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -110,7 +137,7 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
       const res = await fetch("/api/admin/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reorder", items }),
+        body: JSON.stringify({ action: "reorder", items, menuItemId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -134,11 +161,13 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
 
   return (
     <div className="space-y-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-2xl">게시판 목록</h2>
-          <p className="text-sm text-gray-500">드래그 또는 화살표로 순서를 조정하세요.</p>
-        </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-2xl">게시판 목록</h2>
+              <p className="text-sm text-gray-500">
+                {groupSlug} 그룹의 게시판을 관리합니다. 드래그 또는 화살표로 순서를 조정하세요.
+              </p>
+            </div>
         <Button
           variant="secondary"
           onClick={handleReorderSave}
@@ -149,7 +178,7 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
       </div>
 
       <div className="space-y-3">
-        {boardState.map((item, index) => (
+        {boardState.filter(Boolean).map((item, index) => (
           <div
             key={item.id}
             draggable
@@ -177,18 +206,7 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
                     placeholder="게시판 이름"
                     disabled={disabled}
                   />
-                  <Input
-                    value={item.key}
-                    onChange={(event) =>
-                      updateBoardState((items) =>
-                        items.map((target) =>
-                          target.id === item.id ? { ...target, key: event.target.value } : target
-                        )
-                      )
-                    }
-                    placeholder="URL 키 (예: review)"
-                    disabled={disabled}
-                  />
+                  <Input value={`${groupSlug}__${item.slug}`} disabled />
                 </div>
                 <Textarea
                   value={item.description ?? ""}
@@ -269,12 +287,7 @@ export const BoardManager = ({ boards, disabled = false }: BoardManagerProps) =>
             placeholder="게시판 이름"
             disabled={disabled}
           />
-          <Input
-            value={draft.key}
-            onChange={(event) => setDraft((prev) => ({ ...prev, key: event.target.value }))}
-            placeholder="URL 키 (비워두면 자동 생성)"
-            disabled={disabled}
-          />
+          <Input value={`${groupSlug}__${nextBoardSlug()}`} placeholder="URL 키 (자동 생성)" disabled />
         </div>
         <Textarea
           value={draft.description}

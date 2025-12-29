@@ -4,8 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { BoardManager } from "@/components/admin/board-manager";
 import type { MenuItemData } from "@/lib/menus";
-import { slugify } from "@/lib/slug";
 
 type MenuSection = {
   key: string;
@@ -15,6 +15,7 @@ type MenuSection = {
 
 interface MenuManagerProps {
   menus: MenuSection[];
+  communityEnabled?: boolean;
 }
 
 const blankItem = {
@@ -28,7 +29,7 @@ const blankItem = {
   badgeText: "",
 };
 
-export const MenuManager = ({ menus }: MenuManagerProps) => {
+export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps) => {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const normalizedMenus = useMemo(() => {
@@ -56,13 +57,36 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     if (href.startsWith("/products/")) {
       return href.replace("/products/", "");
     }
+    if (href.startsWith("/community")) {
+      return "";
+    }
     return href.replace(/^\/+/, "");
   };
 
-  const buildCategoryHref = (value: string, fallbackLabel: string) => {
-    const raw = value.trim() || slugify(fallbackLabel);
-    if (!raw) return "";
-    return `/products/${raw}`;
+  const getCommunitySlug = (href: string, fallbackLabel: string) => {
+    if (href?.startsWith("/community/")) {
+      return href.replace("/community/", "").trim();
+    }
+    if (href?.startsWith("/community")) {
+      return href.replace("/community", "").replace(/^\/+/, "").trim();
+    }
+    return fallbackLabel;
+  };
+
+  const getNextSequentialSlug = (menuKey: string, linkType: MenuItemData["linkType"]) => {
+    const menu = menuState.find((item) => item.key === menuKey);
+    if (!menu) return linkType === "community" ? "community-1" : "category-1";
+    const prefix = linkType === "community" ? "community" : "category";
+    const basePath = linkType === "community" ? "/community/" : "/products/";
+    const max = menu.items.reduce((acc, item) => {
+      if (item.linkType !== linkType) return acc;
+      if (!item.href?.startsWith(basePath)) return acc;
+      const slug = item.href.replace(basePath, "").replace(/^\/+/, "");
+      const match = slug.match(new RegExp(`^${prefix}-(\\d+)$`));
+      if (!match) return acc;
+      return Math.max(acc, Number(match[1]));
+    }, 0);
+    return `${prefix}-${max + 1}`;
   };
 
   const updateMenuState = (menuKey: string, updater: (items: MenuItemData[]) => MenuItemData[]) => {
@@ -88,8 +112,8 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     const payload = drafts[menuKey];
     const resolvedHref =
       payload.linkType === "community"
-        ? "/community"
-        : buildCategoryHref(getCategorySlug(payload.href), payload.label);
+        ? `/community/${getNextSequentialSlug(menuKey, "community")}`
+        : `/products/${getNextSequentialSlug(menuKey, "category")}`;
     if (!payload.label.trim() || !resolvedHref.trim()) {
       showToast("메뉴명과 링크를 입력해주세요.", "error");
       return;
@@ -129,10 +153,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
           id: item.id,
           data: {
             label: item.label,
-            href:
-              item.linkType === "community"
-                ? "/community"
-                : buildCategoryHref(getCategorySlug(item.href), item.label),
+            href: item.href,
             isVisible: item.isVisible ?? true,
             isExternal: item.isExternal ?? false,
             openInNew: item.openInNew ?? false,
@@ -146,6 +167,12 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
         const data = await res.json().catch(() => ({}));
         showToast(data.error || "메뉴 저장에 실패했습니다.", "error");
         return;
+      }
+      const updated = await res.json().catch(() => null);
+      if (updated?.id) {
+        updateMenuState(menuKey, (items) =>
+          items.map((current) => (current.id === updated.id ? { ...current, ...updated } : current))
+        );
       }
       showToast("메뉴가 저장되었습니다.", "success");
     });
@@ -246,19 +273,16 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                       placeholder="메뉴명"
                     />
                     {item.linkType === "community" ? (
-                      <Input value="/community" disabled />
+                      <Input
+                        value={getCommunitySlug(item.href, item.label)}
+                        placeholder="커뮤니티 슬러그 (자동 생성)"
+                        disabled
+                      />
                     ) : (
                       <Input
                         value={getCategorySlug(item.href)}
-                        onChange={(event) =>
-                          handleFieldChange(
-                            menu.key,
-                            item.id ?? "",
-                            "href",
-                            buildCategoryHref(event.target.value, item.label)
-                          )
-                        }
-                        placeholder="카테고리 슬러그 (예: casino)"
+                        placeholder="카테고리 슬러그 (자동 생성)"
+                        disabled
                       />
                     )}
                   </div>
@@ -271,14 +295,19 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                           const nextType = event.target.value as MenuItemData["linkType"];
                           handleFieldChange(menu.key, item.id ?? "", "linkType", nextType);
                           if (nextType === "community") {
-                            handleFieldChange(menu.key, item.id ?? "", "href", "/community");
+                            handleFieldChange(
+                              menu.key,
+                              item.id ?? "",
+                              "href",
+                              `/community/${getNextSequentialSlug(menu.key, "community")}`
+                            );
                             return;
                           }
                           handleFieldChange(
                             menu.key,
                             item.id ?? "",
                             "href",
-                            buildCategoryHref(getCategorySlug(item.href), item.label)
+                            `/products/${getNextSequentialSlug(menu.key, "category")}`
                           );
                         }}
                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -288,7 +317,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                       </select>
                     </label>
                     <span className="text-xs text-gray-400">
-                      커뮤니티 유형은 /community 로 고정됩니다.
+                      커뮤니티 유형은 /community/슬러그 형태로 저장됩니다. (순번 자동)
                     </span>
                   </div>
 
@@ -371,10 +400,26 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                       삭제
                     </Button>
                   </div>
-                </div>
               </div>
             </div>
-          ))}
+            {item.linkType === "community" && item.id && (
+              <div className="mt-4 border-t border-dashed border-black/10 pt-4 space-y-3">
+                {!communityEnabled && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    커뮤니티 기능이 비활성화되어 있어 게시판이 노출되지 않습니다. 사이트 설정에서
+                    커뮤니티 기능을 켜주세요.
+                  </div>
+                )}
+                <BoardManager
+                  boards={item.boards ?? []}
+                  menuItemId={item.id}
+                  groupSlug={getCommunitySlug(item.href, item.label)}
+                  disabled={isPending || !communityEnabled}
+                />
+              </div>
+            )}
+          </div>
+        ))}
         </div>
 
         <div className="rounded-xl border border-dashed border-black/10 bg-white/60 p-4">
@@ -391,20 +436,16 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
               placeholder="메뉴명"
             />
             {drafts[menu.key]?.linkType === "community" ? (
-              <Input value="/community" disabled />
+              <Input
+                value={getNextSequentialSlug(menu.key, "community")}
+                placeholder="커뮤니티 슬러그 (자동 생성)"
+                disabled
+              />
             ) : (
               <Input
-                value={getCategorySlug(drafts[menu.key]?.href ?? "")}
-                onChange={(event) =>
-                  setDrafts((prev) => ({
-                    ...prev,
-                    [menu.key]: {
-                      ...prev[menu.key],
-                      href: buildCategoryHref(event.target.value, prev[menu.key]?.label ?? ""),
-                    },
-                  }))
-                }
-                placeholder="카테고리 슬러그 (예: casino)"
+                value={getNextSequentialSlug(menu.key, "category")}
+                placeholder="카테고리 슬러그 (자동 생성)"
+                disabled
               />
             )}
             <Button type="button" onClick={() => handleCreate(menu.key)} disabled={isPending}>
@@ -425,11 +466,8 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                       linkType: nextType,
                       href:
                         nextType === "community"
-                          ? "/community"
-                          : buildCategoryHref(
-                              getCategorySlug(prev[menu.key]?.href ?? ""),
-                              prev[menu.key]?.label ?? ""
-                            ),
+                          ? `/community/${getNextSequentialSlug(menu.key, "community")}`
+                          : `/products/${getNextSequentialSlug(menu.key, "category")}`,
                     },
                   }));
                 }}
@@ -440,7 +478,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
               </select>
             </label>
             <span className="text-xs text-gray-400">
-              커뮤니티 유형은 /community 로 고정됩니다.
+              커뮤니티 유형은 /community/슬러그 형태로 저장됩니다. (순번 자동)
             </span>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 text-xs text-gray-600">

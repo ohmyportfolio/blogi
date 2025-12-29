@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MenuManager } from "@/components/admin/menu-manager";
 import { DEFAULT_MAIN_MENU } from "@/lib/menus";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const seedMenuItems = async (menuId: string, items: typeof DEFAULT_MAIN_MENU) => {
   await prisma.menuItem.createMany({
@@ -20,11 +21,14 @@ const seedMenuItems = async (menuId: string, items: typeof DEFAULT_MAIN_MENU) =>
 };
 
 export default async function AdminMenusPage() {
-  const mainMenu = await prisma.menu.upsert({
-    where: { key: "main" },
-    update: {},
-    create: { key: "main", name: "Main" },
-  });
+  const [mainMenu, siteSettings] = await Promise.all([
+    prisma.menu.upsert({
+      where: { key: "main" },
+      update: {},
+      create: { key: "main", name: "Main" },
+    }),
+    getSiteSettings(),
+  ]);
 
   const mainCount = await prisma.menuItem.count({ where: { menuId: mainMenu.id } });
 
@@ -35,10 +39,21 @@ export default async function AdminMenusPage() {
   const rawMainItems = await prisma.menuItem.findMany({
     where: { menuId: mainMenu.id },
     orderBy: { order: "asc" },
+    include: { boards: { orderBy: { order: "asc" } } },
   });
 
   const mainItems = rawMainItems.map((item) => ({
     ...item,
+    boards: item.boards?.map((board) => ({
+      id: board.id,
+      key: board.key,
+      slug: board.slug,
+      menuItemId: board.menuItemId,
+      name: board.name,
+      description: board.description,
+      order: board.order,
+      isVisible: board.isVisible,
+    })),
     linkType:
       item.linkType === "category" || item.linkType === "community"
         ? (item.linkType as "category" | "community")
@@ -67,6 +82,7 @@ export default async function AdminMenusPage() {
             items: mainItems,
           },
         ]}
+        communityEnabled={siteSettings.communityEnabled}
       />
     </div>
   );

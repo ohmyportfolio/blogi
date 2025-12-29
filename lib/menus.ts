@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { BoardData } from "@/lib/boards";
 
 export type MenuItemData = {
   id?: string;
@@ -12,6 +13,7 @@ export type MenuItemData = {
   badgeText?: string | null;
   linkType?: "category" | "community";
   linkedId?: string | null;
+  boards?: BoardData[];
 };
 
 export const DEFAULT_MAIN_MENU: MenuItemData[] = [
@@ -22,7 +24,7 @@ export const DEFAULT_MAIN_MENU: MenuItemData[] = [
   { label: "여행 TIP", href: "/products/tip", order: 5, linkType: "category" },
   { label: "호텔 & 풀빌라", href: "/products/hotel-villa", order: 6, linkType: "category" },
   { label: "골프 & 레저", href: "/products/golf", order: 7, linkType: "category" },
-  { label: "커뮤니티", href: "/community", order: 8, linkType: "community" },
+  { label: "커뮤니티", href: "/community/community-1", order: 8, linkType: "community" },
 ];
 
 
@@ -35,7 +37,7 @@ export const getMenuByKey = async (key: string) => {
   const menu = await prisma.menu.findUnique({
     where: { key },
     include: {
-      items: { orderBy: { order: "asc" } },
+      items: { orderBy: { order: "asc" }, include: { boards: { orderBy: { order: "asc" } } } },
     },
   });
 
@@ -66,6 +68,16 @@ export const getMenuByKey = async (key: string) => {
       requiresAuth: item.requiresAuth,
       badgeText: item.badgeText,
       isVisible: item.isVisible,
+      boards: item.boards?.map((board) => ({
+        id: board.id,
+        key: board.key,
+        slug: board.slug,
+        menuItemId: board.menuItemId,
+        name: board.name,
+        description: board.description,
+        order: board.order,
+        isVisible: board.isVisible,
+      })),
       linkType:
         item.linkType === "community" || item.linkType === "category"
           ? (item.linkType as MenuItemData["linkType"])

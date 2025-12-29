@@ -93,6 +93,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!settings.communityEnabled && session.user.role !== "ADMIN") {
         return NextResponse.json({ error: "커뮤니티 기능이 비활성화되어 있습니다." }, { status: 403 });
     }
+    const currentUser = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (!currentUser) {
+        return NextResponse.json({ error: "세션이 만료되었습니다. 다시 로그인해주세요." }, { status: 401 });
+    }
 
     const { id } = await params;
     const post = await prisma.post.findUnique({ where: { id } });

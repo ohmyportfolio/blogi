@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPinned, ShieldCheck, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getBoardMapByKeys } from "@/lib/community";
 import { format } from "date-fns";
 import { redirect } from "next/navigation";
 
@@ -112,6 +113,7 @@ export default async function Home() {
 
   const siteName = siteSettings?.siteName || "다낭VIP투어";
   const siteLogoUrl = siteSettings?.siteLogoUrl || "/logo.png";
+  const boardMap = await getBoardMapByKeys(latestPosts.map((post) => post.type));
 
   return (
     <div className="flex flex-col">
@@ -347,12 +349,15 @@ export default async function Home() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">
-              {latestPosts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/community/${post.id}`}
-                  className="group rounded-3xl border border-black/5 bg-white/90 p-5 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] transition hover:-translate-y-1"
-                >
+              {latestPosts.map((post) => {
+                const boardInfo = boardMap.get(post.type);
+                const href = boardInfo ? `${boardInfo.href}/${post.id}` : `/community/${post.id}`;
+                return (
+                  <Link
+                    key={post.id}
+                    href={href}
+                    className="group rounded-3xl border border-black/5 bg-white/90 p-5 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] transition hover:-translate-y-1"
+                  >
                   <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
                     <span>Story</span>
                     <span className="text-[11px]">{format(post.createdAt, "yyyy.MM.dd")}</span>
@@ -367,8 +372,9 @@ export default async function Home() {
                     읽어보기
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

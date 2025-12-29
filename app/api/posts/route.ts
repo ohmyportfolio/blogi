@@ -48,6 +48,10 @@ export async function POST(req: NextRequest) {
     if (!settings.communityEnabled && session.user.role !== "ADMIN") {
         return NextResponse.json({ error: "커뮤니티 기능이 비활성화되어 있습니다." }, { status: 403 });
     }
+    const currentUser = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (!currentUser) {
+        return NextResponse.json({ error: "세션이 만료되었습니다. 다시 로그인해주세요." }, { status: 401 });
+    }
 
     const body = await req.json();
     const { title, content, contentMarkdown, type, boardKey, isSecret, isPinned, attachments } = body;
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
             type: board.key,
             isSecret: Boolean(isSecret),
             isPinned: session.user.role === "ADMIN" ? Boolean(isPinned) : false,
-            authorId: session.user.id,
+            authorId: currentUser.id,
             attachments: Array.isArray(attachments) && attachments.length
                 ? {
                     create: attachments

@@ -26,6 +26,7 @@ interface PostListViewProps {
   sessionUserId?: string | null;
   sessionRole?: string | null;
   emptyMessage?: string;
+  postBasePath?: string;
 }
 
 export function PostListView({
@@ -33,6 +34,7 @@ export function PostListView({
   sessionUserId,
   sessionRole,
   emptyMessage = "게시물이 없습니다.",
+  postBasePath,
 }: PostListViewProps) {
   const [items, setItems] = useState(posts);
   const [lockedPost, setLockedPost] = useState<PostListItem | null>(null);
@@ -46,6 +48,10 @@ export function PostListView({
     Boolean(sessionUserId && (sessionUserId === authorId || sessionRole === "ADMIN"));
 
   const canOpen = (post: PostListItem) => !post.isSecret || canEdit(post.authorId);
+  const getPostHref = (postId: string) =>
+    postBasePath ? `${postBasePath}/${postId}` : `/community/${postId}`;
+  const getEditHref = (postId: string) =>
+    postBasePath ? `${postBasePath}/${postId}/edit` : `/community/${postId}/edit`;
 
   const handleDelete = async (postId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
@@ -115,7 +121,7 @@ export function PostListView({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <Link
-                  href={`/community/${post.id}`}
+                  href={getPostHref(post.id)}
                   className="block text-base font-semibold text-foreground hover:text-sky-700"
                   onClick={(event) => {
                     if (!canOpen(post)) {
@@ -154,10 +160,10 @@ export function PostListView({
                 <Eye className="w-3.5 h-3.5" />
                 {post.viewCount}
               </span>
-              {canEdit(post.authorId) && (
+                    {canEdit(post.authorId) && (
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <Link href={`/community/${post.id}/edit`}>
+                    <Link href={getEditHref(post.id)}>
                       <Edit className="w-3.5 h-3.5 mr-1" />
                       수정
                     </Link>
@@ -203,7 +209,7 @@ export function PostListView({
                   </td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/community/${post.id}`}
+                      href={getPostHref(post.id)}
                       className="font-medium text-foreground hover:text-sky-700"
                       onClick={(event) => {
                         if (!canOpen(post)) {
@@ -233,7 +239,7 @@ export function PostListView({
                     {canEdit(post.authorId) ? (
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" asChild>
-                          <Link href={`/community/${post.id}/edit`}>
+                          <Link href={getEditHref(post.id)}>
                             수정
                           </Link>
                         </Button>

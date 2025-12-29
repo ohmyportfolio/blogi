@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,7 +15,13 @@ interface HeaderClientProps {
   menuItems: MenuItemData[];
   siteName: string;
   siteLogoUrl: string;
-  boards: { id: string; key: string; name: string }[];
+  communityGroups: {
+    menuItemId: string;
+    label: string;
+    href: string;
+    slug: string;
+    boards: { id: string; key: string; slug: string; name: string }[];
+  }[];
   communityEnabled: boolean;
 }
 
@@ -23,7 +29,7 @@ export const HeaderClient = ({
   menuItems,
   siteName,
   siteLogoUrl,
-  boards,
+  communityGroups,
   communityEnabled,
 }: HeaderClientProps) => {
   const pathname = usePathname();
@@ -31,11 +37,15 @@ export const HeaderClient = ({
   const { data: session } = useSession();
   const { showToast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCommunityOpen, setIsCommunityOpen] = useState(false);
+  const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
+  const groupMap = useMemo(
+    () => new Map(communityGroups.map((group) => [group.menuItemId, group])),
+    [communityGroups]
+  );
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
-    setIsCommunityOpen(false);
+    setOpenCommunityId(null);
   };
   const visibleMenuItems = communityEnabled
     ? menuItems
@@ -54,6 +64,7 @@ export const HeaderClient = ({
       !!route.href &&
       (pathname === route.href || pathname?.startsWith(route.href + "/"));
     const isProtected = Boolean(route.requiresAuth && !session);
+    const communityKey = route.id ?? route.href ?? route.label ?? "community";
     const linkClass = isMobile
       ? cn(
           "block px-6 py-3 text-sm font-semibold transition-colors",
@@ -99,9 +110,13 @@ export const HeaderClient = ({
 
   const renderCommunityMenu = (route: MenuItemData, isMobile = false) => {
     if (!communityEnabled) return null;
-    const communityHref = route.href || "/community";
-    const isActive = pathname === "/community" || pathname?.startsWith("/community/");
-    const label = route.label || "커뮤니티";
+    const group = route.id ? groupMap.get(route.id) : undefined;
+    const communityHref = group?.href || route.href || "/community";
+    const isActive = communityHref
+      ? pathname === communityHref || pathname?.startsWith(communityHref + "/")
+      : pathname === "/community" || pathname?.startsWith("/community/");
+    const label = group?.label || route.label || "커뮤니티";
+    const communityKey = route.id ?? route.href ?? route.label ?? "community";
     const linkClass = isMobile
       ? cn(
           "block px-6 py-3 text-sm font-semibold transition-colors",
@@ -114,11 +129,15 @@ export const HeaderClient = ({
           isActive ? "text-white" : "text-white/70 hover:text-white"
         );
 
-    const list = boards.map((board) => (
+    const list = (group?.boards ?? []).map((board) => (
       <Link
         key={board.id}
-        href={`/community?board=${board.key}`}
-        className={isMobile ? "block px-8 py-2 text-sm text-white/70 hover:text-white" : "block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"}
+        href={`/community/${group?.slug ?? "community"}/${board.slug}`}
+        className={
+          isMobile
+            ? "block px-8 py-2 text-sm text-white/70 hover:text-white"
+            : "block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+        }
         onClick={() => {
           if (isMobile) closeSidebar();
         }}
@@ -133,19 +152,23 @@ export const HeaderClient = ({
           <button
             type="button"
             className={linkClass}
-            onClick={() => setIsCommunityOpen((prev) => !prev)}
+            onClick={() =>
+              setOpenCommunityId((prev) => (prev === communityKey ? null : communityKey))
+            }
           >
             {label}
           </button>
-          {isCommunityOpen && (
+          {openCommunityId === communityKey && (
             <div className="pb-3">
-              <Link
-                href={communityHref}
-                className="block px-8 py-2 text-sm text-white/70 hover:text-white"
-                onClick={closeSidebar}
-              >
-                전체 보기
-              </Link>
+              {communityHref && (
+                <Link
+                  href={communityHref}
+                  className="block px-8 py-2 text-sm text-white/70 hover:text-white"
+                  onClick={closeSidebar}
+                >
+                  전체 보기
+                </Link>
+              )}
               {list.length > 0 ? list : (
                 <span className="block px-8 py-2 text-xs text-white/40">게시판 없음</span>
               )}
@@ -157,17 +180,25 @@ export const HeaderClient = ({
 
     return (
       <div key={route.id ?? "community"} className="relative group">
-        <Link href={communityHref} className={linkClass}>
-          {label}
-        </Link>
-        <div className="absolute left-0 top-full mt-2 min-w-[180px] rounded-xl border border-black/10 bg-white/95 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
-          <Link
-            href={communityHref}
-            className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-          >
-            전체 보기
+        {communityHref ? (
+          <Link href={communityHref} className={linkClass}>
+            {label}
           </Link>
-          <div className="border-t border-black/5" />
+        ) : (
+          <span className={linkClass}>{label}</span>
+        )}
+        <div className="absolute left-0 top-full mt-2 min-w-[180px] rounded-xl border border-black/10 bg-white/95 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
+          {communityHref && (
+            <>
+              <Link
+                href={communityHref}
+                className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                전체 보기
+              </Link>
+              <div className="border-t border-black/5" />
+            </>
+          )}
           {list.length > 0 ? list : (
             <span className="block px-4 py-3 text-xs text-gray-400">게시판 없음</span>
           )}
