@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import type { JSX } from "react";
 import { DecoratorNode, type NodeKey } from "lexical";
 import { createCommand } from "lexical";
 

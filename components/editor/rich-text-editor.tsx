@@ -753,7 +753,7 @@ const LexicalEditorBody = ({
   onImageUpload: () => void;
   onEmojiPick: (emoji: { native: string }, editor: LexicalEditor, selection: RangeSelection | null) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>, editor: LexicalEditor) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   initializingRef: React.MutableRefObject<boolean>;
 }) => {
   const [editor] = useLexicalComposerContext();

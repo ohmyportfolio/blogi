@@ -12,12 +12,13 @@ export async function POST(_: Request, { params }: RouteParams) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
+    const userId = session.user.id;
     const { id } = await params;
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
         return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
     }
-    const isAuthor = post.authorId === session.user.id;
+    const isAuthor = post.authorId === userId;
     const isAdmin = session.user.role === "ADMIN";
     if (post.isSecret && !isAuthor && !isAdmin) {
         return NextResponse.json({ error: "비밀글입니다" }, { status: 403 });
@@ -25,7 +26,7 @@ export async function POST(_: Request, { params }: RouteParams) {
 
     const result = await prisma.$transaction(async (tx) => {
         const existing = await tx.postScrap.findUnique({
-            where: { postId_userId: { postId: id, userId: session.user.id } },
+            where: { postId_userId: { postId: id, userId } },
         });
 
         if (existing) {
@@ -38,7 +39,7 @@ export async function POST(_: Request, { params }: RouteParams) {
         }
 
         await tx.postScrap.create({
-            data: { postId: id, userId: session.user.id },
+            data: { postId: id, userId },
         });
         const updated = await tx.post.update({
             where: { id },

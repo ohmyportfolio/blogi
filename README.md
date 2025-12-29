@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Danang VIP
 
-## Getting Started
+Next.js 커뮤니티 플랫폼
 
-First, run the development server:
+## Production URL
+
+https://gc.lumejs.com
+
+## Tech Stack
+
+- **Framework**: Next.js 16.1.0
+- **Database**: PostgreSQL 17 + Prisma ORM
+- **Authentication**: NextAuth.js
+- **Styling**: Tailwind CSS
+- **Editor**: Lexical Rich Text Editor
+
+## Development Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Generate Prisma client
+npx prisma generate
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Prerequisites
 
-## Learn More
+- Node.js 22+
+- PostgreSQL 17
+- Nginx
+- PM2
+- Certbot
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Database Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Create PostgreSQL user and database
+sudo -u postgres psql -c "CREATE USER danang_vip_user WITH PASSWORD 'danang_vip';"
+sudo -u postgres psql -c "CREATE DATABASE danang_vip OWNER danang_vip_user;"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Environment Configuration
 
-## Deploy on Vercel
+Create `.env` file:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+DATABASE_URL="postgresql://danang_vip_user:danang_vip@localhost:5432/danang_vip?schema=public"
+AUTH_SECRET="your-secret-key"
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Build & Deploy
+
+```bash
+# Install dependencies
+npm install
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npm run db:deploy
+
+# Build production bundle
+npm run build
+
+# Start with PM2
+pm2 start npm --name "danang-vip" -- start -- -p 3010
+pm2 save
+```
+
+### 5. Nginx Configuration
+
+Create `/etc/nginx/sites-available/gc.lumejs.com`:
+
+```nginx
+server {
+    listen 80;
+    server_name gc.lumejs.com;
+
+    location / {
+        proxy_pass http://localhost:3010;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enable site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/gc.lumejs.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 6. SSL Certificate
+
+```bash
+sudo certbot --nginx -d gc.lumejs.com
+```
+
+## Useful Commands
+
+```bash
+# View PM2 logs
+pm2 logs danang-vip
+
+# Restart application
+pm2 restart danang-vip
+
+# Database migration (development)
+npm run db:migrate
+
+# Database migration (production)
+npm run db:deploy
+```
+
+## Project Structure
+
+```
+/projects/danang-vip
+├── app/                 # Next.js App Router pages
+├── components/          # React components
+├── lib/                 # Utility functions
+├── prisma/              # Database schema & migrations
+├── public/              # Static files
+└── actions/             # Server actions
+```
