@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
+import { Plus } from "lucide-react";
 export type BoardItem = {
   id: string;
   key: string;
@@ -40,10 +41,17 @@ export const BoardManager = ({
   const [boardState, setBoardState] = useState<BoardItem[]>(boards.filter(Boolean));
   const [draft, setDraft] = useState<typeof blankBoard>(blankBoard);
   const [orderDirty, setOrderDirty] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     setBoardState(boards.filter(Boolean));
   }, [boards]);
+
+  useEffect(() => {
+    if (!showCreateForm) {
+      setDraft(blankBoard);
+    }
+  }, [showCreateForm]);
 
   const nextBoardSlug = () => {
     const max = boardState.reduce((acc, item) => {
@@ -80,6 +88,7 @@ export const BoardManager = ({
       const item = await res.json();
       updateBoardState((items) => [...items, item]);
       setDraft(blankBoard);
+      setShowCreateForm(false);
       showToast("게시판이 추가되었습니다.", "success");
     });
   };
@@ -279,38 +288,72 @@ export const BoardManager = ({
       </div>
 
       <div className="rounded-xl border border-dashed border-black/10 bg-white/60 p-4">
-        <h3 className="font-semibold mb-3">새 게시판 추가</h3>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Input
-            value={draft.name}
-            onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))}
-            placeholder="게시판 이름"
+        {!showCreateForm ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowCreateForm(true)}
             disabled={disabled}
-          />
-          <Input value={`${groupSlug}__${nextBoardSlug()}`} placeholder="URL 키 (자동 생성)" disabled />
-        </div>
-        <Textarea
-          value={draft.description}
-          onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
-          placeholder="게시판 설명 (선택)"
-          rows={2}
-          className="mt-3"
-          disabled={disabled}
-        />
-        <div className="mt-3 flex items-center justify-between">
-          <label className="flex items-center gap-2 text-xs text-gray-600">
-            <input
-              type="checkbox"
-              checked={draft.isVisible}
-              onChange={(event) => setDraft((prev) => ({ ...prev, isVisible: event.target.checked }))}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            새 게시판 추가
+          </Button>
+        ) : (
+          <>
+            <h3 className="font-semibold mb-3">새 게시판 추가</h3>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Input
+                value={draft.name}
+                onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))}
+                placeholder="게시판 이름"
+                disabled={disabled}
+              />
+              <Input
+                value={`${groupSlug}__${nextBoardSlug()}`}
+                placeholder="URL 키 (자동 생성)"
+                disabled
+              />
+            </div>
+            <Textarea
+              value={draft.description}
+              onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
+              placeholder="게시판 설명 (선택)"
+              rows={2}
+              className="mt-3"
               disabled={disabled}
             />
-            노출
-          </label>
-          <Button type="button" onClick={handleCreate} disabled={disabled || isPending}>
-            추가
-          </Button>
-        </div>
+            <div className="mt-3 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={draft.isVisible}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, isVisible: event.target.checked }))
+                  }
+                  disabled={disabled}
+                />
+                노출
+              </label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setDraft(blankBoard);
+                    setShowCreateForm(false);
+                  }}
+                  disabled={disabled || isPending}
+                >
+                  취소
+                </Button>
+                <Button type="button" onClick={handleCreate} disabled={disabled || isPending}>
+                  추가
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

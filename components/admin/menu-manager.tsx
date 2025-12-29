@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { BoardManager } from "@/components/admin/board-manager";
 import type { MenuItemData } from "@/lib/menus";
+import { Plus } from "lucide-react";
 
 type MenuSection = {
   key: string;
@@ -51,6 +52,7 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
     menus.reduce((acc, menu) => ({ ...acc, [menu.key]: { ...blankItem } }), {})
   );
   const [orderDirty, setOrderDirty] = useState<Record<string, boolean>>({});
+  const [createOpen, setCreateOpen] = useState<Record<string, boolean>>({});
 
   const getCategorySlug = (href: string) => {
     if (!href) return "";
@@ -139,6 +141,7 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
       const item = await res.json();
       updateMenuState(menuKey, (items) => [...items, item]);
       setDrafts((prev) => ({ ...prev, [menuKey]: { ...blankItem } }));
+      setCreateOpen((prev) => ({ ...prev, [menuKey]: false }));
       showToast("메뉴가 추가되었습니다.", "success");
     });
   };
@@ -423,86 +426,114 @@ export const MenuManager = ({ menus, communityEnabled = true }: MenuManagerProps
         </div>
 
         <div className="rounded-xl border border-dashed border-black/10 bg-white/60 p-4">
-          <h3 className="font-semibold mb-3">새 메뉴 추가</h3>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-center">
-            <Input
-              value={drafts[menu.key]?.label ?? ""}
-              onChange={(event) =>
-                setDrafts((prev) => ({
-                  ...prev,
-                  [menu.key]: { ...prev[menu.key], label: event.target.value },
-                }))
-              }
-              placeholder="메뉴명"
-            />
-            {drafts[menu.key]?.linkType === "community" ? (
-              <Input
-                value={getNextSequentialSlug(menu.key, "community")}
-                placeholder="커뮤니티 슬러그 (자동 생성)"
-                disabled
-              />
-            ) : (
-              <Input
-                value={getNextSequentialSlug(menu.key, "category")}
-                placeholder="카테고리 슬러그 (자동 생성)"
-                disabled
-              />
-            )}
-            <Button type="button" onClick={() => handleCreate(menu.key)} disabled={isPending}>
-              추가
+          {!createOpen[menu.key] ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setCreateOpen((prev) => ({ ...prev, [menu.key]: true }))}
+              disabled={isPending}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              새 메뉴 추가
             </Button>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[200px_1fr] text-sm text-gray-600">
-            <label className="flex items-center gap-2">
-              <span className="min-w-12">유형</span>
-              <select
-                value={drafts[menu.key]?.linkType ?? "category"}
-                onChange={(event) => {
-                  const nextType = event.target.value as MenuItemData["linkType"];
-                  setDrafts((prev) => ({
-                    ...prev,
-                    [menu.key]: {
-                      ...prev[menu.key],
-                      linkType: nextType,
-                      href:
-                        nextType === "community"
-                          ? `/community/${getNextSequentialSlug(menu.key, "community")}`
-                          : `/products/${getNextSequentialSlug(menu.key, "category")}`,
-                    },
-                  }));
-                }}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="category">상품 카테고리</option>
-                <option value="community">커뮤니티</option>
-              </select>
-            </label>
-            <span className="text-xs text-gray-400">
-              커뮤니티 유형은 /community/슬러그 형태로 저장됩니다. (순번 자동)
-            </span>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 text-xs text-gray-600">
-            {([
-              ["isVisible", "노출"],
-              ["isExternal", "외부 링크"],
-              ["openInNew", "새 탭"],
-              ["requiresAuth", "로그인 필요"],
-            ] as const).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={drafts[menu.key]?.[key] ?? false}
+          ) : (
+            <>
+              <h3 className="font-semibold mb-3">새 메뉴 추가</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-center">
+                <Input
+                  value={drafts[menu.key]?.label ?? ""}
                   onChange={(event) =>
                     setDrafts((prev) => ({
                       ...prev,
-                      [menu.key]: { ...prev[menu.key], [key]: event.target.checked },
+                      [menu.key]: { ...prev[menu.key], label: event.target.value },
                     }))
                   }
+                  placeholder="메뉴명"
                 />
-                {label}
-              </label>
-            ))}
-          </div>
+                {drafts[menu.key]?.linkType === "community" ? (
+                  <Input
+                    value={getNextSequentialSlug(menu.key, "community")}
+                    placeholder="커뮤니티 슬러그 (자동 생성)"
+                    disabled
+                  />
+                ) : (
+                  <Input
+                    value={getNextSequentialSlug(menu.key, "category")}
+                    placeholder="카테고리 슬러그 (자동 생성)"
+                    disabled
+                  />
+                )}
+                <Button type="button" onClick={() => handleCreate(menu.key)} disabled={isPending}>
+                  추가
+                </Button>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[200px_1fr] text-sm text-gray-600">
+                <label className="flex items-center gap-2">
+                  <span className="min-w-12">유형</span>
+                  <select
+                    value={drafts[menu.key]?.linkType ?? "category"}
+                    onChange={(event) => {
+                      const nextType = event.target.value as MenuItemData["linkType"];
+                      setDrafts((prev) => ({
+                        ...prev,
+                        [menu.key]: {
+                          ...prev[menu.key],
+                          linkType: nextType,
+                          href:
+                            nextType === "community"
+                              ? `/community/${getNextSequentialSlug(menu.key, "community")}`
+                              : `/products/${getNextSequentialSlug(menu.key, "category")}`,
+                        },
+                      }));
+                    }}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="category">상품 카테고리</option>
+                    <option value="community">커뮤니티</option>
+                  </select>
+                </label>
+                <span className="text-xs text-gray-400">
+                  커뮤니티 유형은 /community/슬러그 형태로 저장됩니다. (순번 자동)
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 text-xs text-gray-600">
+                {([
+                  ["isVisible", "노출"],
+                  ["isExternal", "외부 링크"],
+                  ["openInNew", "새 탭"],
+                  ["requiresAuth", "로그인 필요"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={drafts[menu.key]?.[key] ?? false}
+                      onChange={(event) =>
+                        setDrafts((prev) => ({
+                          ...prev,
+                          [menu.key]: { ...prev[menu.key], [key]: event.target.checked },
+                        }))
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setDrafts((prev) => ({ ...prev, [menu.key]: { ...blankItem } }));
+                    setCreateOpen((prev) => ({ ...prev, [menu.key]: false }));
+                  }}
+                  disabled={isPending}
+                >
+                  닫기
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
     );
