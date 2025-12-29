@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { ConfirmForm, type ConfirmActionState } from "@/components/admin/confirm-form";
 import { auth } from "@/auth";
+import { Eye, EyeOff, Pencil, Trash2, Package, Plus } from "lucide-react";
 
 async function toggleVisibility(_: ConfirmActionState, formData: FormData): Promise<ConfirmActionState> {
   "use server";
@@ -69,112 +70,94 @@ export default async function AdminProductsPage() {
               상품을 추가하고 노출 상태를 관리할 수 있습니다.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/admin/products/new">상품 추가</Link>
-          </Button>
+          <div className="text-xs text-gray-500">
+            총 {products.length}개의 상품
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4 md:space-y-0">
-        {/* Mobile cards */}
-        <div className="space-y-3 md:hidden">
+      <div className="rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
+        {/* 상품 목록 */}
+        <div className="divide-y divide-gray-100">
           {products.map((product) => (
-            <div key={product.id} className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="font-semibold">{product.title}</div>
-                  <div className="text-sm text-gray-500">{product.category}</div>
+            <div key={product.id} className="p-4 hover:bg-gray-50/50 transition-colors">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                {/* 상품 정보 */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0">
+                    <div className={`p-2 rounded-lg ${product.isVisible ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                      <Package className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{product.title}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-500">{product.category}</span>
+                      <span className="text-xs text-gray-300">|</span>
+                      <span className="text-xs text-gray-400">{format(product.createdAt, "yyyy-MM-dd")}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm font-medium">
-                  {product.isVisible ? "노출" : "숨김"}
+
+                {/* 액션 버튼들 */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <ConfirmForm
+                    action={toggleVisibility}
+                    message={`상품을 ${product.isVisible ? "숨김" : "노출"} 처리할까요?`}
+                    hiddenFields={{
+                      productId: product.id,
+                      nextVisible: (!product.isVisible).toString(),
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                        product.isVisible
+                          ? "text-green-600 bg-green-50 hover:bg-green-100"
+                          : "text-gray-400 bg-gray-100 hover:bg-gray-200"
+                      }`}
+                    >
+                      {product.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                      {product.isVisible ? "노출" : "숨김"}
+                    </button>
+                  </ConfirmForm>
+
+                  <Link
+                    href={`/admin/products/${product.id}/edit`}
+                    className="p-1.5 rounded text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                    title="수정"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+
+                  <ConfirmForm
+                    action={deleteProduct}
+                    message="상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+                    hiddenFields={{ productId: product.id }}
+                  >
+                    <button
+                      type="submit"
+                      className="p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </ConfirmForm>
                 </div>
-              </div>
-              <div className="mt-2 text-sm text-gray-500">
-                {format(product.createdAt, "yyyy-MM-dd")}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" asChild>
-                  <Link href={`/admin/products/${product.id}/edit`}>수정</Link>
-                </Button>
-                <ConfirmForm
-                  action={toggleVisibility}
-                  message={`상품을 ${product.isVisible ? "숨김" : "노출"} 처리할까요?`}
-                  hiddenFields={{
-                    productId: product.id,
-                    nextVisible: (!product.isVisible).toString(),
-                  }}
-                >
-                  <Button size="sm" variant="secondary">
-                    {product.isVisible ? "숨김" : "노출"}
-                  </Button>
-                </ConfirmForm>
-                <ConfirmForm
-                  action={deleteProduct}
-                  message="상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-                  hiddenFields={{ productId: product.id }}
-                >
-                  <Button size="sm" variant="destructive">
-                    삭제
-                  </Button>
-                </ConfirmForm>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Desktop table */}
-        <div className="hidden md:block rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
-          <table className="w-full min-w-[800px]">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="p-4">상품명</th>
-                <th className="p-4">카테고리</th>
-                <th className="p-4">노출</th>
-                <th className="p-4">등록일</th>
-                <th className="p-4">관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-t">
-                  <td className="p-4 font-medium">{product.title}</td>
-                  <td className="p-4">{product.category}</td>
-                  <td className="p-4">{product.isVisible ? "노출" : "숨김"}</td>
-                  <td className="p-4">{format(product.createdAt, "yyyy-MM-dd")}</td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/admin/products/${product.id}/edit`}>
-                          수정
-                        </Link>
-                      </Button>
-                      <ConfirmForm
-                        action={toggleVisibility}
-                        message={`상품을 ${product.isVisible ? "숨김" : "노출"} 처리할까요?`}
-                        hiddenFields={{
-                          productId: product.id,
-                          nextVisible: (!product.isVisible).toString(),
-                        }}
-                      >
-                        <Button size="sm" variant="secondary">
-                          {product.isVisible ? "숨김" : "노출"}
-                        </Button>
-                      </ConfirmForm>
-                      <ConfirmForm
-                        action={deleteProduct}
-                        message="상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-                        hiddenFields={{ productId: product.id }}
-                      >
-                        <Button size="sm" variant="destructive">
-                          삭제
-                        </Button>
-                      </ConfirmForm>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* 상품 추가 버튼 */}
+        <div className="border-t border-dashed border-gray-200">
+          <Link
+            href="/admin/products/new"
+            className="w-full p-3 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            새 상품 추가
+          </Link>
         </div>
       </div>
     </div>

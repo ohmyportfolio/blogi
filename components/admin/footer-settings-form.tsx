@@ -5,7 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
-import { Label } from "@/components/ui/label";
+import {
+  Copyright,
+  FileText,
+  Shield,
+  Building2,
+  Share2,
+  Eye,
+  EyeOff,
+  LayoutDashboard
+} from "lucide-react";
 
 type SocialLink = {
   key: string;
@@ -119,40 +128,102 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
     });
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">저작권 표시</h2>
-        <Input
-          value={copyrightText}
-          onChange={(event) => setCopyrightText(event.target.value)}
-          placeholder="예) Copyright © Danang VIP Tour. All rights reserved."
-        />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showCopyright}
-            onChange={(event) => setShowCopyright(event.target.checked)}
-          />
-          저작권 문구 노출
-        </label>
-      </section>
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">기본 설정</h2>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={footerEnabled}
-            onChange={(event) => setFooterEnabled(event.target.checked)}
-          />
-          푸터 전체 노출
-        </label>
-      </section>
+  const ToggleSwitch = ({
+    checked,
+    onChange,
+    disabled
+  }: {
+    checked: boolean;
+    onChange: (value: boolean) => void;
+    disabled?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      className={`relative w-11 h-6 rounded-full transition-colors ${
+        checked ? "bg-green-500" : "bg-gray-300"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+          checked ? "translate-x-5" : ""
+        }`}
+      />
+    </button>
+  );
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">이용약관</h2>
-        <div className="space-y-2">
-          <Label>내용</Label>
+  const VisibilityBadge = ({
+    visible,
+    onClick
+  }: {
+    visible: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+        visible
+          ? "text-green-600 bg-green-50 hover:bg-green-100"
+          : "text-gray-400 bg-gray-100 hover:bg-gray-200"
+      }`}
+    >
+      {visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+      {visible ? "노출" : "숨김"}
+    </button>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 기본 설정 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+        <div className={`p-2.5 rounded-lg ${footerEnabled ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-400"}`}>
+          <LayoutDashboard className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">푸터 전체 노출</label>
+            <ToggleSwitch checked={footerEnabled} onChange={setFooterEnabled} disabled={isPending} />
+          </div>
+          <p className="text-xs text-gray-400">푸터 영역 전체를 표시하거나 숨깁니다.</p>
+        </div>
+      </div>
+
+      {/* 저작권 표시 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+        <div className={`p-2.5 rounded-lg ${showCopyright ? "bg-amber-50 text-amber-600" : "bg-gray-100 text-gray-400"}`}>
+          <Copyright className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">저작권 표시</label>
+            <VisibilityBadge visible={showCopyright} onClick={() => setShowCopyright(!showCopyright)} />
+          </div>
+          <Input
+            value={copyrightText}
+            onChange={(event) => setCopyrightText(event.target.value)}
+            placeholder="예) Copyright © Danang VIP Tour. All rights reserved."
+            disabled={isPending}
+            className="bg-white"
+          />
+        </div>
+      </div>
+
+      {/* 이용약관 */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50/50 overflow-hidden">
+        <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <div className={`p-2.5 rounded-lg ${showTerms ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-400"}`}>
+            <FileText className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">이용약관</label>
+              <VisibilityBadge visible={showTerms} onClick={() => setShowTerms(!showTerms)} />
+            </div>
+          </div>
+        </div>
+        <div className="px-4 pb-4">
           <RichTextEditor
             content={termsContent}
             onChange={setTermsContent}
@@ -160,20 +231,22 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
             placeholder="이용약관 내용을 입력하세요..."
           />
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showTerms}
-            onChange={(event) => setShowTerms(event.target.checked)}
-          />
-          이용약관 노출
-        </label>
-      </section>
+      </div>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">개인정보처리방침</h2>
-        <div className="space-y-2">
-          <Label>내용</Label>
+      {/* 개인정보처리방침 */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50/50 overflow-hidden">
+        <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <div className={`p-2.5 rounded-lg ${showPrivacy ? "bg-purple-50 text-purple-600" : "bg-gray-100 text-gray-400"}`}>
+            <Shield className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">개인정보처리방침</label>
+              <VisibilityBadge visible={showPrivacy} onClick={() => setShowPrivacy(!showPrivacy)} />
+            </div>
+          </div>
+        </div>
+        <div className="px-4 pb-4">
           <RichTextEditor
             content={privacyContent}
             onChange={setPrivacyContent}
@@ -181,19 +254,22 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
             placeholder="개인정보처리방침 내용을 입력하세요..."
           />
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showPrivacy}
-            onChange={(event) => setShowPrivacy(event.target.checked)}
-          />
-          개인정보처리방침 노출
-        </label>
-      </section>
+      </div>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">사업자 정보</h2>
-        <div className="grid gap-3">
+      {/* 사업자 정보 */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50/50 overflow-hidden">
+        <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <div className={`p-2.5 rounded-lg ${showBusinessInfo ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">사업자 정보</label>
+              <VisibilityBadge visible={showBusinessInfo} onClick={() => setShowBusinessInfo(!showBusinessInfo)} />
+            </div>
+          </div>
+        </div>
+        <div className="px-4 pb-4 space-y-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <Input
               key={`business-line-${index}`}
@@ -206,52 +282,55 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
                 })
               }
               placeholder={`라인 ${index + 1}`}
+              disabled={isPending}
+              className="bg-white"
             />
           ))}
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showBusinessInfo}
-            onChange={(event) => setShowBusinessInfo(event.target.checked)}
-          />
-          사업자 정보 노출
-        </label>
-      </section>
+      </div>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">소셜 링크</h2>
-        <div className="space-y-3">
+      {/* 소셜 링크 */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50/50 overflow-hidden">
+        <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <div className={`p-2.5 rounded-lg ${showSocials ? "bg-pink-50 text-pink-600" : "bg-gray-100 text-gray-400"}`}>
+            <Share2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">소셜 링크</label>
+              <VisibilityBadge visible={showSocials} onClick={() => setShowSocials(!showSocials)} />
+            </div>
+          </div>
+        </div>
+        <div className="px-4 pb-4 space-y-2">
           {socialLinks.map((item, index) => (
-            <div key={item.key} className="grid gap-3 sm:grid-cols-[140px_1fr_auto] items-center">
-              <div className="text-sm font-medium">{item.label}</div>
+            <div key={item.key} className="flex items-center gap-2">
+              <span className="w-24 text-sm text-gray-600 flex-shrink-0">{item.label}</span>
               <Input
                 value={item.url}
                 onChange={(event) => updateSocial(index, "url", event.target.value)}
                 placeholder="https://"
+                disabled={isPending}
+                className="bg-white flex-1"
               />
-              <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={item.enabled}
-                  onChange={(event) => updateSocial(index, "enabled", event.target.checked)}
-                />
-                노출
-              </label>
+              <button
+                type="button"
+                onClick={() => updateSocial(index, "enabled", !item.enabled)}
+                disabled={isPending}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs transition-colors flex-shrink-0 ${
+                  item.enabled
+                    ? "text-green-600 bg-green-50 hover:bg-green-100"
+                    : "text-gray-400 bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                {item.enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+              </button>
             </div>
           ))}
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showSocials}
-            onChange={(event) => setShowSocials(event.target.checked)}
-          />
-          소셜 링크 전체 노출
-        </label>
-      </section>
+      </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isPending}>
           {isPending ? "저장 중..." : "저장"}
         </Button>
