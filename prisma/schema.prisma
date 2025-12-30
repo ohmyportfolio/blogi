@@ -159,6 +159,10 @@ model SiteSettings {
   termsContentMarkdown   String?
   siteLogoUrl            String?
   siteName               String?
+  siteTagline            String?
+  siteDescription        String?
+  ogImageUrl             String?
+  faviconUrl             String?
   copyrightText          String?
   showCopyright          Boolean  @default(true)
   communityEnabled       Boolean  @default(true)
@@ -171,6 +175,7 @@ model Category {
   description String?
   order       Int       @default(0)
   isVisible   Boolean   @default(true)
+  requiresAuth Boolean  @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]

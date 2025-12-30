@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { register } from "@/actions/register";
 import { useToast } from "@/components/ui/toast";
 
-export const RegisterForm = () => {
+export const RegisterForm = ({ siteName }: { siteName?: string }) => {
     const { showToast } = useToast();
     const [isPending, startTransition] = useTransition();
 
@@ -51,6 +51,7 @@ export const RegisterForm = () => {
 
     return (
         <CardWrapper
+            siteName={siteName}
             headerLabel="회원가입"
             backButtonLabel="이미 계정이 있으신가요?"
             backButtonHref="/login"

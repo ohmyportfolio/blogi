@@ -1,8 +1,10 @@
 import { RegisterForm } from "@/components/auth/register-form";
+import { getSiteSettings } from "@/lib/site-settings";
 
-const RegisterPage = () => {
+const RegisterPage = async () => {
+    const settings = await getSiteSettings();
     return (
-        <RegisterForm />
+        <RegisterForm siteName={settings.siteName || undefined} />
     );
 }
 

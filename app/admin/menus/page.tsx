@@ -13,8 +13,18 @@ const seedMenuItems = async (menuId: string, items: typeof DEFAULT_MAIN_MENU) =>
       if (slug) {
         const category = await prisma.category.upsert({
           where: { slug },
-          update: { name: item.label, order: item.order ?? index + 1 },
-          create: { name: item.label, slug, order: item.order ?? index + 1, isVisible: true },
+          update: {
+            name: item.label,
+            order: item.order ?? index + 1,
+            requiresAuth: item.requiresAuth ?? false,
+          },
+          create: {
+            name: item.label,
+            slug,
+            order: item.order ?? index + 1,
+            isVisible: true,
+            requiresAuth: item.requiresAuth ?? false,
+          },
         });
         linkedCategoryId = category.id;
       }
@@ -64,7 +74,7 @@ const ensureCategoryMenuItems = async (menuId: string) => {
       isVisible: category.isVisible,
       isExternal: false,
       openInNew: false,
-      requiresAuth: category.slug === "vip-trip",
+      requiresAuth: category.requiresAuth ?? false,
       badgeText: null,
       linkType: "category",
       linkedCategoryId: category.id,

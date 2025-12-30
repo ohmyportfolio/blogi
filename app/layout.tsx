@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const instrumentSans = Instrument_Sans({
   variable: "--font-body",
@@ -23,10 +24,34 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "다낭VIP투어",
-  description: "다낭 여행의 모든 것, 다낭 VIP 투어에서!",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const title = settings.siteName || "사이트";
+  const description =
+    settings.siteDescription || settings.siteTagline || "사이트 소개 내용을 입력해주세요.";
+  const ogImage = settings.ogImageUrl || settings.siteLogoUrl || undefined;
+
+  return {
+    title,
+    description,
+    openGraph: ogImage
+      ? {
+          title,
+          description,
+          images: [{ url: ogImage }],
+        }
+      : {
+          title,
+          description,
+        },
+    icons: settings.faviconUrl
+      ? {
+          icon: settings.faviconUrl,
+          shortcut: settings.faviconUrl,
+        }
+      : undefined,
+  };
+}
 
 export default function RootLayout({
   children,

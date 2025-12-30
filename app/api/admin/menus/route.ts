@@ -162,12 +162,14 @@ export async function POST(req: NextRequest) {
           name: data.label,
           isVisible: data.isVisible ?? true,
           order: data.order ?? 0,
+          requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : false,
         },
         create: {
           name: data.label,
           slug,
           isVisible: data.isVisible ?? true,
           order: data.order ?? 0,
+          requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : false,
         },
       });
       linkedCategoryId = category.id;
@@ -247,6 +249,7 @@ export async function POST(req: NextRequest) {
           data: {
             name: data.label ?? existing.label,
             isVisible: data.isVisible ?? existing.isVisible,
+            requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : undefined,
           },
         });
       } else if (slug) {
@@ -256,12 +259,14 @@ export async function POST(req: NextRequest) {
           update: {
             name: data.label ?? existing.label,
             isVisible: data.isVisible ?? true,
+            requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : false,
           },
           create: {
             name: data.label ?? existing.label,
             slug,
             isVisible: data.isVisible ?? true,
             order: existing.order ?? 0,
+            requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : false,
           },
         });
         linkedCategoryId = category.id;

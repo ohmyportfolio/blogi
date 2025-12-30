@@ -14,8 +14,9 @@ export const Header = async () => {
   return (
     <HeaderClient
       menuItems={menu.items}
-      siteName={footerSettings.siteName || "다낭VIP투어"}
+      siteName={footerSettings.siteName || "사이트"}
       siteLogoUrl={footerSettings.siteLogoUrl || "/logo.png"}
+      siteTagline={siteSettings.siteTagline || ""}
       communityGroups={communityGroups}
       communityEnabled={siteSettings.communityEnabled}
     />

@@ -18,11 +18,26 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { siteName, siteLogoUrl, communityEnabled } = body;
+  const {
+    siteName,
+    siteLogoUrl,
+    siteTagline,
+    siteDescription,
+    ogImageUrl,
+    faviconUrl,
+    communityEnabled,
+  } = body;
 
   const data = {
     siteName: typeof siteName === "string" && siteName.trim() ? siteName.trim() : null,
     siteLogoUrl: typeof siteLogoUrl === "string" && siteLogoUrl.trim() ? siteLogoUrl.trim() : null,
+    siteTagline: typeof siteTagline === "string" && siteTagline.trim() ? siteTagline.trim() : null,
+    siteDescription:
+      typeof siteDescription === "string" && siteDescription.trim()
+        ? siteDescription.trim()
+        : null,
+    ogImageUrl: typeof ogImageUrl === "string" && ogImageUrl.trim() ? ogImageUrl.trim() : null,
+    faviconUrl: typeof faviconUrl === "string" && faviconUrl.trim() ? faviconUrl.trim() : null,
     communityEnabled: typeof communityEnabled === "boolean" ? communityEnabled : undefined,
   };
 

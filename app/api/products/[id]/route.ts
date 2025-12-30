@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { isVipCategorySlug } from "@/lib/categories";
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -25,8 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: "상품을 찾을 수 없습니다" }, { status: 404 });
     }
 
-    const productCategorySlug = product.categoryRef?.slug ?? "";
-    if (isVipCategorySlug(productCategorySlug) && !session) {
+    if (product.categoryRef?.requiresAuth && !session) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 

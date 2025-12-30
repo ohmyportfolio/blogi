@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { isVipCategorySlug } from "@/lib/categories";
 
 // GET: List products
 export async function GET(req: NextRequest) {
@@ -13,7 +12,7 @@ export async function GET(req: NextRequest) {
         ? await prisma.category.findUnique({ where: { slug: category } })
         : null;
 
-    if (category && !session && isVipCategorySlug(category)) {
+    if (categoryRecord?.requiresAuth && !session) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
@@ -27,7 +26,7 @@ export async function GET(req: NextRequest) {
                 : { id: { in: [] } }
             : {
                 isVisible: isAdmin ? undefined : true,
-                ...(session ? {} : { NOT: { categoryRef: { is: { slug: "vip-trip" } } } }),
+                ...(session ? {} : { NOT: { categoryRef: { is: { requiresAuth: true } } } }),
             },
         orderBy: { createdAt: "desc" },
         include: { categoryRef: true },

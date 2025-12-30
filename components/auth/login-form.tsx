@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { login } from "@/actions/login";
 
-export const LoginForm = () => {
+export const LoginForm = ({ siteName }: { siteName?: string }) => {
     const { showToast } = useToast();
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
@@ -57,6 +57,7 @@ export const LoginForm = () => {
 
     return (
         <CardWrapper
+            siteName={siteName}
             headerLabel="로그인"
             backButtonLabel="계정이 없으신가요?"
             backButtonHref="/register"

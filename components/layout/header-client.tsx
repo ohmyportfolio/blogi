@@ -15,6 +15,7 @@ interface HeaderClientProps {
   menuItems: MenuItemData[];
   siteName: string;
   siteLogoUrl: string;
+  siteTagline?: string;
   communityGroups: {
     menuItemId: string;
     label: string;
@@ -29,6 +30,7 @@ export const HeaderClient = ({
   menuItems,
   siteName,
   siteLogoUrl,
+  siteTagline,
   communityGroups,
   communityEnabled,
 }: HeaderClientProps) => {
@@ -234,9 +236,11 @@ export const HeaderClient = ({
               />
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-display text-xl tracking-tight">{siteName}</span>
-                <span className="text-[10px] uppercase tracking-[0.3em] text-white/60">
-                  Danang Curated
-                </span>
+                {siteTagline ? (
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-white/60">
+                    {siteTagline}
+                  </span>
+                ) : null}
               </div>
             </Link>
 

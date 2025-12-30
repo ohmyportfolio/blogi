@@ -24,6 +24,10 @@ export default async function AdminSiteSettingsPage() {
           initialData={{
             siteName: settings?.siteName ?? "",
             siteLogoUrl: settings?.siteLogoUrl ?? "",
+            siteTagline: settings?.siteTagline ?? "",
+            siteDescription: settings?.siteDescription ?? "",
+            ogImageUrl: settings?.ogImageUrl ?? "",
+            faviconUrl: settings?.faviconUrl ?? "",
             communityEnabled: settings?.communityEnabled ?? true,
           }}
         />

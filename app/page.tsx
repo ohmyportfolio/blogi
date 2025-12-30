@@ -4,63 +4,12 @@ import Image from "next/image";
 import { ArrowRight, MapPinned, ShieldCheck, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getBoardMapByIds } from "@/lib/community";
+import { getMenuByKey } from "@/lib/menus";
 import { format } from "date-fns";
 import { redirect } from "next/navigation";
 
 // 항상 동적으로 렌더링 (사용자 수 체크를 위해)
 export const dynamic = "force-dynamic";
-
-const categories = [
-  {
-    label: "카지노",
-    en: "Casino",
-    href: "/products/casino",
-    image: "/images/landing/casino-guide-03.jpg",
-    description: "시설·게임·에티켓까지 한 번에 정리한 카지노 가이드.",
-  },
-  {
-    label: "다낭 유흥",
-    en: "Nightlife",
-    href: "/products/nightlife",
-    image: "/images/landing/nightlife-sky36-01.jpg",
-    description: "바, 라운지, 루프탑까지 세련된 밤 코스.",
-  },
-  {
-    label: "프로모션",
-    en: "Promotion",
-    href: "/products/promotion",
-    image: "/images/landing/promo-hoian-sunset-01.jpg",
-    description: "숙박+투어+픽업을 묶은 프리미엄 패키지.",
-  },
-  {
-    label: "VIP 여행",
-    en: "VIP Trip",
-    href: "/products/vip-trip",
-    image: "/images/landing/promo-couple-night-01.jpg",
-    description: "프라이빗 이동, 예약, 코스까지 원스톱.",
-  },
-  {
-    label: "여행 TIP",
-    en: "Travel TIP",
-    href: "/products/tip",
-    image: "/images/landing/tip-itinerary-01.jpg",
-    description: "처음 가도 실수 없는 다낭 실전 팁.",
-  },
-  {
-    label: "호텔 & 풀빌라",
-    en: "Hotel & Villa",
-    href: "/products/hotel-villa",
-    image: "/images/landing/hotel-intercontinental-01.jpg",
-    description: "바다 전망과 프라이빗 풀, 감각적인 스테이.",
-  },
-  {
-    label: "골프 & 레저",
-    en: "Golf & Leisure",
-    href: "/products/golf",
-    image: "/images/landing/golf-hoiana-01.jpg",
-    description: "휴식과 라운딩을 동시에 즐기는 셀렉션.",
-  },
-];
 
 const pillars = [
   {
@@ -102,18 +51,73 @@ export default async function Home() {
     redirect("/setup");
   }
 
-  const [latestPosts, siteSettings] = await Promise.all([
+  const [latestPosts, siteSettings, menu] = await Promise.all([
     prisma.post.findMany({
       orderBy: { createdAt: "desc" },
       take: 3,
       include: { author: { select: { name: true } } },
     }),
     prisma.siteSettings.findUnique({ where: { key: "default" } }),
+    getMenuByKey("main"),
   ]);
 
-  const siteName = siteSettings?.siteName || "다낭VIP투어";
+  const siteName = siteSettings?.siteName || "사이트";
   const siteLogoUrl = siteSettings?.siteLogoUrl || "/logo.png";
+  const siteTagline = siteSettings?.siteTagline || "";
   const boardMap = await getBoardMapByIds(latestPosts.map((post) => post.boardId));
+  const menuCategories = menu.items
+    .filter((item) => item.linkType === "category" && item.href)
+    .map((item, index) => {
+      const href = item.href ?? "";
+      const slug = href.startsWith("/products/")
+        ? href.replace("/products/", "")
+        : href.replace(/^\/+/, "");
+      return {
+        id: item.id,
+        label: item.label,
+        slug,
+        href,
+        order: item.order ?? index + 1,
+      };
+    })
+    .filter((item) => item.slug);
+
+  const categoryRecords = menuCategories.length
+    ? await prisma.category.findMany({
+        where: { slug: { in: menuCategories.map((item) => item.slug) } },
+      })
+    : [];
+  const categoryBySlug = new Map(categoryRecords.map((item) => [item.slug, item]));
+  const categoryIds = categoryRecords.map((item) => item.id);
+  const categoryImages = categoryIds.length
+    ? await prisma.product.findMany({
+        where: {
+          categoryId: { in: categoryIds },
+          isVisible: true,
+          imageUrl: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { categoryId: true, imageUrl: true },
+      })
+    : [];
+  const imageByCategoryId = new Map<string, string>();
+  categoryImages.forEach((product) => {
+    if (!product.imageUrl) return;
+    if (!imageByCategoryId.has(product.categoryId)) {
+      imageByCategoryId.set(product.categoryId, product.imageUrl);
+    }
+  });
+
+  const categories = menuCategories.map((item) => {
+    const category = categoryBySlug.get(item.slug);
+    const imageUrl = category?.id ? imageByCategoryId.get(category.id) : undefined;
+    return {
+      ...item,
+      description: category?.description ?? "",
+      imageUrl,
+      shortLabel: item.slug.replace(/-/g, " ").toUpperCase(),
+    };
+  });
 
   return (
     <div className="flex flex-col">
@@ -136,7 +140,9 @@ export default async function Home() {
               <div className="h-8 w-px bg-white/20" />
               <div>
                 <p className="font-display text-lg text-white tracking-wide">{siteName}</p>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-white/50">Premium Travel Concierge</p>
+                <p className="text-[9px] uppercase tracking-[0.25em] text-white/50">
+                  {siteTagline || "Premium Travel Concierge"}
+                </p>
               </div>
             </div>
           </div>
@@ -148,7 +154,7 @@ export default async function Home() {
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-white/70 px-4 py-1 text-[10px] uppercase tracking-[0.3em] text-foreground/70">
-                Danang VIP Concierge
+                {siteTagline || "Danang VIP Concierge"}
               </div>
               <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl mt-6 leading-[1.05]">
                 다낭의 밤과 낮을
@@ -259,24 +265,30 @@ export default async function Home() {
               >
                 <div className="rounded-3xl border border-black/5 bg-white/90 overflow-hidden shadow-[0_20px_45px_-35px_rgba(15,23,42,0.4)]">
                   <div className="relative h-[150px]">
-                    <Image
-                      src={category.image}
-                      alt={category.label}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 70vw, 240px"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
+                    {category.imageUrl ? (
+                      <>
+                        <Image
+                          src={category.imageUrl}
+                          alt={category.label}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 640px) 70vw, 240px"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-700 to-slate-900" />
+                    )}
                     <div className="absolute bottom-3 left-4 text-white">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-white/70">
-                        {category.en}
+                        {category.shortLabel}
                       </p>
                       <h3 className="font-display text-lg">{category.label}</h3>
                     </div>
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {category.description}
+                      {category.description || "카테고리 설명을 추가해보세요."}
                     </p>
                   </div>
                 </div>

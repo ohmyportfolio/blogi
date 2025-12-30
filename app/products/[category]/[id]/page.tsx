@@ -7,7 +7,6 @@ import { RichTextViewer } from "@/components/editor/rich-text-viewer";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
-import { isVipCategorySlug } from "@/lib/categories";
 
 interface ProductDetailPageProps {
     params: Promise<{
@@ -35,9 +34,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
     const productCategorySlug = product.categoryRef?.slug ?? category;
     const productCategoryLabel = product.categoryRef?.name ?? category;
-    const isVipProduct = isVipCategorySlug(productCategorySlug);
     const isAdmin = session?.user?.role === "ADMIN";
-    const canViewVip = !isVipProduct || Boolean(session);
+    const requiresAuth = product.categoryRef?.requiresAuth ?? false;
+    const canViewCategory = !requiresAuth || Boolean(session);
 
     if (!product.isVisible && !isAdmin) {
         notFound();
@@ -67,7 +66,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             {/* Meta */}
             <div className="flex flex-wrap items-center text-gray-500 text-sm mb-8 border-b pb-4 gap-2">
                 <span>{format(product.createdAt, "yyyy.MM.dd")}</span>
-                {product.price && canViewVip && (
+                {product.price && canViewCategory && (
                     <span className="ml-auto font-bold text-lg text-sky-600">
                         {product.price}
                     </span>
@@ -75,12 +74,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
 
             {/* Content (Rich Text) */}
-            {canViewVip ? (
+            {canViewCategory ? (
                 <RichTextViewer content={product.content} />
             ) : (
                 <div className="rounded-2xl border border-black/5 bg-white/80 px-6 py-10 text-center shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]">
                     <p className="text-gray-500 text-base mb-6">
-                        VIP 여행 상품 상세는 로그인 후 확인할 수 있습니다.
+                        로그인 후 확인할 수 있습니다.
                     </p>
                     <Button asChild>
                         <Link href={`/login?callbackUrl=${encodeURIComponent(`/products/${category}/${id}`)}`}>

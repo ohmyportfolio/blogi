@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/products/product-card";
 import { auth } from "@/auth";
-import { isVipCategorySlug } from "@/lib/categories";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -15,10 +14,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const category = await prisma.category.findUnique({
         where: { slug: categorySlug },
     });
-    const isVipCategory = isVipCategorySlug(categorySlug);
-    const canViewVip = !isVipCategory || Boolean(session);
+    const requiresAuth = category?.requiresAuth ?? false;
+    const canViewCategory = !requiresAuth || Boolean(session);
 
-    const products = canViewVip && category
+    const products = canViewCategory && category
         ? await prisma.product.findMany({
             where: {
                 categoryId: category.id,
@@ -37,10 +36,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 {category?.name ?? categorySlug.replace(/-/g, " ")}
             </h1>
 
-            {!canViewVip ? (
+            {!canViewCategory ? (
                 <div className="text-center py-20 bg-white/80 rounded-2xl border border-black/5 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]">
                     <p className="text-gray-500 text-lg mb-6">
-                        VIP 여행 상품은 로그인 후 확인할 수 있습니다.
+                        로그인 후 확인할 수 있습니다.
                     </p>
                     <div className="flex justify-center">
                         <a

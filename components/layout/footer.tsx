@@ -22,7 +22,7 @@ export const Footer = async () => {
         <footer className="relative overflow-hidden bg-[#0b1320] text-white py-10 border-t border-white/10">
             <div className="absolute inset-0 bg-[radial-gradient(700px_420px_at_90%_0%,rgba(14,165,166,0.2),transparent_60%)]" />
             <div className="container mx-auto px-4 text-center relative space-y-4">
-                <h3 className="font-display text-2xl">{settings.siteName || "다낭VIP투어"}</h3>
+                <h3 className="font-display text-2xl">{settings.siteName || "사이트"}</h3>
                 {(settings.showTerms || settings.showPrivacy) && (
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-white/70">
                         {settings.showTerms && settings.termsContent && (
@@ -64,7 +64,10 @@ export const Footer = async () => {
                 )}
                 {settings.showCopyright && (
                     <p className="text-xs text-white/50 uppercase tracking-[0.2em]">
-                        {settings.copyrightText || "Copyright © Danang VIP Tour. All rights reserved."}
+                        {settings.copyrightText ||
+                          (settings.siteName
+                            ? `Copyright © ${settings.siteName}. All rights reserved.`
+                            : "Copyright © All rights reserved.")}
                     </p>
                 )}
             </div>
