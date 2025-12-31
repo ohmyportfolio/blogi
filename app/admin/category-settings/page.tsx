@@ -25,7 +25,7 @@ export default async function AdminCategorySettingsPage() {
         <div>
           <h1 className="font-display text-2xl md:text-3xl">카테고리 표시 설정</h1>
           <p className="text-sm text-gray-500 mt-2">
-            각 카테고리의 상품 목록 페이지에서 리스트형/카드형 표시 방식을 설정합니다.
+            각 카테고리의 콘텐츠 목록 페이지에서 리스트형/카드형 표시 방식을 설정합니다.
           </p>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
-// GET: List products
+// GET: List contents
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const products = await prisma.product.findMany({
+    const contents = await prisma.content.findMany({
         where: category
             ? categoryRecord
                 ? {
@@ -32,10 +32,10 @@ export async function GET(req: NextRequest) {
         include: { categoryRef: true },
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json(contents);
 }
 
-// POST: Create a new product (Admin only)
+// POST: Create a new content (Admin only)
 export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMIN") {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "카테고리를 찾을 수 없습니다" }, { status: 400 });
     }
 
-    const product = await prisma.product.create({
+    const createdContent = await prisma.content.create({
         data: {
             title,
             content,
@@ -67,5 +67,5 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(createdContent, { status: 201 });
 }

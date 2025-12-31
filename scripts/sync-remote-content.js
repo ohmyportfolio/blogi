@@ -126,7 +126,7 @@ const main = async () => {
     menus,
     menuItems,
     categories,
-    products,
+    contents,
     boards,
     posts,
     attachments,
@@ -137,7 +137,7 @@ const main = async () => {
     selectAll(local, `SELECT * FROM "Menu"`),
     selectAll(local, `SELECT * FROM "MenuItem"`),
     selectAll(local, `SELECT * FROM "Category"`),
-    selectAll(local, `SELECT * FROM "Product"`),
+    selectAll(local, `SELECT * FROM "Content"`),
     selectAll(local, `SELECT * FROM "Board"`),
     selectAll(local, `SELECT * FROM "Post"`),
     selectAll(local, `SELECT * FROM "PostAttachment"`),
@@ -180,39 +180,51 @@ const main = async () => {
   try {
     await remoteClient.query("BEGIN");
     await remoteClient.query(
-      `TRUNCATE "PostLike","PostScrap","Comment","PostAttachment","Post","MenuItem","Menu","Product","Category","Board" RESTART IDENTITY`
+      `TRUNCATE "PostLike","PostScrap","Comment","PostAttachment","Post","Board","MenuItem","Menu","Content","Category" RESTART IDENTITY`
     );
 
     const inserts = [
       buildInsert("Menu", ["id", "key", "name", "createdAt", "updatedAt"], menus),
       buildInsert(
         "Category",
-        ["id", "name", "slug", "description", "order", "isVisible", "createdAt", "updatedAt"],
+        [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "thumbnailUrl",
+          "order",
+          "isVisible",
+          "requiresAuth",
+          "createdAt",
+          "updatedAt",
+          "listViewEnabled",
+          "listViewCount",
+          "listViewLabel",
+          "cardViewEnabled",
+          "cardViewCount",
+          "cardViewLabel",
+          "displayOrder",
+        ],
         categories
       ),
       buildInsert(
-        "Board",
-        ["id", "key", "name", "description", "order", "isVisible", "createdAt", "updatedAt"],
-        boards
-      ),
-      buildInsert(
-        "Product",
+        "Content",
         [
           "id",
           "title",
           "content",
-          "contentMarkdown",
-          "category",
-          "categoryId",
-          "contentType",
-          "htmlContent",
           "imageUrl",
           "price",
           "isVisible",
           "createdAt",
           "updatedAt",
+          "contentMarkdown",
+          "categoryId",
+          "contentType",
+          "htmlContent",
         ],
-        products
+        contents
       ),
       buildInsert(
         "MenuItem",
@@ -227,12 +239,31 @@ const main = async () => {
           "openInNew",
           "requiresAuth",
           "badgeText",
+          "thumbnailUrl",
+          "createdAt",
+          "updatedAt",
           "linkType",
-          "linkedId",
+          "linkedCategoryId",
+        ],
+        menuItems
+      ),
+      buildInsert(
+        "Board",
+        [
+          "id",
+          "key",
+          "slug",
+          "menuItemId",
+          "name",
+          "description",
+          "order",
+          "isVisible",
+          "isDeleted",
+          "deletedAt",
           "createdAt",
           "updatedAt",
         ],
-        menuItems
+        boards
       ),
       buildInsert(
         "Post",
@@ -241,7 +272,7 @@ const main = async () => {
           "title",
           "content",
           "contentMarkdown",
-          "type",
+          "boardId",
           "authorId",
           "viewCount",
           "isPinned",

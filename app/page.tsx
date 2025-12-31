@@ -68,8 +68,8 @@ export default async function Home() {
     .filter((item) => item.linkType === "category" && item.href)
     .map((item, index) => {
       const href = item.href ?? "";
-      const slug = href.startsWith("/products/")
-        ? href.replace("/products/", "")
+      const slug = href.startsWith("/contents/")
+        ? href.replace("/contents/", "")
         : href.replace(/^\/+/, "");
       return {
         id: item.id,
@@ -88,8 +88,8 @@ export default async function Home() {
     : [];
   const categoryBySlug = new Map(categoryRecords.map((item) => [item.slug, item]));
   const categoryIds = categoryRecords.map((item) => item.id);
-  const categoryImages = categoryIds.length
-    ? await prisma.product.findMany({
+  const contentImages = categoryIds.length
+    ? await prisma.content.findMany({
         where: {
           categoryId: { in: categoryIds },
           isVisible: true,
@@ -100,19 +100,19 @@ export default async function Home() {
       })
     : [];
   const imageByCategoryId = new Map<string, string>();
-  categoryImages.forEach((product) => {
-    if (!product.imageUrl) return;
-    if (!imageByCategoryId.has(product.categoryId)) {
-      imageByCategoryId.set(product.categoryId, product.imageUrl);
+  contentImages.forEach((content) => {
+    if (!content.imageUrl) return;
+    if (!imageByCategoryId.has(content.categoryId)) {
+      imageByCategoryId.set(content.categoryId, content.imageUrl);
     }
   });
 
   const categories = menuCategories.map((item) => {
     const category = categoryBySlug.get(item.slug);
-    // 카테고리 썸네일 우선, 없으면 상품 이미지 fallback
+    // 카테고리 썸네일 우선, 없으면 콘텐츠 이미지 fallback
     const thumbnailUrl = category?.thumbnailUrl;
-    const productImageUrl = category?.id ? imageByCategoryId.get(category.id) : undefined;
-    const imageUrl = thumbnailUrl || productImageUrl;
+    const contentImageUrl = category?.id ? imageByCategoryId.get(category.id) : undefined;
+    const imageUrl = thumbnailUrl || contentImageUrl;
     return {
       ...item,
       description: category?.description ?? "",
@@ -221,7 +221,7 @@ export default async function Home() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link href="/products/promotion">이번달 프로모션</Link>
+                  <Link href="/contents/promotion">이번달 프로모션</Link>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/community">후기 보기</Link>

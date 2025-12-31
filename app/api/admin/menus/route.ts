@@ -60,8 +60,8 @@ const getExistingCommunitySlug = (href?: string) => {
 
 const getExistingCategorySlug = (href?: string) => {
   if (!href) return "";
-  if (href.startsWith("/products/")) {
-    return href.replace("/products/", "").trim();
+  if (href.startsWith("/contents/")) {
+    return href.replace("/contents/", "").trim();
   }
   return "";
 };
@@ -150,12 +150,12 @@ export async function POST(req: NextRequest) {
         menuId: menu.id,
         linkType: "category",
         prefix: "category",
-        basePath: "/products/",
+        basePath: "/contents/",
       });
       if (!slug) {
         return NextResponse.json({ error: "카테고리 주소가 필요합니다" }, { status: 400 });
       }
-      href = `/products/${slug}`;
+      href = `/contents/${slug}`;
       const category = await prisma.category.upsert({
         where: { slug },
         update: {

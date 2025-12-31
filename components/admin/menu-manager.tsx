@@ -441,8 +441,8 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
 
   const getCategorySlug = (href: string) => {
     if (!href) return "";
-    if (href.startsWith("/products/")) {
-      return href.replace("/products/", "");
+    if (href.startsWith("/contents/")) {
+      return href.replace("/contents/", "");
     }
     if (href.startsWith("/community")) {
       return "";
@@ -464,7 +464,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     const menu = menuState.find((item) => item.key === menuKey);
     if (!menu) return linkType === "community" ? "community-1" : "category-1";
     const prefix = linkType === "community" ? "community" : "category";
-    const basePath = linkType === "community" ? "/community/" : "/products/";
+    const basePath = linkType === "community" ? "/community/" : "/contents/";
     const max = menu.items.reduce((acc, item) => {
       if (item.linkType !== linkType) return acc;
       if (!item.href?.startsWith(basePath)) return acc;
@@ -480,7 +480,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     if (!slug) return false;
     const menu = menuState.find((m) => m.key === menuKey);
     if (!menu) return false;
-    const basePath = linkType === "community" ? "/community/" : "/products/";
+    const basePath = linkType === "community" ? "/community/" : "/contents/";
     return menu.items.some((item) => item.href === `${basePath}${slug}`);
   };
 
@@ -560,7 +560,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     const resolvedHref =
       payload.linkType === "community"
         ? `/community/${slug}`
-        : `/products/${slug}`;
+        : `/contents/${slug}`;
     const resolvedPayload = { ...payload, href: resolvedHref, slug };
     const menu = menuState.find((item) => item.key === menuKey);
     const nextOrder = menu ? menu.items.length + 1 : 1;
@@ -793,7 +793,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                         }`}
                         title="메뉴 유형은 생성 후 변경할 수 없습니다"
                       >
-                        {item.linkType === "community" ? "커뮤니티" : item.linkType === "external" ? "외부" : "상품"}
+                        {item.linkType === "community" ? "커뮤니티" : item.linkType === "external" ? "외부" : "콘텐츠"}
                       </span>
                     </div>
 
@@ -1000,7 +1000,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                 ) : (
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-gray-400">
-                      {drafts[menu.key]?.linkType === "community" ? "/community/" : "/products/"}
+                      {drafts[menu.key]?.linkType === "community" ? "/community/" : "/contents/"}
                     </span>
                     <Input
                       value={drafts[menu.key]?.slug ?? ""}
@@ -1037,7 +1037,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                   }}
                   className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 >
-                  <option value="category">상품</option>
+                  <option value="category">콘텐츠</option>
                   <option value="community">커뮤니티</option>
                   <option value="external">외부 링크</option>
                 </select>

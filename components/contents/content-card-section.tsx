@@ -1,9 +1,9 @@
 "use client";
 
-import { ProductCard } from "./product-card";
+import { ContentCard } from "./content-card";
 import { Pagination } from "@/components/ui/pagination";
 
-interface Product {
+interface Content {
   id: string;
   title: string;
   imageUrl: string | null;
@@ -12,8 +12,8 @@ interface Product {
   categoryRef?: { slug: string; name: string } | null;
 }
 
-interface ProductCardSectionProps {
-  products: Product[];
+interface ContentCardSectionProps {
+  contents: Content[];
   categorySlug: string;
   categoryName: string;
   currentPage?: number;
@@ -22,16 +22,16 @@ interface ProductCardSectionProps {
   label?: string | null;
 }
 
-export const ProductCardSection = ({
-  products,
+export const ContentCardSection = ({
+  contents,
   categorySlug,
   categoryName,
   currentPage = 1,
   totalPages = 1,
   showPagination = false,
   label,
-}: ProductCardSectionProps) => {
-  if (products.length === 0) return null;
+}: ContentCardSectionProps) => {
+  if (contents.length === 0) return null;
 
   return (
     <div>
@@ -39,16 +39,16 @@ export const ProductCardSection = ({
         <h2 className="font-display text-xl md:text-2xl mb-4">{label}</h2>
       )}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            id={product.id}
-            title={product.title}
-            categorySlug={product.categoryRef?.slug ?? categorySlug}
-            categoryLabel={product.categoryRef?.name ?? categoryName}
-            imageUrl={product.imageUrl}
-            price={product.price}
-            createdAt={product.createdAt}
+        {contents.map((content) => (
+          <ContentCard
+            key={content.id}
+            id={content.id}
+            title={content.title}
+            categorySlug={content.categoryRef?.slug ?? categorySlug}
+            categoryLabel={content.categoryRef?.name ?? categoryName}
+            imageUrl={content.imageUrl}
+            price={content.price}
+            createdAt={content.createdAt}
           />
         ))}
       </div>
@@ -56,7 +56,7 @@ export const ProductCardSection = ({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          baseHref={`/products/${categorySlug}`}
+          baseHref={`/contents/${categorySlug}`}
           queryKey="cardPage"
         />
       )}

@@ -28,7 +28,7 @@ model User {
   postScraps PostScrap[]
 }
 
-model Product {
+model Content {
   id              String    @id @default(cuid())
   title           String
   content         String
@@ -195,7 +195,7 @@ model Category {
   cardViewCount     Int      @default(0)        // 카드형 표시 개수 (0 = 전체, 페이징)
   cardViewLabel     String?                     // 카드형 섹션 제목 (비어있으면 표시 안함)
   displayOrder      String   @default("card")   // "list" | "card" (먼저 표시할 섹션)
-  products     Product[]
+  contents     Content[]
   menuItems    MenuItem[]
 }
 

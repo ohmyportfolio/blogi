@@ -91,7 +91,7 @@ location /uploads/ {
 
 예:
 ```
-/uploads/products/2025/12/22/1700000000-abc123.jpg
+/uploads/contents/2025/12/22/1700000000-abc123.jpg
 /uploads/posts/2025/12/22/1700000000-xyz789.webp
 ```
 

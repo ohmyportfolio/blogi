@@ -24,8 +24,8 @@ export default async function AdminLayout({
                     <Link href="/admin/users" className="block p-2 hover:bg-gray-800 rounded">
                         사용자 관리
                     </Link>
-                    <Link href="/admin/products" className="block p-2 hover:bg-gray-800 rounded">
-                        상품 관리
+                    <Link href="/admin/contents" className="block p-2 hover:bg-gray-800 rounded">
+                        콘텐츠 관리
                     </Link>
                     <Link href="/admin/menus" className="block p-2 hover:bg-gray-800 rounded">
                         메뉴 관리

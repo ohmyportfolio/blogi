@@ -4,7 +4,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { auth } from "@/auth";
 import { BackButton } from "@/components/ui/back-button";
-import { Package } from "lucide-react";
+import { FileText } from "lucide-react";
 
 interface SearchPageProps {
     searchParams: Promise<{
@@ -28,8 +28,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         );
     }
 
-    // 상품만 검색 (제목 + 본문)
-    const products = await prisma.product.findMany({
+    // 콘텐츠만 검색 (제목 + 본문)
+    const contents = await prisma.content.findMany({
         where: {
             isVisible: true,
             ...(session ? {} : { NOT: { categoryRef: { is: { requiresAuth: true } } } }),
@@ -53,29 +53,29 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         &quot;{query}&quot;
                     </h1>
                     <span className="text-sm text-gray-500">
-                        검색 결과 {products.length}건
+                        검색 결과 {contents.length}건
                     </span>
                 </div>
             </div>
 
-            {products.length === 0 ? (
+            {contents.length === 0 ? (
                 <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
                     검색 결과가 없습니다.
                 </div>
             ) : (
                 <div className="rounded-xl border border-black/5 bg-white overflow-hidden divide-y divide-gray-100">
-                    {products.map((product) => (
+                    {contents.map((content) => (
                         <Link
-                            key={product.id}
-                            href={`/products/${product.categoryRef?.slug ?? "unknown"}/${product.id}`}
+                            key={content.id}
+                            href={`/contents/${content.categoryRef?.slug ?? "unknown"}/${content.id}`}
                             className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors"
                         >
                             {/* 썸네일 */}
                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                {product.imageUrl ? (
+                                {content.imageUrl ? (
                                     <Image
-                                        src={product.imageUrl}
-                                        alt={product.title}
+                                        src={content.imageUrl}
+                                        alt={content.title}
                                         width={48}
                                         height={48}
                                         className="w-full h-full object-cover"
@@ -83,23 +83,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <Package className="w-5 h-5 text-gray-300" />
+                                        <FileText className="w-5 h-5 text-gray-300" />
                                     </div>
                                 )}
                             </div>
                             {/* 내용 */}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">
-                                    {product.title}
+                                    {content.title}
                                 </p>
                                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <span className="text-sky-600">{product.categoryRef?.name ?? "미분류"}</span>
+                                    <span className="text-sky-600">{content.categoryRef?.name ?? "미분류"}</span>
                                     <span>·</span>
-                                    <span>{format(product.createdAt, "MM.dd")}</span>
-                                    {product.price && (
+                                    <span>{format(content.createdAt, "MM.dd")}</span>
+                                    {content.price && (
                                         <>
                                             <span>·</span>
-                                            <span className="text-sky-700 font-medium">{product.price}</span>
+                                            <span className="text-sky-700 font-medium">{content.price}</span>
                                         </>
                                     )}
                                 </div>

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 모든 카테고리 페이지 캐시 무효화
-    revalidatePath("/products", "layout");
+    revalidatePath("/contents", "layout");
 
     return NextResponse.json({ success: true, appliedToAll: true });
   }
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   });
 
   // 해당 카테고리 페이지 캐시 무효화
-  revalidatePath(`/products/${updated.slug}`);
+  revalidatePath(`/contents/${updated.slug}`);
 
   return NextResponse.json(updated);
 }

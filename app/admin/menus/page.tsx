@@ -8,7 +8,7 @@ const seedMenuItems = async (menuId: string, items: typeof DEFAULT_MAIN_MENU) =>
 
     // 카테고리 타입인 경우 Category 생성 및 linkedCategoryId 연결
     if (item.linkType === "category" && item.href) {
-      const slug = item.href.replace("/products/", "");
+      const slug = item.href.replace("/contents/", "");
       if (slug) {
         const category = await prisma.category.upsert({
           where: { slug },
@@ -68,7 +68,7 @@ const ensureCategoryMenuItems = async (menuId: string) => {
     data: categories.map((category, index) => ({
       menuId,
       label: category.name,
-      href: `/products/${category.slug}`,
+      href: `/contents/${category.slug}`,
       order: category.order > 0 ? category.order : maxOrder + index + 1,
       isVisible: category.isVisible,
       isExternal: false,
@@ -150,7 +150,7 @@ export default async function AdminMenusPage() {
               모바일 우선 기준으로 메뉴를 구성하세요. 로그인 필요 메뉴는 안내 토스트가 표시됩니다.
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              메뉴 유형은 상품 카테고리 또는 커뮤니티로 설정할 수 있습니다.
+              메뉴 유형은 콘텐츠 카테고리 또는 커뮤니티로 설정할 수 있습니다.
             </p>
           </div>
           <div className="text-xs text-gray-500 space-y-1">

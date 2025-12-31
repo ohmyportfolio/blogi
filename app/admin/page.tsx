@@ -1,17 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { Users, Package, FileText, MessageSquare } from "lucide-react";
+import { Users, LayoutGrid, FileText, MessageSquare } from "lucide-react";
 
 export default async function AdminPage() {
-  const [userCount, productCount, postCount, commentCount] = await Promise.all([
+  const [userCount, contentCount, postCount, commentCount] = await Promise.all([
     prisma.user.count(),
-    prisma.product.count(),
+    prisma.content.count(),
     prisma.post.count(),
     prisma.comment.count(),
   ]);
 
   const stats = [
     { label: "사용자", value: userCount, icon: Users, color: "text-blue-600 bg-blue-50" },
-    { label: "상품", value: productCount, icon: Package, color: "text-green-600 bg-green-50" },
+    { label: "콘텐츠", value: contentCount, icon: LayoutGrid, color: "text-green-600 bg-green-50" },
     { label: "게시물", value: postCount, icon: FileText, color: "text-purple-600 bg-purple-50" },
     { label: "댓글", value: commentCount, icon: MessageSquare, color: "text-orange-600 bg-orange-50" },
   ];

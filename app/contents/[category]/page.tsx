@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { Suspense } from "react";
-import { ProductListSection } from "@/components/products/product-list-section";
-import { ProductCardSection } from "@/components/products/product-card-section";
+import { ContentListSection } from "@/components/contents/content-list-section";
+import { ContentCardSection } from "@/components/contents/content-card-section";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -41,7 +41,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     </p>
                     <div className="flex justify-center">
                         <a
-                            href={`/login?callbackUrl=${encodeURIComponent(`/products/${categorySlug}`)}`}
+                            href={`/login?callbackUrl=${encodeURIComponent(`/contents/${categorySlug}`)}`}
                             className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground"
                         >
                             로그인하기
@@ -77,8 +77,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         displayOrder,
     } = category;
 
-    // 전체 상품 조회
-    const allProducts = await prisma.product.findMany({
+    // 전체 콘텐츠 조회
+    const allContents = await prisma.content.findMany({
         where: {
             categoryId: category.id,
             isVisible: true,
@@ -87,22 +87,22 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         include: { categoryRef: true },
     });
 
-    // 상품 없음
-    if (allProducts.length === 0) {
+    // 콘텐츠 없음
+    if (allContents.length === 0) {
         return (
             <div className="container mx-auto px-4 py-10">
                 <h1 className="font-display text-3xl sm:text-4xl mb-8 capitalize">
                     {category.name}
                 </h1>
                 <div className="text-center py-20 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500 text-lg">상품이 없습니다.</p>
+                    <p className="text-gray-500 text-lg">콘텐츠가 없습니다.</p>
                 </div>
             </div>
         );
     }
 
     // 리스트형 데이터 준비
-    let listProducts: typeof allProducts = [];
+    let listContents: typeof allContents = [];
     let listCurrentPage = 1;
     let listTotalPages = 1;
     let showListPagination = false;
@@ -110,20 +110,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     if (listViewEnabled) {
         if (listViewCount > 0) {
             // 최근 N개만 표시 (페이징 없음)
-            listProducts = allProducts.slice(0, listViewCount);
+            listContents = allContents.slice(0, listViewCount);
         } else {
             // 전체 표시 (페이징 적용)
             listCurrentPage = Math.max(1, Number(listPageParam) || 1);
-            listTotalPages = Math.ceil(allProducts.length / PAGE_SIZE);
+            listTotalPages = Math.ceil(allContents.length / PAGE_SIZE);
             listCurrentPage = Math.min(listCurrentPage, listTotalPages);
             const startIdx = (listCurrentPage - 1) * PAGE_SIZE;
-            listProducts = allProducts.slice(startIdx, startIdx + PAGE_SIZE);
+            listContents = allContents.slice(startIdx, startIdx + PAGE_SIZE);
             showListPagination = listTotalPages > 1;
         }
     }
 
     // 카드형 데이터 준비
-    let cardProducts: typeof allProducts = [];
+    let cardContents: typeof allContents = [];
     let cardCurrentPage = 1;
     let cardTotalPages = 1;
     let showCardPagination = false;
@@ -131,14 +131,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     if (cardViewEnabled) {
         if (cardViewCount > 0) {
             // 최근 N개만 표시 (페이징 없음)
-            cardProducts = allProducts.slice(0, cardViewCount);
+            cardContents = allContents.slice(0, cardViewCount);
         } else {
             // 전체 표시 (페이징 적용)
             cardCurrentPage = Math.max(1, Number(cardPageParam) || 1);
-            cardTotalPages = Math.ceil(allProducts.length / PAGE_SIZE);
+            cardTotalPages = Math.ceil(allContents.length / PAGE_SIZE);
             cardCurrentPage = Math.min(cardCurrentPage, cardTotalPages);
             const startIdx = (cardCurrentPage - 1) * PAGE_SIZE;
-            cardProducts = allProducts.slice(startIdx, startIdx + PAGE_SIZE);
+            cardContents = allContents.slice(startIdx, startIdx + PAGE_SIZE);
             showCardPagination = cardTotalPages > 1;
         }
     }
@@ -148,13 +148,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
     // 섹션 렌더링 함수
     const renderSection = (type: string, index: number) => {
-        if (type === "list" && listViewEnabled && listProducts.length > 0) {
+        if (type === "list" && listViewEnabled && listContents.length > 0) {
             return (
                 <div key="list-section">
                     {index > 0 && <hr className="border-gray-200 my-8" />}
                     <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-xl h-40" />}>
-                        <ProductListSection
-                            products={listProducts}
+                        <ContentListSection
+                            contents={listContents}
                             categorySlug={categorySlug}
                             currentPage={listCurrentPage}
                             totalPages={listTotalPages}
@@ -166,13 +166,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             );
         }
 
-        if (type === "card" && cardViewEnabled && cardProducts.length > 0) {
+        if (type === "card" && cardViewEnabled && cardContents.length > 0) {
             return (
                 <div key="card-section">
                     {index > 0 && <hr className="border-gray-200 my-8" />}
                     <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-xl h-40" />}>
-                        <ProductCardSection
-                            products={cardProducts}
+                        <ContentCardSection
+                            contents={cardContents}
                             categorySlug={categorySlug}
                             categoryName={category.name}
                             currentPage={cardCurrentPage}
@@ -190,8 +190,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
     // 실제로 표시될 섹션만 필터링
     const visibleSections = sections.filter((type) => {
-        if (type === "list") return listViewEnabled && listProducts.length > 0;
-        if (type === "card") return cardViewEnabled && cardProducts.length > 0;
+        if (type === "list") return listViewEnabled && listContents.length > 0;
+        if (type === "card") return cardViewEnabled && cardContents.length > 0;
         return false;
     });
 

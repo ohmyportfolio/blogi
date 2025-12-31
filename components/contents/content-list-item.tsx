@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
 
-interface ProductListItemProps {
+interface ContentListItemProps {
   id: string;
   title: string;
   categorySlug: string;
@@ -10,16 +10,16 @@ interface ProductListItemProps {
   createdAt: Date;
 }
 
-export const ProductListItem = ({
+export const ContentListItem = ({
   id,
   title,
   categorySlug,
   imageUrl,
   createdAt,
-}: ProductListItemProps) => {
+}: ContentListItemProps) => {
   return (
     <Link
-      href={`/products/${categorySlug}/${id}`}
+      href={`/contents/${categorySlug}/${id}`}
       className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
     >
       {/* 썸네일 (모바일 컴팩트) */}

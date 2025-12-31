@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
-interface ProductCardProps {
+interface ContentCardProps {
     id: string;
     title: string;
     categorySlug: string;
@@ -14,7 +14,7 @@ interface ProductCardProps {
     createdAt: Date;
 }
 
-export const ProductCard = ({
+export const ContentCard = ({
     id,
     title,
     categorySlug,
@@ -22,9 +22,9 @@ export const ProductCard = ({
     imageUrl,
     price,
     createdAt
-}: ProductCardProps) => {
+}: ContentCardProps) => {
     return (
-        <Link href={`/products/${categorySlug}/${id}`}>
+        <Link href={`/contents/${categorySlug}/${id}`}>
             <Card className="h-full overflow-hidden transition-transform duration-300 hover:-translate-y-1">
                 <div className="aspect-[4/3] relative bg-gradient-to-br from-slate-100 via-white to-amber-50">
                     {imageUrl ? (

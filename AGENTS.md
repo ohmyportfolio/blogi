@@ -142,7 +142,7 @@ const MyComponent = () => {
 - 읽기 전용 렌더: `components/editor/rich-text-viewer.tsx`
 
 ### 저장 형식
-- 게시글/상품 내용은 **Lexical JSON 문자열**로 저장합니다.
+- 게시글/콘텐츠 내용은 **Lexical JSON 문자열**로 저장합니다.
 - 필요 시 `contentMarkdown`에 Markdown 문자열을 함께 저장합니다.
 
 ### 이미지 업로드

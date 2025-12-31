@@ -6,35 +6,35 @@ interface RouteParams {
     params: Promise<{ id: string }>;
 }
 
-// GET: Product detail
+// GET: Content detail
 export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const session = await auth();
     const isAdmin = session?.user?.role === "ADMIN";
-    const product = await prisma.product.findUnique({
+    const content = await prisma.content.findUnique({
         where: { id },
         include: { categoryRef: true },
     });
 
-    if (!product) {
-        return NextResponse.json({ error: "상품을 찾을 수 없습니다" }, { status: 404 });
+    if (!content) {
+        return NextResponse.json({ error: "콘텐츠를 찾을 수 없습니다" }, { status: 404 });
     }
 
-    if (!product.isVisible && !isAdmin) {
-        return NextResponse.json({ error: "상품을 찾을 수 없습니다" }, { status: 404 });
+    if (!content.isVisible && !isAdmin) {
+        return NextResponse.json({ error: "콘텐츠를 찾을 수 없습니다" }, { status: 404 });
     }
 
-    if (product.categoryRef?.requiresAuth && !session) {
+    if (content.categoryRef?.requiresAuth && !session) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
     return NextResponse.json({
-        ...product,
-        content: product.content,
+        ...content,
+        content: content.content,
     });
 }
 
-// PUT: Update product (Admin only)
+// PUT: Update content (Admin only)
 export async function PUT(req: NextRequest, { params }: RouteParams) {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMIN") {
@@ -74,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         updateData.contentMarkdown = contentMarkdown.trim() || null;
     }
 
-    const updated = await prisma.product.update({
+    const updated = await prisma.content.update({
         where: { id },
         data: updateData,
     });
@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updated);
 }
 
-// DELETE: Delete product (Admin only)
+// DELETE: Delete content (Admin only)
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMIN") {
@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    await prisma.product.delete({ where: { id } });
+    await prisma.content.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
 }

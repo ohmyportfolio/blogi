@@ -161,7 +161,7 @@ npx prisma studio
 │   ├── admin/              # 관리자 페이지
 │   ├── api/                # API 라우트
 │   ├── community/          # 커뮤니티 페이지
-│   └── products/           # 상품 페이지
+│   └── contents/           # 콘텐츠 페이지
 ├── components/             # React 컴포넌트
 │   ├── admin/              # 관리자 컴포넌트
 │   ├── layout/             # 레이아웃 컴포넌트

@@ -146,7 +146,7 @@ app/
 ├── admin/          # 관리자 페이지
 ├── api/            # API 라우트
 ├── community/      # 커뮤니티
-└── products/       # 상품
+└── contents/       # 콘텐츠
 
 components/
 ├── admin/          # 관리자 컴포넌트
