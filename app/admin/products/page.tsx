@@ -172,13 +172,22 @@ export default async function AdminProductsPage({
               상품을 추가하고 노출 상태를 관리할 수 있습니다.
             </p>
           </div>
-          <div className="text-xs text-gray-500">
-            총 {products.length}개의 상품
-            {selectedCategory !== "all" && (
-              <span className="ml-1 text-blue-500">
-                ({getCategoryLabel(selectedCategory, selectedCategory)} 필터 적용)
-              </span>
-            )}
+          <div className="flex flex-col items-end gap-2">
+            <Link
+              href="/admin/products/new"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              새 상품 추가
+            </Link>
+            <div className="text-xs text-gray-500">
+              총 {products.length}개의 상품
+              {selectedCategory !== "all" && (
+                <span className="ml-1 text-blue-500">
+                  ({getCategoryLabel(selectedCategory, selectedCategory)} 필터 적용)
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
