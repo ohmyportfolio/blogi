@@ -31,7 +31,7 @@ export default async function AdminLayout({
                         메뉴 관리
                     </Link>
                     <Link href="/admin/category-settings" className="block p-2 hover:bg-gray-800 rounded">
-                        카테고리 설정
+                        메뉴 카테고리 설정
                     </Link>
                     <Link href="/admin/site-settings" className="block p-2 hover:bg-gray-800 rounded">
                         사이트 설정
