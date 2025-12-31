@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductCard } from "@/components/products/product-card";
 import { auth } from "@/auth";
 import { getBoardMapByIds } from "@/lib/community";
+import { BackButton } from "@/components/ui/back-button";
 
 interface SearchPageProps {
     searchParams: {
@@ -62,9 +63,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
     return (
         <div className="container mx-auto px-4 py-10 max-w-5xl">
-            <h1 className="font-display text-3xl mb-6">
-                검색 결과: <span className="text-sky-600">{query}</span>
-            </h1>
+            <div className="mb-6">
+                <BackButton label="이전 페이지로" className="mb-4" />
+                <h1 className="font-display text-3xl">
+                    검색 결과: <span className="text-sky-600">{query}</span>
+                </h1>
+            </div>
 
             <section className="mb-10">
                 <h2 className="font-display text-2xl mb-4">게시글</h2>
