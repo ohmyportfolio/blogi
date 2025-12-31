@@ -8,13 +8,14 @@ import { getBoardMapByIds } from "@/lib/community";
 import { BackButton } from "@/components/ui/back-button";
 
 interface SearchPageProps {
-    searchParams: {
+    searchParams: Promise<{
         q?: string;
-    };
+    }>;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-    const query = (searchParams.q || "").trim();
+    const { q } = await searchParams;
+    const query = (q || "").trim();
     const session = await auth();
 
     if (!query) {
