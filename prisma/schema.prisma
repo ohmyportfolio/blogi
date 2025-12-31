@@ -130,6 +130,7 @@ model MenuItem {
   openInNew    Boolean  @default(false)
   requiresAuth Boolean  @default(false)
   badgeText    String?
+  thumbnailUrl String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   linkType     MenuLinkType @default(category)
@@ -169,6 +170,10 @@ model SiteSettings {
   // 헤더 스타일 설정 (2025-2026 트렌드)
   headerStyle            String   @default("classic")  // classic | glassmorphism | minimal | bento
   headerScrollEffect     Boolean  @default(true)       // 스크롤 시 축소/블러 효과
+  // SNS 아이콘 스타일
+  socialIconStyle        String   @default("branded")  // branded | branded-sm | minimal
+  socialAlignment        String   @default("center")   // left | center | right
+  showSocialLabels       Boolean  @default(false)      // 라벨 표시 여부
 }
 
 model Category {

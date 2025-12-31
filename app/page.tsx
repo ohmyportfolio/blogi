@@ -129,6 +129,7 @@ export default async function Home() {
       label: item.label,
       href: item.href ?? "",
       order: item.order ?? index + 1,
+      thumbnailUrl: item.thumbnailUrl ?? null,
     }));
 
   return (
@@ -171,10 +172,20 @@ export default async function Home() {
               className="group"
             >
               <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white text-xs font-semibold leading-tight text-center px-1">
+                {menu.thumbnailUrl ? (
+                  <Image
+                    src={menu.thumbnailUrl}
+                    alt={menu.label}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 768px) 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-2">
+                  <span className="text-white text-xs font-semibold leading-tight block">
                     {menu.label}
                   </span>
                 </div>

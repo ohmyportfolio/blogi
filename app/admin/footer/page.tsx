@@ -39,6 +39,9 @@ export default async function AdminFooterPage() {
               ? (settings?.socialLinks as { key: string; label: string; url: string }[])
               : [],
             showSocials: settings?.showSocials ?? true,
+            socialIconStyle: (settings?.socialIconStyle as "branded" | "branded-sm" | "minimal") ?? "branded",
+            socialAlignment: (settings?.socialAlignment as "left" | "center" | "right") ?? "center",
+            showSocialLabels: settings?.showSocialLabels ?? false,
           }}
         />
       </div>

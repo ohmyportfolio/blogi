@@ -13,8 +13,20 @@ import {
   Share2,
   Eye,
   EyeOff,
-  LayoutDashboard
+  LayoutDashboard,
+  Instagram,
+  Facebook,
+  Youtube,
+  Send,
+  MessageCircle,
+  Globe,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Tag,
 } from "lucide-react";
+import { FaInstagram, FaFacebookF, FaYoutube, FaTiktok, FaTelegram, FaXTwitter } from "react-icons/fa6";
+import { RiKakaoTalkFill } from "react-icons/ri";
 
 type SocialLink = {
   key: string;
@@ -22,6 +34,9 @@ type SocialLink = {
   url: string;
   enabled: boolean;
 };
+
+type SocialIconStyle = "branded" | "branded-sm" | "minimal";
+type SocialAlignment = "left" | "center" | "right";
 
 interface FooterSettingsFormProps {
   initialData: {
@@ -38,6 +53,9 @@ interface FooterSettingsFormProps {
     showBusinessInfo: boolean;
     socialLinks: { key: string; label: string; url: string }[];
     showSocials: boolean;
+    socialIconStyle?: SocialIconStyle;
+    socialAlignment?: SocialAlignment;
+    showSocialLabels?: boolean;
   };
 }
 
@@ -83,6 +101,15 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
     });
   });
   const [showSocials, setShowSocials] = useState(initialData.showSocials);
+  const [socialIconStyle, setSocialIconStyle] = useState<SocialIconStyle>(
+    initialData.socialIconStyle ?? "branded"
+  );
+  const [socialAlignment, setSocialAlignment] = useState<SocialAlignment>(
+    initialData.socialAlignment ?? "center"
+  );
+  const [showSocialLabels, setShowSocialLabels] = useState(
+    initialData.showSocialLabels ?? false
+  );
 
   const updateSocial = (index: number, field: keyof SocialLink, value: string | boolean) => {
     setSocialLinks((prev) =>
@@ -106,6 +133,9 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
         businessLines: businessLines.map((line) => line.trim()).filter(Boolean),
         showBusinessInfo,
         showSocials,
+        socialIconStyle,
+        socialAlignment,
+        showSocialLabels,
         socialLinks: socialLinks
           .filter((item) => item.enabled && item.url.trim())
           .map((item) => ({
@@ -302,7 +332,146 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
             </div>
           </div>
         </div>
-        <div className="px-4 pb-4 space-y-2">
+        {/* 아이콘 스타일 선택 */}
+        <div className="px-4 pb-3 border-b border-gray-100">
+          <label className="text-xs text-gray-500 mb-2 block">아이콘 스타일</label>
+          <div className="flex gap-2">
+            {/* 브랜드 (큰) */}
+            <button
+              type="button"
+              onClick={() => setSocialIconStyle("branded")}
+              disabled={isPending}
+              className={`flex-1 p-2 rounded-lg transition-colors ${
+                socialIconStyle === "branded"
+                  ? "bg-pink-100 ring-1 ring-pink-300"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              <div className="flex justify-center gap-1 mb-1.5">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]">
+                  <FaInstagram className="w-3.5 h-3.5 text-white" />
+                </span>
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#1877F2]">
+                  <FaFacebookF className="w-3.5 h-3.5 text-white" />
+                </span>
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#FF0000]">
+                  <FaYoutube className="w-3.5 h-3.5 text-white" />
+                </span>
+              </div>
+              <span className="text-[10px] font-medium text-gray-600">브랜드 (큰)</span>
+            </button>
+            {/* 브랜드 (작은) */}
+            <button
+              type="button"
+              onClick={() => setSocialIconStyle("branded-sm")}
+              disabled={isPending}
+              className={`flex-1 p-2 rounded-lg transition-colors ${
+                socialIconStyle === "branded-sm"
+                  ? "bg-pink-100 ring-1 ring-pink-300"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              <div className="flex justify-center gap-1 mb-1.5">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]">
+                  <FaInstagram className="w-3 h-3 text-white" />
+                </span>
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-[#1877F2]">
+                  <FaFacebookF className="w-3 h-3 text-white" />
+                </span>
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-[#FF0000]">
+                  <FaYoutube className="w-3 h-3 text-white" />
+                </span>
+              </div>
+              <span className="text-[10px] font-medium text-gray-600">브랜드 (작은)</span>
+            </button>
+            {/* 미니멀 */}
+            <button
+              type="button"
+              onClick={() => setSocialIconStyle("minimal")}
+              disabled={isPending}
+              className={`flex-1 p-2 rounded-lg transition-colors ${
+                socialIconStyle === "minimal"
+                  ? "bg-pink-100 ring-1 ring-pink-300"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              <div className="flex justify-center gap-1.5 mb-1.5">
+                <Instagram className="w-4 h-4 text-gray-500" />
+                <Facebook className="w-4 h-4 text-gray-500" />
+                <Youtube className="w-4 h-4 text-gray-500" />
+              </div>
+              <span className="text-[10px] font-medium text-gray-600">미니멀</span>
+            </button>
+          </div>
+        </div>
+        {/* 정렬 및 라벨 표시 옵션 */}
+        <div className="px-4 pb-3 border-b border-gray-100 flex flex-col md:flex-row md:items-center gap-4">
+          {/* 정렬 */}
+          <div className="flex-1">
+            <label className="text-xs text-gray-500 mb-2 block">정렬</label>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setSocialAlignment("left")}
+                disabled={isPending}
+                className={`flex-1 p-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                  socialAlignment === "left"
+                    ? "bg-pink-100 ring-1 ring-pink-300"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                <AlignLeft className="w-4 h-4 text-gray-600" />
+                <span className="text-[10px] font-medium text-gray-600">좌측</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSocialAlignment("center")}
+                disabled={isPending}
+                className={`flex-1 p-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                  socialAlignment === "center"
+                    ? "bg-pink-100 ring-1 ring-pink-300"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                <AlignCenter className="w-4 h-4 text-gray-600" />
+                <span className="text-[10px] font-medium text-gray-600">가운데</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSocialAlignment("right")}
+                disabled={isPending}
+                className={`flex-1 p-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                  socialAlignment === "right"
+                    ? "bg-pink-100 ring-1 ring-pink-300"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                <AlignRight className="w-4 h-4 text-gray-600" />
+                <span className="text-[10px] font-medium text-gray-600">우측</span>
+              </button>
+            </div>
+          </div>
+          {/* 라벨 표시 */}
+          <div className="md:w-40">
+            <label className="text-xs text-gray-500 mb-2 block">라벨 표시</label>
+            <button
+              type="button"
+              onClick={() => setShowSocialLabels(!showSocialLabels)}
+              disabled={isPending}
+              className={`w-full p-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                showSocialLabels
+                  ? "bg-pink-100 ring-1 ring-pink-300"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              <Tag className="w-4 h-4 text-gray-600" />
+              <span className="text-[10px] font-medium text-gray-600">
+                {showSocialLabels ? "표시" : "숨김"}
+              </span>
+            </button>
+          </div>
+        </div>
+        <div className="px-4 py-3 space-y-2">
           {socialLinks.map((item, index) => (
             <div key={item.key} className="flex items-center gap-2">
               <span className="w-24 text-sm text-gray-600 flex-shrink-0">{item.label}</span>

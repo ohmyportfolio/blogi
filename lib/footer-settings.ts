@@ -6,6 +6,12 @@ export type SocialLink = {
   url: string;
 };
 
+// branded: 브랜드 컬러 배경 + 아이콘
+// branded-sm: 브랜드 컬러 배경 + 아이콘 (작은 사이즈)
+// minimal: lucide 아이콘 (배경 없음)
+export type SocialIconStyle = "branded" | "branded-sm" | "minimal";
+export type SocialAlignment = "left" | "center" | "right";
+
 export type FooterSettings = {
   siteName?: string | null;
   siteLogoUrl?: string | null;
@@ -22,6 +28,9 @@ export type FooterSettings = {
   showBusinessInfo: boolean;
   socialLinks: SocialLink[];
   showSocials: boolean;
+  socialIconStyle: SocialIconStyle;
+  socialAlignment: SocialAlignment;
+  showSocialLabels: boolean;
 };
 
 export const getFooterSettings = async (): Promise<FooterSettings> => {
@@ -75,5 +84,12 @@ export const getFooterSettings = async (): Promise<FooterSettings> => {
     showBusinessInfo: settings?.showBusinessInfo ?? true,
     socialLinks,
     showSocials: settings?.showSocials ?? true,
+    socialIconStyle: (["branded", "branded-sm", "minimal"].includes(settings?.socialIconStyle ?? "")
+      ? settings?.socialIconStyle
+      : "branded") as SocialIconStyle,
+    socialAlignment: (["left", "center", "right"].includes(settings?.socialAlignment ?? "")
+      ? settings?.socialAlignment
+      : "center") as SocialAlignment,
+    showSocialLabels: settings?.showSocialLabels ?? false,
   };
 };

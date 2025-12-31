@@ -17,6 +17,7 @@ export type MenuItemData = {
   openInNew?: boolean;
   requiresAuth?: boolean;
   badgeText?: string | null;
+  thumbnailUrl?: string | null;
   linkType?: "category" | "community" | "external";
   linkedCategoryId?: string | null;
   boards?: BoardData[];
@@ -102,6 +103,7 @@ export const getMenuByKey = async (key: string) => {
               ? "community"
               : "category",
       linkedCategoryId: item.linkedCategoryId ?? null,
+      thumbnailUrl: item.thumbnailUrl ?? null,
     })),
   };
 };

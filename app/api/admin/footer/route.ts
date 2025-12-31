@@ -31,7 +31,13 @@ export async function POST(req: NextRequest) {
     showBusinessInfo,
     socialLinks,
     showSocials,
+    socialIconStyle,
+    socialAlignment,
+    showSocialLabels,
   } = body;
+
+  const validIconStyles = ["branded", "branded-sm", "minimal"];
+  const validAlignments = ["left", "center", "right"];
 
   const data = {
     footerEnabled: Boolean(footerEnabled),
@@ -54,6 +60,9 @@ export async function POST(req: NextRequest) {
     showBusinessInfo: Boolean(showBusinessInfo),
     showSocials: Boolean(showSocials),
     socialLinks: Array.isArray(socialLinks) ? socialLinks : [],
+    socialIconStyle: validIconStyles.includes(socialIconStyle) ? socialIconStyle : "branded",
+    socialAlignment: validAlignments.includes(socialAlignment) ? socialAlignment : "center",
+    showSocialLabels: Boolean(showSocialLabels),
   };
 
   const settings = await prisma.siteSettings.upsert({

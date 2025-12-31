@@ -364,3 +364,37 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ error: "지원하지 않는 동작입니다" }, { status: 400 });
 }
+
+export async function PATCH(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "관리자 권한이 필요합니다" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { action, id, thumbnailUrl } = body;
+
+  if (action === "updateThumbnail") {
+    if (!id) {
+      return NextResponse.json({ error: "ID가 필요합니다" }, { status: 400 });
+    }
+
+    const existing = await prisma.menuItem.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "메뉴를 찾을 수 없습니다" }, { status: 404 });
+    }
+
+    const item = await prisma.menuItem.update({
+      where: { id },
+      data: {
+        thumbnailUrl: thumbnailUrl || null,
+      },
+    });
+
+    revalidatePath("/admin/menus");
+    revalidatePath("/", "layout");
+    return NextResponse.json(item);
+  }
+
+  return NextResponse.json({ error: "지원하지 않는 동작입니다" }, { status: 400 });
+}

@@ -503,7 +503,7 @@ export const HeaderClient = ({
           {/* Left: Hamburger Menu */}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition"
+            className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
             aria-label="메뉴 열기"
           >
             <Menu className="w-5 h-5 text-white" />
