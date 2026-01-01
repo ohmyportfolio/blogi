@@ -3,10 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getBoardMapByIds } from "@/lib/community";
 import { getMenuByKey } from "@/lib/menus";
 import { format } from "date-fns";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 // 항상 동적으로 렌더링 (사용자 수 체크를 위해)
 export const dynamic = "force-dynamic";
@@ -18,19 +18,19 @@ export default async function Home() {
     redirect("/setup");
   }
 
-  const [latestPosts, siteSettings, menu] = await Promise.all([
-    prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 3,
-      include: { author: { select: { name: true } } },
-    }),
+  const session = await auth();
+  const sessionUserId = session?.user?.id;
+  const isAdmin = session?.user?.role === "ADMIN";
+  const canViewRestricted = Boolean(sessionUserId);
+
+  const [siteSettings, menu] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { key: "default" } }),
     getMenuByKey("main"),
   ]);
 
   const siteName = siteSettings?.siteName || "사이트";
   const siteTagline = siteSettings?.siteTagline || "";
-  const boardMap = await getBoardMapByIds(latestPosts.map((post) => post.boardId));
+
   const menuCategories = menu.items
     .filter((item) => item.linkType === "category" && item.href)
     .map((item, index) => {
@@ -98,6 +98,104 @@ export default async function Home() {
       order: item.order ?? index + 1,
       thumbnailUrl: item.thumbnailUrl ?? null,
     }));
+
+  // 메인 페이지 대시보드 데이터: 메인 노출 설정된 카테고리
+  const homeCategories = await prisma.category.findMany({
+    where: {
+      showOnHome: true,
+      isVisible: true,
+      ...(canViewRestricted ? {} : { requiresAuth: false }),
+    },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      homeItemCount: true,
+    },
+  });
+
+  // 메인 노출 설정된 게시판
+  const homeBoards = await prisma.board.findMany({
+    where: {
+      showOnHome: true,
+      isVisible: true,
+      isDeleted: false,
+    },
+    orderBy: [{ menuItem: { order: "asc" } }, { order: "asc" }],
+    select: {
+      id: true,
+      key: true,
+      slug: true,
+      name: true,
+      homeItemCount: true,
+      menuItemId: true,
+      menuItem: {
+        select: {
+          label: true,
+          href: true,
+          order: true,
+        },
+      },
+    },
+  });
+
+  // 카테고리별 최신 콘텐츠, 게시판별 최신 글
+  const postVisibilityFilter = isAdmin
+    ? {}
+    : sessionUserId
+      ? { OR: [{ isSecret: false }, { authorId: sessionUserId }] }
+      : { isSecret: false };
+  const [categoryContentsEntries, boardPostsEntries] = await Promise.all([
+    Promise.all(
+      homeCategories.map(async (category) => {
+        const contents = await prisma.content.findMany({
+          where: {
+            categoryId: category.id,
+            isVisible: true,
+          },
+          orderBy: { createdAt: "desc" },
+          take: category.homeItemCount,
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+            createdAt: true,
+          },
+        });
+
+        return [category.id, contents] as const;
+      })
+    ),
+    Promise.all(
+      homeBoards.map(async (board) => {
+        const posts = await prisma.post.findMany({
+          where: {
+            boardId: board.id,
+            ...postVisibilityFilter,
+          },
+          orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
+          take: board.homeItemCount,
+          include: {
+            author: { select: { name: true } },
+          },
+        });
+
+        return [board.id, posts] as const;
+      })
+    ),
+  ]);
+  const categoryContentsMap = new Map(
+    categoryContentsEntries.filter(([, contents]) => contents.length > 0)
+  );
+  const boardPostsMap = new Map(
+    boardPostsEntries.filter(([, posts]) => posts.length > 0)
+  );
+
+  // board.key에서 그룹 슬러그 추출 (예: "reviews__review-board" → "reviews")
+  function extractGroupSlug(boardKey: string): string {
+    return boardKey.split("__")[0];
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -219,54 +317,126 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Latest Posts */}
+      {/* Desktop: Latest Content Dashboard */}
       <section className="hidden md:block pt-0 pb-14 sm:pb-20 bg-[#f6f1e8]">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Journal</p>
-              <h2 className="font-display text-3xl sm:text-4xl">최신 여행 정보</h2>
-            </div>
-            <Button variant="outline" asChild>
-              <Link href="/community">
-                더 보기 <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          {latestPosts.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-black/10 bg-white/80 py-12 text-center text-muted-foreground">
-              아직 게시물이 없습니다.
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-3">
-              {latestPosts.map((post) => {
-                const boardInfo = boardMap.get(post.boardId);
-                const href = boardInfo ? `${boardInfo.href}/${post.id}` : `/community/${post.id}`;
-                return (
-                  <Link
-                    key={post.id}
-                    href={href}
-                    className="group rounded-3xl border border-black/5 bg-white/90 p-5 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] transition hover:-translate-y-1"
-                  >
-                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    <span>Story</span>
-                    <span className="text-[11px]">{format(post.createdAt, "yyyy.MM.dd")}</span>
+        <div className="container mx-auto px-4 space-y-12">
+
+          {/* 카테고리별 최신 콘텐츠 */}
+          {homeCategories
+            .filter((cat) => categoryContentsMap.has(cat.id))
+            .map((category) => {
+              const contents = categoryContentsMap.get(category.id) ?? [];
+
+              return (
+                <div key={category.id}>
+                  <div className="flex items-end justify-between mb-6">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                        {category.slug.replace(/-/g, " ")}
+                      </p>
+                      <h2 className="font-display text-2xl sm:text-3xl">
+                        {category.name}
+                      </h2>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/contents/${category.slug}`}>
+                        더 보기 <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
-                  <h3 className="mt-3 font-display text-lg leading-snug line-clamp-2 text-foreground">
-                    {post.title}
-                  </h3>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {post.author.name || "Anonymous"}
-                  </p>
-                  <div className="mt-5 inline-flex items-center gap-2 text-sm text-foreground">
-                    읽어보기
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {contents.map((content) => (
+                      <Link
+                        key={content.id}
+                        href={`/contents/${category.slug}/${content.id}`}
+                        className="group rounded-2xl border border-black/5 bg-white/90 overflow-hidden shadow-sm hover:shadow-md transition"
+                      >
+                        {content.imageUrl && (
+                          <div className="relative aspect-video overflow-hidden">
+                            <Image
+                              src={content.imageUrl}
+                              alt={content.title}
+                              fill
+                              className="object-cover transition-transform group-hover:scale-105"
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          </div>
+                        )}
+                        <div className="p-4">
+                          <h3 className="font-medium line-clamp-2">{content.title}</h3>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {format(content.createdAt, "yyyy.MM.dd")}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })}
+
+          {/* 게시판별 최신 글 */}
+          {homeBoards
+            .filter((board) => boardPostsMap.has(board.id))
+            .map((board) => {
+              const posts = boardPostsMap.get(board.id) ?? [];
+              const groupSlug = extractGroupSlug(board.key);
+
+              return (
+                <div key={board.id}>
+                  <div className="flex items-end justify-between mb-6">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                        {board.menuItem?.label ?? "커뮤니티"}
+                      </p>
+                      <h2 className="font-display text-2xl sm:text-3xl">
+                        {board.name}
+                      </h2>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/community/${groupSlug}/${board.slug}`}>
+                        더 보기 <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <div className="rounded-2xl border border-black/5 bg-white/90 overflow-hidden shadow-sm">
+                    <div className="divide-y divide-gray-100">
+                      {posts.map((post) => (
+                        <Link
+                          key={post.id}
+                          href={`/community/${groupSlug}/${board.slug}/${post.id}`}
+                          className="block p-4 hover:bg-gray-50 transition"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium line-clamp-1 mb-1">
+                                {post.isPinned && (
+                                  <span className="inline-block mr-2 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
+                                    공지
+                                  </span>
+                                )}
+                                {post.title}
+                              </h3>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span>{post.author.name || "익명"}</span>
+                                <span>•</span>
+                                <span>{format(post.createdAt, "yyyy.MM.dd")}</span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground shrink-0">
+                              조회 {post.viewCount}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
         </div>
       </section>
     </div>

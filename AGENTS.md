@@ -90,9 +90,30 @@ AI 에이전트가 이 프로젝트에서 작업할 때 따라야 할 규칙과 
 
 ### DB 스키마 변경
 
+**⚠️ Shadow Database 권한 이슈**
+
+이 프로젝트는 운영 DB를 직접 사용하므로 shadow database 생성 권한이 없습니다.
+
+**수동 마이그레이션 절차**:
+```bash
+# 1. schema.prisma 수정
+# 2. 마이그레이션 폴더 생성
+mkdir -p prisma/migrations/$(date +%Y%m%d%H%M%S)_변경_설명
+
+# 3. migration.sql 파일 생성
+# 예: ALTER TABLE "Category" ADD COLUMN "showOnHome" BOOLEAN NOT NULL DEFAULT false;
+
+# 4. 마이그레이션을 적용됨으로 표시
+npx prisma migrate resolve --applied [마이그레이션_폴더명]
+
+# 5. Prisma Client 재생성
+npx prisma generate
+```
+
+**정상 작동 체크리스트**:
 - [ ] `prisma/schema.prisma` 수정
+- [ ] 마이그레이션 생성 (`npx prisma migrate dev` 또는 수동)
 - [ ] `npx prisma generate`
-- [ ] `npm run db:deploy`
 - [ ] `npm run build`
 - [ ] PM2 재시작
 
@@ -172,7 +193,24 @@ npm run build
 pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
 ```
 
-### 2. Suspense boundary 에러
+### 2. Prisma Shadow Database 에러
+
+```
+Error: P3014
+Prisma Migrate could not create the shadow database.
+Please make sure the database user has permission to create databases.
+```
+
+**원인**: 운영 DB 권한으로 shadow database 생성 불가
+
+**해결**: 수동 마이그레이션 (위의 "DB 스키마 변경" 섹션 참조)
+
+또는 `.env`에 별도 shadow DB 추가:
+```bash
+SHADOW_DATABASE_URL="postgresql://user:pass@host:port/shadow_db"
+```
+
+### 3. Suspense boundary 에러
 
 ```
 useSearchParams() should be wrapped in a suspense boundary
@@ -197,7 +235,7 @@ export default function Page() {
 }
 ```
 
-### 3. 타입 에러
+### 4. 타입 에러
 
 **빌드 전에 항상 타입 체크**:
 ```bash

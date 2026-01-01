@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import {
   Save,
   List,
@@ -24,6 +25,8 @@ interface CategoryData {
   cardViewCount: number;
   cardViewLabel: string | null;
   displayOrder: string;
+  showOnHome: boolean;
+  homeItemCount: number;
 }
 
 interface CategorySettingsClientProps {
@@ -47,6 +50,8 @@ export const CategorySettingsClient = ({
     cardViewCount: 0,
     cardViewLabel: "",
     displayOrder: "card",
+    showOnHome: false,
+    homeItemCount: 3,
   });
 
   // 일괄 적용
@@ -83,6 +88,8 @@ export const CategorySettingsClient = ({
           cardViewCount: bulkSettings.cardViewCount,
           cardViewLabel: bulkSettings.cardViewLabel || null,
           displayOrder: bulkSettings.displayOrder,
+          showOnHome: bulkSettings.showOnHome,
+          homeItemCount: bulkSettings.homeItemCount,
         }))
       );
 
@@ -156,7 +163,7 @@ export const CategorySettingsClient = ({
               isPending={isPending}
               onSave={handleApplyAll}
               saveLabel="전체 카테고리에 적용"
-              bgColor="white"
+              bgVariant="white"
             />
           </div>
         )}
@@ -194,6 +201,8 @@ const CategorySettingsItem = ({
     cardViewCount: category.cardViewCount,
     cardViewLabel: category.cardViewLabel || "",
     displayOrder: category.displayOrder,
+    showOnHome: category.showOnHome,
+    homeItemCount: category.homeItemCount,
   });
 
   // 외부에서 category가 변경되면 로컬 상태도 업데이트
@@ -206,6 +215,8 @@ const CategorySettingsItem = ({
       cardViewCount: category.cardViewCount,
       cardViewLabel: category.cardViewLabel || "",
       displayOrder: category.displayOrder,
+      showOnHome: category.showOnHome,
+      homeItemCount: category.homeItemCount,
     });
   }, [category]);
 
@@ -249,7 +260,7 @@ const CategorySettingsItem = ({
             isPending={isPending}
             onSave={() => onSave(settings)}
             saveLabel="저장"
-            bgColor="gray-50/50"
+            bgVariant="muted"
           />
         </div>
       )}
@@ -266,6 +277,8 @@ interface SettingsData {
   cardViewCount: number;
   cardViewLabel: string;
   displayOrder: string;
+  showOnHome: boolean;
+  homeItemCount: number;
 }
 
 // 공통 설정 패널
@@ -275,19 +288,23 @@ const SettingsPanel = ({
   isPending,
   onSave,
   saveLabel,
-  bgColor,
+  bgVariant,
 }: {
   settings: SettingsData;
   onChange: (settings: SettingsData) => void;
   isPending: boolean;
   onSave: () => void;
   saveLabel: string;
-  bgColor: string;
+  bgVariant: "white" | "muted";
 }) => {
+  const panelClass = cn(
+    "p-4 rounded-xl border border-gray-200",
+    bgVariant === "white" ? "bg-white" : "bg-gray-50/50"
+  );
   return (
     <>
       {/* 리스트형 설정 */}
-      <div className={`p-4 rounded-xl border border-gray-200 bg-${bgColor}`}>
+      <div className={panelClass}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <List className="w-4 h-4 text-blue-600" />
@@ -341,7 +358,7 @@ const SettingsPanel = ({
       </div>
 
       {/* 카드형 설정 */}
-      <div className={`p-4 rounded-xl border border-gray-200 bg-${bgColor}`}>
+      <div className={panelClass}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <LayoutGrid className="w-4 h-4 text-green-600" />
@@ -396,7 +413,7 @@ const SettingsPanel = ({
 
       {/* 표시 순서 (둘 다 활성화 시) */}
       {settings.listViewEnabled && settings.cardViewEnabled && (
-        <div className={`p-4 rounded-xl border border-gray-200 bg-${bgColor}`}>
+        <div className={panelClass}>
           <span className="text-sm font-medium text-gray-700 block mb-2">
             표시 순서
           </span>
@@ -426,6 +443,44 @@ const SettingsPanel = ({
           </div>
         </div>
       )}
+
+      {/* 메인 페이지 노출 설정 */}
+      <div className={`p-4 rounded-xl border border-purple-200 bg-purple-50/50`}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-medium text-sm text-purple-900">메인 페이지 노출</span>
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ ...settings, showOnHome: !settings.showOnHome })
+            }
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              settings.showOnHome ? "bg-purple-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                settings.showOnHome ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+        </div>
+        {settings.showOnHome && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-purple-700">표시 개수:</span>
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              value={settings.homeItemCount}
+              onChange={(e) =>
+                onChange({ ...settings, homeItemCount: Number(e.target.value) })
+              }
+              className="w-20 h-8 text-sm"
+            />
+            <span className="text-xs text-purple-600">(최신 콘텐츠)</span>
+          </div>
+        )}
+      </div>
 
       {/* 저장 버튼 */}
       <div className="flex justify-end">

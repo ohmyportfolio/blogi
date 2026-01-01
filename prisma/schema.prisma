@@ -7,96 +7,51 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MenuLinkType {
-  category
-  community
-  external
+model Board {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  name        String
+  description String?
+  order       Int       @default(0)
+  isVisible   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime @updatedAt
+  slug        String
+  menuItemId  String
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+  // 메인 페이지 노출 설정
+  showOnHome     Boolean  @default(false)
+  homeItemCount  Int      @default(5)
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  posts       Post[]    @relation("posts")
+
+  @@unique([menuItemId, slug])
 }
 
-model User {
-  id         String      @id @default(cuid())
-  email      String      @unique
-  password   String
-  name       String?
-  role       String      @default("USER")
-  isApproved Boolean     @default(false)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  comments   Comment[]
-  posts      Post[]
-  postLikes  PostLike[]
-  postScraps PostScrap[]
-}
-
-model Content {
-  id              String    @id @default(cuid())
-  title           String
-  content         String
-  imageUrl        String?
-  price           String?
-  isVisible       Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  contentMarkdown String?
-  categoryId      String
-  contentType     String    @default("RICH")
-  htmlContent     String?
-  categoryRef     Category  @relation(fields: [categoryId], references: [id])
-}
-
-model Post {
-  id              String           @id @default(cuid())
-  title           String
-  content         String
-  boardId         String
-  authorId        String
-  viewCount       Int              @default(0)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  contentMarkdown String?
-  isPinned        Boolean          @default(false)
-  isSecret        Boolean          @default(false)
-  likeCount       Int              @default(0)
-  scrapCount      Int              @default(0)
-  comments        Comment[]
-  board           Board            @relation(fields: [boardId], references: [id])
-  author          User             @relation(fields: [authorId], references: [id])
-  attachments     PostAttachment[]
-  likes           PostLike[]
-  scraps          PostScrap[]
-}
-
-model PostAttachment {
-  id        String   @id @default(cuid())
-  postId    String
-  url       String
-  name      String?
-  type      String?
-  size      Int?
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
-
-model PostLike {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
-}
-
-model PostScrap {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
+model Category {
+  id              String     @id @default(cuid())
+  name            String
+  slug            String     @unique
+  description     String?
+  order           Int        @default(0)
+  isVisible       Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime @updatedAt
+  requiresAuth    Boolean    @default(false)
+  thumbnailUrl    String?
+  cardViewCount   Int        @default(0)
+  cardViewEnabled Boolean    @default(true)
+  displayOrder    String     @default("card")
+  listViewCount   Int        @default(10)
+  listViewEnabled Boolean    @default(false)
+  cardViewLabel   String?
+  listViewLabel   String?
+  // 메인 페이지 노출 설정
+  showOnHome      Boolean    @default(false)
+  homeItemCount   Int        @default(3)
+  contents        Content[]  @relation("categoryRef")
+  menuItems       MenuItem[]
 }
 
 model Comment {
@@ -107,7 +62,23 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   author    User     @relation(fields: [authorId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post      Post     @relation("comments", fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Content {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  imageUrl        String?
+  price           String?
+  isVisible       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  contentMarkdown String?
+  categoryId      String
+  contentType     String   @default("RICH")
+  htmlContent     String?
+  categoryRef     Category @relation("categoryRef", fields: [categoryId], references: [id])
 }
 
 model Menu {
@@ -115,31 +86,86 @@ model Menu {
   key       String     @unique
   name      String
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  items     MenuItem[]
+  updatedAt DateTime @updatedAt
+  items     MenuItem[] @relation("items")
 }
 
 model MenuItem {
-  id           String   @id @default(cuid())
-  menuId       String
-  label        String
-  href         String
-  order        Int      @default(0)
-  isVisible    Boolean  @default(true)
-  isExternal   Boolean  @default(false)
-  openInNew    Boolean  @default(false)
-  requiresAuth Boolean  @default(false)
-  badgeText    String?
-  thumbnailUrl String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  linkType     MenuLinkType @default(category)
+  id               String       @id @default(cuid())
+  menuId           String
+  label            String
+  href             String
+  order            Int          @default(0)
+  isVisible        Boolean      @default(true)
+  isExternal       Boolean      @default(false)
+  openInNew        Boolean      @default(false)
+  requiresAuth     Boolean      @default(false)
+  badgeText        String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  linkType         MenuLinkType @default(category)
   linkedCategoryId String?
-  menu         Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  boards       Board[]
-  linkedCategory Category? @relation(fields: [linkedCategoryId], references: [id])
+  thumbnailUrl     String?
+  boards           Board[]
+  linkedCategory   Category?    @relation(fields: [linkedCategoryId], references: [id])
+  menu             Menu         @relation("items", fields: [menuId], references: [id], onDelete: Cascade)
 
   @@index([menuId, order])
+}
+
+model Post {
+  id              String           @id @default(cuid())
+  title           String
+  content         String
+  authorId        String
+  viewCount       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime @updatedAt
+  contentMarkdown String?
+  isPinned        Boolean          @default(false)
+  isSecret        Boolean          @default(false)
+  likeCount       Int              @default(0)
+  scrapCount      Int              @default(0)
+  boardId         String
+  comments        Comment[]        @relation("comments")
+  author          User             @relation(fields: [authorId], references: [id])
+  board           Board            @relation("posts", fields: [boardId], references: [id])
+  attachments     PostAttachment[] @relation("attachments")
+  likes           PostLike[]       @relation("likes")
+  scraps          PostScrap[]      @relation("scraps")
+}
+
+model PostAttachment {
+  id        String   @id @default(cuid())
+  postId    String
+  url       String
+  name      String?
+  type      String?
+  size      Int?
+  createdAt DateTime @default(now())
+  post      Post     @relation("attachments", fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation("likes", fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model PostScrap {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation("scraps", fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
 }
 
 model SiteSettings {
@@ -160,60 +186,37 @@ model SiteSettings {
   termsContentMarkdown   String?
   siteLogoUrl            String?
   siteName               String?
+  copyrightText          String?
+  showCopyright          Boolean  @default(true)
+  communityEnabled       Boolean  @default(true)
   siteTagline            String?
   siteDescription        String?
   ogImageUrl             String?
   faviconUrl             String?
-  copyrightText          String?
-  showCopyright          Boolean  @default(true)
-  communityEnabled       Boolean  @default(true)
-  // 헤더 스타일 설정 (2025-2026 트렌드)
-  headerStyle            String   @default("classic")  // classic | glassmorphism | minimal | bento
-  headerScrollEffect     Boolean  @default(true)       // 스크롤 시 축소/블러 효과
-  // SNS 아이콘 스타일
-  socialIconStyle        String   @default("branded")  // branded | branded-sm | minimal
-  socialAlignment        String   @default("center")   // left | center | right
-  showSocialLabels       Boolean  @default(false)      // 라벨 표시 여부
+  headerStyle            String   @default("classic")
+  headerScrollEffect     Boolean  @default(true)
+  socialIconStyle        String   @default("branded")
+  showSocialLabels       Boolean  @default(false)
+  socialAlignment        String   @default("center")
 }
 
-model Category {
-  id           String    @id @default(cuid())
-  name         String
-  slug         String    @unique
-  description  String?
-  thumbnailUrl String?
-  order        Int       @default(0)
-  isVisible    Boolean   @default(true)
-  requiresAuth Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  // 표시 설정
-  listViewEnabled   Boolean  @default(false)    // 리스트형 활성화
-  listViewCount     Int      @default(10)       // 리스트형 표시 개수 (0 = 전체, 페이징)
-  listViewLabel     String?                     // 리스트형 섹션 제목 (비어있으면 표시 안함)
-  cardViewEnabled   Boolean  @default(true)     // 카드형 활성화
-  cardViewCount     Int      @default(0)        // 카드형 표시 개수 (0 = 전체, 페이징)
-  cardViewLabel     String?                     // 카드형 섹션 제목 (비어있으면 표시 안함)
-  displayOrder      String   @default("card")   // "list" | "card" (먼저 표시할 섹션)
-  contents     Content[]
-  menuItems    MenuItem[]
+model User {
+  id         String      @id @default(cuid())
+  email      String      @unique
+  password   String
+  name       String?
+  role       String      @default("USER")
+  isApproved Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  comments   Comment[]
+  posts      Post[]
+  likes      PostLike[]
+  scraps     PostScrap[]
 }
 
-model Board {
-  id          String    @id @default(cuid())
-  key         String    @unique
-  slug        String
-  menuItemId  String
-  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  order       Int       @default(0)
-  isVisible   Boolean   @default(true)
-  isDeleted   Boolean   @default(false)
-  deletedAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  posts       Post[]
-
-  @@unique([menuItemId, slug])
+enum MenuLinkType {
+  category
+  community
+  external
 }

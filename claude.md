@@ -50,10 +50,32 @@ pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
 
 ### 3. DB 스키마 변경 시
 
-```bash
-# 마이그레이션 생성 및 적용
-npx prisma migrate dev --name "변경_설명"
+**⚠️ Shadow Database 권한 문제 해결**
 
+이 프로젝트는 운영 DB를 사용하며 shadow database 생성 권한이 없습니다.
+
+**해결 방법**:
+1. `.env`에 `SHADOW_DATABASE_URL` 추가 (별도 DB 사용 시)
+2. 또는 수동 마이그레이션:
+
+```bash
+# 1. schema.prisma 수정
+# 2. 마이그레이션 디렉토리 생성
+mkdir -p prisma/migrations/$(date +%Y%m%d%H%M%S)_변경_설명
+
+# 3. migration.sql 수동 작성
+# ALTER TABLE "TableName" ADD COLUMN "newColumn" TYPE DEFAULT value;
+
+# 4. 마이그레이션 적용됨으로 표시
+npx prisma migrate resolve --applied [마이그레이션_폴더명]
+
+# 5. Prisma Client 재생성
+npx prisma generate
+```
+
+**정상 작동 시**:
+```bash
+npx prisma migrate dev --name "변경_설명"
 # 또는 운영 환경에서
 npm run db:deploy
 ```

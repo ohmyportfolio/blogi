@@ -16,6 +16,8 @@ export default async function AdminCategorySettingsPage() {
       cardViewCount: true,
       cardViewLabel: true,
       displayOrder: true,
+      showOnHome: true,
+      homeItemCount: true,
     },
   });
 
