@@ -3,7 +3,7 @@
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginSchema } from "@/schemas";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,12 @@ import { CardWrapper } from "@/components/auth/card-wrapper";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { login } from "@/actions/login";
+import { Eye, EyeOff } from "lucide-react";
 
 export const LoginForm = ({ siteName }: { siteName?: string }) => {
     const { showToast } = useToast();
     const [isPending, startTransition] = useTransition();
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
     const rawCallbackUrl = searchParams.get("callbackUrl");
@@ -93,12 +95,25 @@ export const LoginForm = ({ siteName }: { siteName?: string }) => {
                                 <FormItem>
                                     <FormLabel>비밀번호</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            {...field}
-                                            disabled={isPending}
-                                            placeholder="******"
-                                            type="password"
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                disabled={isPending}
+                                                placeholder="******"
+                                                type={showPassword ? "text" : "password"}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="w-4 h-4" />
+                                                ) : (
+                                                    <Eye className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

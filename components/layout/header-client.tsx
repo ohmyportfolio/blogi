@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Search, LogOut, Settings, Menu, X, Lock } from "lucide-react";
+import { Search, LogOut, Settings, Menu, X, Lock, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
@@ -363,9 +363,12 @@ export const HeaderClient = ({
                 <div className={cn("flex items-center gap-x-4 text-sm px-4 py-2", getBentoTileClasses())}>
                   {session ? (
                     <>
-                      <span className={userNameClass}>
+                      <Link
+                        href="/profile"
+                        className={cn(userNameClass, "hover:underline transition cursor-pointer")}
+                      >
                         {session.user?.name || session.user?.email}님
-                      </span>
+                      </Link>
                       {session.user?.role === "ADMIN" && (
                         <Link href="/admin" className={cn(getTextClasses(false), "transition flex items-center gap-1")}>
                           <Settings className="w-4 h-4" />
@@ -451,9 +454,12 @@ export const HeaderClient = ({
               <div className="hidden md:flex items-center gap-x-4 text-sm">
                 {session ? (
                   <>
-                    <span className={userNameClass}>
+                    <Link
+                      href="/profile"
+                      className={cn(userNameClass, "hover:underline transition cursor-pointer")}
+                    >
                       {session.user?.name || session.user?.email}님
-                    </span>
+                    </Link>
                     {session.user?.role === "ADMIN" && (
                       <Link href="/admin" className={cn(getTextClasses(false), "transition flex items-center gap-1")}>
                         <Settings className="w-4 h-4" />
@@ -584,19 +590,7 @@ export const HeaderClient = ({
           </button>
         </div>
 
-        <div className="p-4 border-b border-white/10">
-          <form action="/search" method="get" className="relative">
-            <Input
-              name="q"
-              type="search"
-              className="w-full pl-4 pr-10 bg-white/10 text-white placeholder:text-white/60 border-white/15"
-              placeholder="검색어를 입력하세요"
-            />
-            <Search className="absolute right-3 top-2.5 h-5 w-5 text-white/60" />
-          </form>
-        </div>
-
-        <nav className="py-2">
+        <nav className="py-2 mt-4">
           {visibleMenuItems.map((route) =>
             route.linkType === "community"
               ? renderCommunityMenu(route, true)
@@ -610,6 +604,14 @@ export const HeaderClient = ({
               <div className="text-white/60 text-sm">
                 {session.user?.name || session.user?.email}님
               </div>
+              <Link
+                href="/profile"
+                onClick={closeSidebar}
+                className="flex items-center gap-2 text-sm hover:text-white transition"
+              >
+                <User className="w-4 h-4" />
+                프로필
+              </Link>
               {session.user?.role === "ADMIN" && (
                 <Link
                   href="/admin"
