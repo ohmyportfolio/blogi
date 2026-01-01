@@ -81,6 +81,22 @@ location /uploads/ {
 - 이미지 업로드 후 반환된 URL(`/uploads/...`)이 정상 접근되는지 확인
 - 서버 재시작 후에도 파일이 유지되는지 확인
 
+## 4-1) 업로드 파일 클라이언트 동기화
+
+클라이언트에서 서버 업로드 파일을 내려받아 동기화할 때는 아래 스크립트를 사용합니다.
+
+- 스크립트: `scripts/sync-uploads.sh`
+- 기본 경로: `/projects/danang-vip/public/uploads`
+- 운영에서 `UPLOADS_DIR`를 사용 중이면 `REMOTE_UPLOADS_DIR`를 해당 경로로 변경
+
+사용 방법:
+
+```bash
+./scripts/sync-uploads.sh
+```
+
+`sshpass`가 설치되어 있으면 스크립트에 비밀번호를 입력한 뒤 비대화식으로 동기화할 수 있습니다.
+
 ### 업로드 경로 규칙
 
 업로드 파일은 스코프와 날짜로 분류됩니다.
