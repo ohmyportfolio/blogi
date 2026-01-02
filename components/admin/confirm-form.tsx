@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export interface ConfirmActionState {
   error?: string | null;
@@ -11,14 +12,26 @@ export interface ConfirmActionState {
 interface ConfirmFormProps {
   action: (prevState: ConfirmActionState, formData: FormData) => Promise<ConfirmActionState>;
   message: string;
+  title?: string;
+  confirmText?: string;
   hiddenFields?: Record<string, string>;
   children: React.ReactNode;
 }
 
-export const ConfirmForm = ({ action, message, hiddenFields, children }: ConfirmFormProps) => {
+export const ConfirmForm = ({
+  action,
+  message,
+  title = "확인",
+  confirmText = "확인",
+  hiddenFields,
+  children,
+}: ConfirmFormProps) => {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [state, formAction] = useActionState(action, { error: null, success: false });
+  const [isPending, startTransition] = useTransition();
   const hasMounted = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -33,16 +46,30 @@ export const ConfirmForm = ({ action, message, hiddenFields, children }: Confirm
   }, [state, showToast]);
 
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      if (!confirm(message)) {
-        event.preventDefault();
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (isPending) return;
+
+      const confirmed = await confirm({
+        title,
+        message,
+        confirmText,
+        variant: "warning",
+      });
+
+      if (confirmed && formRef.current) {
+        const formData = new FormData(formRef.current);
+        startTransition(() => {
+          formAction(formData);
+        });
       }
     },
-    [message]
+    [message, title, confirmText, confirm, formAction, isPending, startTransition]
   );
 
   return (
-    <form action={formAction} onSubmit={handleSubmit}>
+    <form ref={formRef} onSubmit={handleSubmit}>
       {hiddenFields &&
         Object.entries(hiddenFields).map(([key, value]) => (
           <input key={key} type="hidden" name={key} value={value} />

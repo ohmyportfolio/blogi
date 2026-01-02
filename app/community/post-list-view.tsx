@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Edit, MessageCircle, Trash2, Eye, Lock, Pin } from "lucide-react";
 
 export interface PostListItem {
@@ -39,6 +40,7 @@ export function PostListView({
   const [items, setItems] = useState(posts);
   const [lockedPost, setLockedPost] = useState<PostListItem | null>(null);
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     setItems(posts);
@@ -54,7 +56,13 @@ export function PostListView({
     postBasePath ? `${postBasePath}/${postId}/edit` : `/community/${postId}/edit`;
 
   const handleDelete = async (postId: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
+    const confirmed = await confirm({
+      title: "게시글 삭제",
+      message: "정말 삭제하시겠습니까?",
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { RotateCcw, Trash2, AlertTriangle } from "lucide-react";
 
 type DeletedBoard = {
@@ -20,11 +21,18 @@ interface TrashManagerProps {
 
 export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [boards, setBoards] = useState<DeletedBoard[]>(initialBoards);
 
-  const handleRestore = (board: DeletedBoard) => {
-    if (!confirm(`"${board.name}" 게시판을 복구하시겠습니까?`)) return;
+  const handleRestore = async (board: DeletedBoard) => {
+    const confirmed = await confirm({
+      title: "게시판 복구",
+      message: `"${board.name}" 게시판을 복구하시겠습니까?`,
+      confirmText: "복구",
+      variant: "info",
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const res = await fetch("/api/admin/boards", {
@@ -44,19 +52,28 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
     });
   };
 
-  const handlePermanentDelete = (board: DeletedBoard) => {
+  const handlePermanentDelete = async (board: DeletedBoard) => {
     let confirmMessage = `"${board.name}" 게시판을 영구 삭제하시겠습니까?`;
     if (board.postCount > 0) {
-      confirmMessage = `⚠️ "${board.name}" 게시판에 ${board.postCount}개의 게시글이 있습니다.\n\n영구 삭제하면 모든 게시글도 함께 삭제되며, 이 작업은 되돌릴 수 없습니다.\n\n정말 삭제하시겠습니까?`;
+      confirmMessage = `"${board.name}" 게시판에 ${board.postCount}개의 게시글이 있습니다.\n\n영구 삭제하면 모든 게시글도 함께 삭제되며, 이 작업은 되돌릴 수 없습니다.\n\n정말 삭제하시겠습니까?`;
     }
 
-    if (!confirm(confirmMessage)) return;
+    const firstConfirm = await confirm({
+      title: "영구 삭제",
+      message: confirmMessage,
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!firstConfirm) return;
 
     // 게시글이 있는 경우 재확인
     if (board.postCount > 0) {
-      const doubleConfirmed = confirm(
-        `마지막 확인: ${board.postCount}개의 게시글이 영구 삭제됩니다.\n\n계속하시겠습니까?`
-      );
+      const doubleConfirmed = await confirm({
+        title: "최종 확인",
+        message: `마지막 확인: ${board.postCount}개의 게시글이 영구 삭제됩니다.\n\n계속하시겠습니까?`,
+        confirmText: "영구 삭제",
+        variant: "danger",
+      });
       if (!doubleConfirmed) return;
     }
 
@@ -83,7 +100,7 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
     });
   };
 
-  const handleEmptyTrash = () => {
+  const handleEmptyTrash = async () => {
     if (boards.length === 0) {
       showToast("휴지통이 비어있습니다.", "info");
       return;
@@ -92,13 +109,25 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
     const totalPosts = boards.reduce((sum, b) => sum + b.postCount, 0);
     let confirmMessage = `휴지통을 비우시겠습니까?\n\n${boards.length}개의 게시판이 영구 삭제됩니다.`;
     if (totalPosts > 0) {
-      confirmMessage = `⚠️ 휴지통을 비우시겠습니까?\n\n${boards.length}개의 게시판과 총 ${totalPosts}개의 게시글이 영구 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.`;
+      confirmMessage = `휴지통을 비우시겠습니까?\n\n${boards.length}개의 게시판과 총 ${totalPosts}개의 게시글이 영구 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.`;
     }
 
-    if (!confirm(confirmMessage)) return;
+    const firstConfirm = await confirm({
+      title: "휴지통 비우기",
+      message: confirmMessage,
+      confirmText: "비우기",
+      variant: "danger",
+    });
+    if (!firstConfirm) return;
 
     if (totalPosts > 0) {
-      if (!confirm(`마지막 확인: 정말로 모든 항목을 영구 삭제하시겠습니까?`)) return;
+      const doubleConfirmed = await confirm({
+        title: "최종 확인",
+        message: "마지막 확인: 정말로 모든 항목을 영구 삭제하시겠습니까?",
+        confirmText: "영구 삭제",
+        variant: "danger",
+      });
+      if (!doubleConfirmed) return;
     }
 
     startTransition(async () => {

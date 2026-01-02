@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ interface UserManagerProps {
 
 export const UserManager = ({ users, currentUserId }: UserManagerProps) => {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [userState, setUserState] = useState<AdminUserItem[]>(users);
   const [draft, setDraft] = useState(blankDraft);
@@ -113,12 +115,18 @@ export const UserManager = ({ users, currentUserId }: UserManagerProps) => {
     });
   };
 
-  const handleDelete = (item: AdminUserItem) => {
+  const handleDelete = async (item: AdminUserItem) => {
     if (item.id === currentUserId) {
       showToast("현재 로그인한 계정은 삭제할 수 없습니다.", "error");
       return;
     }
-    if (!confirm("이 사용자를 삭제할까요?")) return;
+    const confirmed = await confirm({
+      title: "사용자 삭제",
+      message: "이 사용자를 삭제할까요?",
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const res = await fetch("/api/admin/users", {
         method: "POST",

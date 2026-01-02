@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Plus, GripVertical, ChevronUp, ChevronDown, Trash2, Save, Eye, EyeOff } from "lucide-react";
 
 export type BoardItem = {
@@ -40,6 +41,7 @@ export const BoardManager = ({
   disabled = false,
 }: BoardManagerProps) => {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [boardState, setBoardState] = useState<BoardItem[]>(boards.filter(Boolean));
   const [draft, setDraft] = useState<typeof blankBoard>(blankBoard);
@@ -164,7 +166,13 @@ export const BoardManager = ({
       confirmMessage = `"${boardName}" 게시판(게시글 ${postCount}개)을 휴지통으로 이동하시겠습니까?\n\n게시글은 유지되며, 관리자 > 휴지통에서 복구하거나 영구 삭제할 수 있습니다.`;
     }
 
-    if (!confirm(confirmMessage)) return;
+    const confirmed = await confirm({
+      title: "휴지통으로 이동",
+      message: confirmMessage,
+      confirmText: "이동",
+      variant: "warning",
+    });
+    if (!confirmed) return;
 
     // 3단계: 삭제 실행 (soft delete)
     startTransition(async () => {
@@ -199,16 +207,22 @@ export const BoardManager = ({
     }
 
     // 2단계: 경고 + 확인
-    const confirmed = window.confirm(
-      `정말로 "${boardName}" 게시판의 모든 게시글(${count}개)을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`
-    );
-    if (!confirmed) return;
+    const firstConfirm = await confirm({
+      title: "게시글 전체 삭제",
+      message: `정말로 "${boardName}" 게시판의 모든 게시글(${count}개)을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!firstConfirm) return;
 
     // 3단계: 재확인 (게시글이 많은 경우)
     if (count > 10) {
-      const doubleConfirmed = window.confirm(
-        `마지막 확인: ${count}개의 게시글이 영구 삭제됩니다. 계속하시겠습니까?`
-      );
+      const doubleConfirmed = await confirm({
+        title: "최종 확인",
+        message: `마지막 확인: ${count}개의 게시글이 영구 삭제됩니다. 계속하시겠습니까?`,
+        confirmText: "영구 삭제",
+        variant: "danger",
+      });
       if (!doubleConfirmed) return;
     }
 

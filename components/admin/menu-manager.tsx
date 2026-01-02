@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { MenuItemData } from "@/lib/menus";
 import { Plus, GripVertical, ChevronUp, ChevronDown, Trash2, Save, Eye, EyeOff, ExternalLink, Lock } from "lucide-react";
 
@@ -43,6 +44,7 @@ const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
 export const MenuManager = ({ menus }: MenuManagerProps) => {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [dragState, setDragState] = useState<{
     menuKey: string;
@@ -266,9 +268,15 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     });
   };
 
-  const handleDelete = (menuKey: string, itemId?: string) => {
+  const handleDelete = async (menuKey: string, itemId?: string) => {
     if (!itemId) return;
-    if (!confirm("이 메뉴를 삭제할까요?")) return;
+    const confirmed = await confirm({
+      title: "메뉴 삭제",
+      message: "이 메뉴를 삭제할까요?",
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const res = await fetch("/api/admin/menus", {
         method: "POST",

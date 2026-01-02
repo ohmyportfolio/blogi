@@ -11,6 +11,7 @@ import { ArrowLeft, Trash2, Edit, MessageCircle, Heart, Bookmark, Lock } from "l
 import { RichTextViewer } from "@/components/editor/rich-text-viewer";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface Post {
   id: string;
@@ -62,6 +63,7 @@ export default function PostDetailPage() {
   const [blockedSecret, setBlockedSecret] = useState(false);
   const hasIncrementedView = useRef(false);
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   const isAuthor = session?.user?.id === post?.authorId;
   const isAdmin = session?.user?.role === "ADMIN";
@@ -109,7 +111,13 @@ export default function PostDetailPage() {
   }, [id, fetchPost]);
 
   const handleDelete = async () => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
+    const confirmed = await confirm({
+      title: "게시글 삭제",
+      message: "정말 삭제하시겠습니까?",
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/posts/${id}`, {
@@ -194,7 +202,13 @@ export default function PostDetailPage() {
   };
 
   const handleCommentDelete = async (commentId: string) => {
-    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const confirmed = await confirm({
+      title: "댓글 삭제",
+      message: "댓글을 삭제하시겠습니까?",
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/comments/${commentId}`, {

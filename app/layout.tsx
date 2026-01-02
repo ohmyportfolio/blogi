@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { getSiteSettings } from "@/lib/site-settings";
 
 const instrumentSans = Instrument_Sans({
@@ -65,12 +66,14 @@ export default function RootLayout({
       >
         <AuthProvider>
           <ToastProvider>
-            <Header />
-            <main className="flex-1 flex flex-col bg-transparent pt-[130px] md:pt-0">
-              {children}
-            </main>
-            <ScrollToTop />
-            <Footer />
+            <ConfirmProvider>
+              <Header />
+              <main className="flex-1 flex flex-col bg-transparent pt-[130px] md:pt-0">
+                {children}
+              </main>
+              <ScrollToTop />
+              <Footer />
+            </ConfirmProvider>
           </ToastProvider>
         </AuthProvider>
       </body>
