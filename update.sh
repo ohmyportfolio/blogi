@@ -56,6 +56,13 @@ rm -rf .next
 echo "Build..."
 npm run build
 
+echo "Sync standalone assets..."
+mkdir -p .next/standalone/.next
+rm -rf .next/standalone/.next/static
+cp -R .next/static .next/standalone/.next/
+rm -rf .next/standalone/public
+cp -R public .next/standalone/public
+
 echo "Restart app..."
 ensure_app_running
 
