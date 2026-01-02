@@ -9,6 +9,8 @@ export default async function AdminCategorySettingsPage() {
       id: true,
       name: true,
       slug: true,
+      thumbnailUrl: true,
+      description: true,
       listViewEnabled: true,
       listViewCount: true,
       listViewLabel: true,
@@ -16,8 +18,6 @@ export default async function AdminCategorySettingsPage() {
       cardViewCount: true,
       cardViewLabel: true,
       displayOrder: true,
-      showOnHome: true,
-      homeItemCount: true,
     },
   });
 
@@ -25,9 +25,12 @@ export default async function AdminCategorySettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl">카테고리 표시 설정</h1>
+          <h1 className="font-display text-2xl md:text-3xl">콘텐츠 표시 설정</h1>
           <p className="text-sm text-gray-500 mt-2">
-            각 카테고리의 콘텐츠 목록 페이지에서 리스트형/카드형 표시 방식을 설정합니다.
+            카테고리 썸네일/설명과 리스트형/카드형 표시 방식을 설정합니다.
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            메인 화면 노출 설정은 메인화면 설정에서 관리합니다.
           </p>
         </div>
       </div>

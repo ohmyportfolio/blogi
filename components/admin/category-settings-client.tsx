@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { CategoryThumbnailEditor } from "@/components/admin/category-thumbnail-editor";
 import {
   Save,
   List,
@@ -18,6 +19,8 @@ interface CategoryData {
   id: string;
   name: string;
   slug: string;
+  thumbnailUrl?: string | null;
+  description?: string | null;
   listViewEnabled: boolean;
   listViewCount: number;
   listViewLabel: string | null;
@@ -25,8 +28,6 @@ interface CategoryData {
   cardViewCount: number;
   cardViewLabel: string | null;
   displayOrder: string;
-  showOnHome: boolean;
-  homeItemCount: number;
 }
 
 interface CategorySettingsClientProps {
@@ -50,8 +51,6 @@ export const CategorySettingsClient = ({
     cardViewCount: 0,
     cardViewLabel: "",
     displayOrder: "card",
-    showOnHome: false,
-    homeItemCount: 3,
   });
 
   // 일괄 적용
@@ -88,8 +87,6 @@ export const CategorySettingsClient = ({
           cardViewCount: bulkSettings.cardViewCount,
           cardViewLabel: bulkSettings.cardViewLabel || null,
           displayOrder: bulkSettings.displayOrder,
-          showOnHome: bulkSettings.showOnHome,
-          homeItemCount: bulkSettings.homeItemCount,
         }))
       );
 
@@ -129,6 +126,15 @@ export const CategorySettingsClient = ({
 
       showToast("설정이 저장되었습니다.", "success");
     });
+  };
+
+  const handleUpdateCategoryMeta = (
+    categoryId: string,
+    data: { thumbnailUrl?: string | null; description?: string | null }
+  ) => {
+    setCategories((prev) =>
+      prev.map((cat) => (cat.id === categoryId ? { ...cat, ...data } : cat))
+    );
   };
 
   return (
@@ -176,6 +182,7 @@ export const CategorySettingsClient = ({
           category={category}
           isPending={isPending}
           onSave={(settings) => handleSaveCategory(category.id, settings)}
+          onUpdateMeta={(data) => handleUpdateCategoryMeta(category.id, data)}
         />
       ))}
     </div>
@@ -187,10 +194,12 @@ const CategorySettingsItem = ({
   category,
   isPending,
   onSave,
+  onUpdateMeta,
 }: {
   category: CategoryData;
   isPending: boolean;
   onSave: (settings: Partial<CategoryData>) => void;
+  onUpdateMeta: (data: { thumbnailUrl?: string | null; description?: string | null }) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [settings, setSettings] = useState({
@@ -201,8 +210,6 @@ const CategorySettingsItem = ({
     cardViewCount: category.cardViewCount,
     cardViewLabel: category.cardViewLabel || "",
     displayOrder: category.displayOrder,
-    showOnHome: category.showOnHome,
-    homeItemCount: category.homeItemCount,
   });
 
   // 외부에서 category가 변경되면 로컬 상태도 업데이트
@@ -215,8 +222,6 @@ const CategorySettingsItem = ({
       cardViewCount: category.cardViewCount,
       cardViewLabel: category.cardViewLabel || "",
       displayOrder: category.displayOrder,
-      showOnHome: category.showOnHome,
-      homeItemCount: category.homeItemCount,
     });
   }, [category]);
 
@@ -254,6 +259,16 @@ const CategorySettingsItem = ({
 
       {isOpen && (
         <div className="p-4 pt-0 space-y-4 border-t border-gray-100">
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-gray-500">카테고리 정보</span>
+            <CategoryThumbnailEditor
+              categoryId={category.id}
+              thumbnailUrl={category.thumbnailUrl ?? ""}
+              description={category.description ?? ""}
+              disabled={isPending}
+              onUpdate={onUpdateMeta}
+            />
+          </div>
           <SettingsPanel
             settings={settings}
             onChange={setSettings}
@@ -277,8 +292,6 @@ interface SettingsData {
   cardViewCount: number;
   cardViewLabel: string;
   displayOrder: string;
-  showOnHome: boolean;
-  homeItemCount: number;
 }
 
 // 공통 설정 패널
@@ -443,44 +456,6 @@ const SettingsPanel = ({
           </div>
         </div>
       )}
-
-      {/* 메인 페이지 노출 설정 */}
-      <div className={`p-4 rounded-xl border border-purple-200 bg-purple-50/50`}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="font-medium text-sm text-purple-900">메인 페이지 노출</span>
-          <button
-            type="button"
-            onClick={() =>
-              onChange({ ...settings, showOnHome: !settings.showOnHome })
-            }
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              settings.showOnHome ? "bg-purple-500" : "bg-gray-300"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                settings.showOnHome ? "translate-x-5" : ""
-              }`}
-            />
-          </button>
-        </div>
-        {settings.showOnHome && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm text-purple-700">표시 개수:</span>
-            <Input
-              type="number"
-              min={1}
-              max={10}
-              value={settings.homeItemCount}
-              onChange={(e) =>
-                onChange({ ...settings, homeItemCount: Number(e.target.value) })
-              }
-              className="w-20 h-8 text-sm"
-            />
-            <span className="text-xs text-purple-600">(최신 콘텐츠)</span>
-          </div>
-        )}
-      </div>
 
       {/* 저장 버튼 */}
       <div className="flex justify-end">

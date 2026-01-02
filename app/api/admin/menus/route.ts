@@ -66,29 +66,40 @@ const getExistingCategorySlug = (href?: string) => {
   return "";
 };
 
-const getNextSequentialSlug = async ({
-  menuId,
-  linkType,
-  prefix,
-  basePath,
-}: {
-  menuId: string;
-  linkType: "community" | "category";
-  prefix: string;
-  basePath: string;
-}) => {
+const getNextAvailableSlug = (prefix: string, usedSlugs: Set<string>) => {
+  let index = 1;
+  while (usedSlugs.has(`${prefix}-${index}`)) {
+    index += 1;
+  }
+  return `${prefix}-${index}`;
+};
+
+const getMenuSlugs = (items: { href: string | null }[], basePath: string) => {
+  return items
+    .map((item) => (item.href?.startsWith(basePath) ? item.href.replace(basePath, "").replace(/^\/+/, "") : ""))
+    .filter(Boolean);
+};
+
+const getNextCommunitySlug = async (menuId: string) => {
   const items = await prisma.menuItem.findMany({
-    where: { menuId, linkType },
+    where: { menuId, linkType: "community" },
     select: { href: true },
   });
-  const max = items.reduce((acc, item) => {
-    if (!item.href?.startsWith(basePath)) return acc;
-    const slug = item.href.replace(basePath, "").replace(/^\/+/, "");
-    const match = slug.match(new RegExp(`^${prefix}-(\\d+)$`));
-    if (!match) return acc;
-    return Math.max(acc, Number(match[1]));
-  }, 0);
-  return `${prefix}-${max + 1}`;
+  const usedSlugs = new Set<string>(items.map((item) => extractCommunitySlug(item.href) || "").filter(Boolean));
+  return getNextAvailableSlug("community", usedSlugs);
+};
+
+const getNextCategorySlug = async (menuId: string) => {
+  const [items, categories] = await Promise.all([
+    prisma.menuItem.findMany({
+      where: { menuId, linkType: "category" },
+      select: { href: true },
+    }),
+    prisma.category.findMany({ select: { slug: true } }),
+  ]);
+  const usedSlugs = new Set<string>(categories.map((item) => item.slug));
+  getMenuSlugs(items, "/contents/").forEach((slug) => usedSlugs.add(slug));
+  return getNextAvailableSlug("category", usedSlugs);
 };
 
 
@@ -127,12 +138,7 @@ export async function POST(req: NextRequest) {
       if (!validation.valid) {
         return NextResponse.json({ error: validation.error }, { status: 400 });
       }
-      const slug = inputSlug || await getNextSequentialSlug({
-        menuId: menu.id,
-        linkType: "community",
-        prefix: "community",
-        basePath: "/community/",
-      });
+      const slug = inputSlug || await getNextCommunitySlug(menu.id);
       href = buildCommunityHref(slug);
       const duplicate = await prisma.menuItem.findFirst({
         where: { menuId: menu.id, linkType: "community", href },
@@ -146,12 +152,7 @@ export async function POST(req: NextRequest) {
       if (!validation.valid) {
         return NextResponse.json({ error: validation.error }, { status: 400 });
       }
-      const slug = inputSlug || await getNextSequentialSlug({
-        menuId: menu.id,
-        linkType: "category",
-        prefix: "category",
-        basePath: "/contents/",
-      });
+      const slug = inputSlug || await getNextCategorySlug(menu.id);
       if (!slug) {
         return NextResponse.json({ error: "카테고리 주소가 필요합니다" }, { status: 400 });
       }

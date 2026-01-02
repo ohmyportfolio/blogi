@@ -4,9 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import { BoardManager } from "@/components/admin/board-manager";
 import type { MenuItemData } from "@/lib/menus";
-import { Plus, GripVertical, ChevronUp, ChevronDown, Trash2, Save, Eye, EyeOff, ExternalLink, Lock, ImageIcon, Upload, X } from "lucide-react";
+import { Plus, GripVertical, ChevronUp, ChevronDown, Trash2, Save, Eye, EyeOff, ExternalLink, Lock } from "lucide-react";
 
 type MenuSection = {
   key: string;
@@ -41,372 +40,6 @@ const blankItem: {
 };
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
-
-// 카테고리 썸네일/설명 편집 컴포넌트
-const CategoryEditor = ({
-  categoryId,
-  thumbnailUrl,
-  description,
-  disabled,
-  onUpdate,
-}: {
-  categoryId: string;
-  thumbnailUrl: string;
-  description: string;
-  disabled: boolean;
-  onUpdate: (data: { thumbnailUrl?: string; description?: string }) => void;
-}) => {
-  const { showToast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [localThumbnail, setLocalThumbnail] = useState(thumbnailUrl);
-  const [localDescription, setLocalDescription] = useState(description);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      showToast("이미지 파일만 업로드할 수 있습니다.", "error");
-      return;
-    }
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("업로드 실패");
-      }
-
-      const data = await res.json();
-      setLocalThumbnail(data.url);
-      showToast("이미지가 업로드되었습니다.", "success");
-    } catch {
-      showToast("이미지 업로드에 실패했습니다.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const res = await fetch("/api/admin/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update",
-          id: categoryId,
-          data: {
-            thumbnailUrl: localThumbnail || null,
-            description: localDescription || null,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "저장에 실패했습니다.", "error");
-        return;
-      }
-
-      onUpdate({ thumbnailUrl: localThumbnail, description: localDescription });
-      showToast("저장되었습니다.", "success");
-    } catch {
-      showToast("저장에 실패했습니다.", "error");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setLocalThumbnail("");
-  };
-
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="w-full px-4 py-2 text-left text-xs text-gray-500 hover:bg-gray-50 border-t border-dashed border-gray-200 flex items-center gap-2"
-      >
-        <ImageIcon className="w-3.5 h-3.5" />
-        썸네일/설명 편집
-        {(thumbnailUrl || description) && (
-          <span className="text-green-600">• 설정됨</span>
-        )}
-      </button>
-    );
-  }
-
-  return (
-    <div className="px-4 pb-4 pt-3 bg-amber-50/50 border-t border-dashed border-gray-200 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-700">썸네일 / 설명</span>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* 썸네일 */}
-      <div className="flex items-start gap-3">
-        <div className="relative w-20 h-20 rounded-lg border border-gray-200 bg-white overflow-hidden flex-shrink-0">
-          {localThumbnail ? (
-            <>
-              <img
-                src={localThumbnail}
-                alt="썸네일"
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-1 right-1 p-0.5 bg-black/50 rounded-full text-white hover:bg-black/70"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <ImageIcon className="w-6 h-6" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 space-y-2">
-          <label
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border cursor-pointer ${
-              isUploading
-                ? "bg-gray-100 text-gray-400 cursor-wait"
-                : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
-            }`}
-          >
-            <Upload className="w-3.5 h-3.5" />
-            {isUploading ? "업로드 중..." : "이미지 선택"}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={isUploading || disabled}
-              className="hidden"
-            />
-          </label>
-          <p className="text-xs text-gray-400">권장: 정사각형, 최소 400x400px</p>
-        </div>
-      </div>
-
-      {/* 설명 */}
-      <div>
-        <textarea
-          value={localDescription}
-          onChange={(e) => setLocalDescription(e.target.value)}
-          placeholder="카테고리 설명 (선택사항)"
-          disabled={disabled}
-          rows={2}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-gray-300"
-        />
-      </div>
-
-      {/* 저장 버튼 */}
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving || disabled}
-        >
-          <Save className="w-3.5 h-3.5 mr-1" />
-          {isSaving ? "저장 중..." : "저장"}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// 커뮤니티 메뉴 썸네일 편집 컴포넌트
-const CommunityThumbnailEditor = ({
-  menuItemId,
-  thumbnailUrl,
-  disabled,
-  onUpdate,
-}: {
-  menuItemId: string;
-  thumbnailUrl: string;
-  disabled: boolean;
-  onUpdate: (thumbnailUrl: string) => void;
-}) => {
-  const { showToast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [localThumbnail, setLocalThumbnail] = useState(thumbnailUrl);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      showToast("이미지 파일만 업로드할 수 있습니다.", "error");
-      return;
-    }
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("업로드 실패");
-      }
-
-      const data = await res.json();
-      setLocalThumbnail(data.url);
-      showToast("이미지가 업로드되었습니다.", "success");
-    } catch {
-      showToast("이미지 업로드에 실패했습니다.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const res = await fetch("/api/admin/menus", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateThumbnail",
-          id: menuItemId,
-          thumbnailUrl: localThumbnail || null,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "저장에 실패했습니다.", "error");
-        return;
-      }
-
-      onUpdate(localThumbnail);
-      showToast("저장되었습니다.", "success");
-    } catch {
-      showToast("저장에 실패했습니다.", "error");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setLocalThumbnail("");
-  };
-
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="w-full px-4 py-2 text-left text-xs text-gray-500 hover:bg-gray-50 border-t border-dashed border-gray-200 flex items-center gap-2"
-      >
-        <ImageIcon className="w-3.5 h-3.5" />
-        썸네일 편집
-        {thumbnailUrl && (
-          <span className="text-green-600">• 설정됨</span>
-        )}
-      </button>
-    );
-  }
-
-  return (
-    <div className="px-4 pb-4 pt-3 bg-cyan-50/50 border-t border-dashed border-gray-200 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-700">커뮤니티 썸네일</span>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* 썸네일 */}
-      <div className="flex items-start gap-3">
-        <div className="relative w-20 h-20 rounded-lg border border-gray-200 bg-white overflow-hidden flex-shrink-0">
-          {localThumbnail ? (
-            <>
-              <img
-                src={localThumbnail}
-                alt="썸네일"
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-1 right-1 p-0.5 bg-black/50 rounded-full text-white hover:bg-black/70"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <ImageIcon className="w-6 h-6" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 space-y-2">
-          <label
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border cursor-pointer ${
-              isUploading
-                ? "bg-gray-100 text-gray-400 cursor-wait"
-                : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
-            }`}
-          >
-            <Upload className="w-3.5 h-3.5" />
-            {isUploading ? "업로드 중..." : "이미지 선택"}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={isUploading || disabled}
-              className="hidden"
-            />
-          </label>
-          <p className="text-xs text-gray-400">권장: 정사각형, 최소 400x400px</p>
-        </div>
-      </div>
-
-      {/* 저장 버튼 */}
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving || disabled}
-        >
-          <Save className="w-3.5 h-3.5 mr-1" />
-          {isSaving ? "저장 중..." : "저장"}
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 export const MenuManager = ({ menus }: MenuManagerProps) => {
   const { showToast } = useToast();
@@ -460,20 +93,24 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
     return fallbackLabel;
   };
 
-  const getNextSequentialSlug = (menuKey: string, linkType: MenuItemData["linkType"]) => {
+  const getSuggestedSlug = (menuKey: string, linkType: MenuItemData["linkType"]) => {
     const menu = menuState.find((item) => item.key === menuKey);
-    if (!menu) return linkType === "community" ? "community-1" : "category-1";
     const prefix = linkType === "community" ? "community" : "category";
     const basePath = linkType === "community" ? "/community/" : "/contents/";
-    const max = menu.items.reduce((acc, item) => {
-      if (item.linkType !== linkType) return acc;
-      if (!item.href?.startsWith(basePath)) return acc;
-      const slug = item.href.replace(basePath, "").replace(/^\/+/, "");
-      const match = slug.match(new RegExp(`^${prefix}-(\\d+)$`));
-      if (!match) return acc;
-      return Math.max(acc, Number(match[1]));
-    }, 0);
-    return `${prefix}-${max + 1}`;
+    const usedSlugs = new Set(
+      (menu?.items ?? [])
+        .filter((item) => item.linkType === linkType)
+        .map((item) => {
+          if (!item.href?.startsWith(basePath)) return "";
+          return item.href.replace(basePath, "").replace(/^\/+/, "");
+        })
+        .filter(Boolean)
+    );
+    let index = 1;
+    while (usedSlugs.has(`${prefix}-${index}`)) {
+      index += 1;
+    }
+    return `${prefix}-${index}`;
   };
 
   const isSlugDuplicate = (menuKey: string, slug: string, linkType: MenuItemData["linkType"]) => {
@@ -548,20 +185,27 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
       return;
     }
 
-    const slug = payload.slug?.trim() || getNextSequentialSlug(menuKey, payload.linkType);
-    if (!isSlugValid(slug)) {
-      showToast("슬러그는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다.", "error");
-      return;
+    const inputSlug = payload.slug?.trim();
+    if (inputSlug) {
+      if (!isSlugValid(inputSlug)) {
+        showToast("슬러그는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다.", "error");
+        return;
+      }
+      if (isSlugDuplicate(menuKey, inputSlug, payload.linkType)) {
+        showToast("이미 사용 중인 슬러그입니다.", "error");
+        return;
+      }
     }
-    if (isSlugDuplicate(menuKey, slug, payload.linkType)) {
-      showToast("이미 사용 중인 슬러그입니다.", "error");
-      return;
-    }
-    const resolvedHref =
-      payload.linkType === "community"
-        ? `/community/${slug}`
-        : `/contents/${slug}`;
-    const resolvedPayload = { ...payload, href: resolvedHref, slug };
+    const resolvedPayload = inputSlug
+      ? {
+          ...payload,
+          href:
+            payload.linkType === "community"
+              ? `/community/${inputSlug}`
+              : `/contents/${inputSlug}`,
+          slug: inputSlug,
+        }
+      : { ...payload, href: "", slug: "" };
     const menu = menuState.find((item) => item.key === menuKey);
     const nextOrder = menu ? menu.items.length + 1 : 1;
     startTransition(async () => {
@@ -904,54 +548,12 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                     </div>
                   </div>
 
-                  {/* 커뮤니티 하위 게시판 */}
-                  {item.linkType === "community" && item.id && (
-                    <div className="px-4 pb-4 pt-2 bg-slate-50/50 border-t border-dashed border-gray-200">
-                      <BoardManager
-                        boards={item.boards ?? []}
-                        menuItemId={item.id}
-                        groupSlug={getCommunitySlug(item.href, item.label)}
-                        disabled={isPending}
-                      />
+                  {item.linkType === "community" && (
+                    <div className="px-4 pb-4 pt-2 text-xs text-gray-400 border-t border-dashed border-gray-200">
+                      게시판 및 그룹 썸네일 관리는 커뮤니티 관리에서 설정합니다.
                     </div>
                   )}
 
-                  {/* 커뮤니티 썸네일 편집 */}
-                  {item.linkType === "community" && item.id && (
-                    <CommunityThumbnailEditor
-                      menuItemId={item.id}
-                      thumbnailUrl={item.thumbnailUrl ?? ""}
-                      disabled={isPending}
-                      onUpdate={(thumbnailUrl) => {
-                        updateMenuState(menu.key, (items) =>
-                          items.map((i) =>
-                            i.id === item.id
-                              ? { ...i, thumbnailUrl }
-                              : i
-                          )
-                        );
-                      }}
-                    />
-                  )}
-
-                  {/* 카테고리 썸네일/설명 편집 */}
-                  {item.linkType === "category" && item.category && (
-                    <CategoryEditor
-                      categoryId={item.category.id}
-                      thumbnailUrl={item.category.thumbnailUrl ?? ""}
-                      description={item.category.description ?? ""}
-                      disabled={isPending}
-                      onUpdate={(data) => {
-                        updateMenuState(menu.key, (items) =>
-                          items.map((i) =>
-                            i.id === item.id && i.category
-                              ? { ...i, category: { ...i.category, ...data } }
-                              : i
-                          )
-                        );
-                      }}
-                    />
-                  )}
                 </div>
               );
               })}
@@ -1010,7 +612,7 @@ export const MenuManager = ({ menus }: MenuManagerProps) => {
                           [menu.key]: { ...prev[menu.key], slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") },
                         }))
                       }
-                      placeholder={getNextSequentialSlug(menu.key, drafts[menu.key]?.linkType ?? "category")}
+                      placeholder={getSuggestedSlug(menu.key, drafts[menu.key]?.linkType ?? "category")}
                       className={`w-36 h-9 ${
                         drafts[menu.key]?.slug && !isSlugValid(drafts[menu.key]?.slug ?? "")
                           ? "border-red-500 focus:ring-red-500"

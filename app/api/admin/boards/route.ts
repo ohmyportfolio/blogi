@@ -18,12 +18,12 @@ const getNextBoardSlug = async (menuItemId: string) => {
     where: { menuItemId },
     select: { slug: true },
   });
-  const max = boards.reduce((acc, board) => {
-    const match = board.slug?.match(/^board-(\d+)$/);
-    if (!match) return acc;
-    return Math.max(acc, Number(match[1]));
-  }, 0);
-  return `board-${max + 1}`;
+  const usedSlugs = new Set(boards.map((board) => board.slug).filter(Boolean));
+  let index = 1;
+  while (usedSlugs.has(`board-${index}`)) {
+    index += 1;
+  }
+  return `board-${index}`;
 };
 
 export async function POST(req: NextRequest) {

@@ -59,13 +59,13 @@ export const BoardManager = ({
     }
   }, [showCreateForm]);
 
-  const nextBoardSlug = () => {
-    const max = boardState.reduce((acc, item) => {
-      const match = item.slug?.match(/^board-(\d+)$/);
-      if (!match) return acc;
-      return Math.max(acc, Number(match[1]));
-    }, 0);
-    return `board-${max + 1}`;
+  const getSuggestedBoardSlug = () => {
+    const usedSlugs = new Set(boardState.map((item) => item.slug).filter(Boolean));
+    let index = 1;
+    while (usedSlugs.has(`board-${index}`)) {
+      index += 1;
+    }
+    return `board-${index}`;
   };
 
   const isSlugDuplicate = (slug: string) => {
@@ -87,14 +87,16 @@ export const BoardManager = ({
       showToast("게시판 이름을 입력해주세요.", "error");
       return;
     }
-    const slug = draft.slug?.trim() || nextBoardSlug();
-    if (!isSlugValid(slug)) {
-      showToast("슬러그는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다.", "error");
-      return;
-    }
-    if (isSlugDuplicate(slug)) {
-      showToast("이미 사용 중인 슬러그입니다.", "error");
-      return;
+    const inputSlug = draft.slug?.trim();
+    if (inputSlug) {
+      if (!isSlugValid(inputSlug)) {
+        showToast("슬러그는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다.", "error");
+        return;
+      }
+      if (isSlugDuplicate(inputSlug)) {
+        showToast("이미 사용 중인 슬러그입니다.", "error");
+        return;
+      }
     }
     startTransition(async () => {
       const res = await fetch("/api/admin/boards", {
@@ -102,7 +104,7 @@ export const BoardManager = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create",
-          data: { ...draft, slug, menuItemId },
+          data: inputSlug ? { ...draft, slug: inputSlug, menuItemId } : { ...draft, menuItemId },
         }),
       });
       if (!res.ok) {
@@ -477,7 +479,7 @@ export const BoardManager = ({
                       slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
                     }))
                   }
-                  placeholder={nextBoardSlug()}
+                  placeholder={getSuggestedBoardSlug()}
                   className={`w-24 h-8 text-sm ${
                     draft.slug && !isSlugValid(draft.slug)
                       ? "border-red-500 focus:ring-red-500"

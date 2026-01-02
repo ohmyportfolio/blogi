@@ -530,9 +530,12 @@ export const HeaderClient = ({
 
           {/* Right: Login */}
           {session ? (
-            <span className="text-white text-sm font-medium px-2 truncate max-w-[80px]">
+            <Link
+              href="/profile"
+              className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
+            >
               {session.user?.name?.slice(0, 4) || "회원"}
-            </span>
+            </Link>
           ) : (
             <Link
               href="/login"

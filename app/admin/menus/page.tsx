@@ -98,33 +98,10 @@ export default async function AdminMenusPage() {
   const rawMainItems = await prisma.menuItem.findMany({
     where: { menuId: mainMenu.id },
     orderBy: { order: "asc" },
-    include: {
-      boards: {
-        where: { isDeleted: false },
-        orderBy: { order: "asc" },
-      },
-      linkedCategory: {
-        select: {
-          id: true,
-          thumbnailUrl: true,
-          description: true,
-        },
-      },
-    },
   });
 
   const mainItems = rawMainItems.map((item) => ({
     ...item,
-    boards: item.boards?.map((board) => ({
-      id: board.id,
-      key: board.key,
-      slug: board.slug,
-      menuItemId: board.menuItemId,
-      name: board.name,
-      description: board.description,
-      order: board.order,
-      isVisible: board.isVisible,
-    })),
     linkType:
       item.linkType === "category" || item.linkType === "community" || item.linkType === "external"
         ? (item.linkType as "category" | "community" | "external")
@@ -133,11 +110,6 @@ export default async function AdminMenusPage() {
           : item.href?.startsWith("/community")
             ? ("community" as const)
             : ("category" as const),
-    category: item.linkedCategory ? {
-      id: item.linkedCategory.id,
-      thumbnailUrl: item.linkedCategory.thumbnailUrl,
-      description: item.linkedCategory.description,
-    } : null,
   }));
 
   return (
@@ -154,7 +126,8 @@ export default async function AdminMenusPage() {
             </p>
           </div>
           <div className="text-xs text-gray-500 space-y-1">
-            <div>커뮤니티는 그룹 단위로 게시판을 추가합니다.</div>
+            <div>커뮤니티 게시판/그룹 썸네일은 커뮤니티 관리에서 설정합니다.</div>
+            <div>카테고리 썸네일/설명은 콘텐츠 표시 설정에서 관리합니다.</div>
           </div>
         </div>
       </div>

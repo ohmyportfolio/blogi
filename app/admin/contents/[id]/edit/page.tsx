@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Crop } from "lucide-react";
 import Image from "next/image";
 import { lexicalJsonToPlainText } from "@/lib/lexical";
+import { ImageCropper } from "@/components/admin/image-cropper";
 
 type CategoryOption = {
     id: string;
@@ -33,6 +34,7 @@ export default function EditContentPage() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState("");
+    const [cropperImage, setCropperImage] = useState<string | null>(null);
 
     const fetchContent = useCallback(async () => {
         if (!id) return;
@@ -121,17 +123,33 @@ export default function EditContentPage() {
         }
     };
 
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        if (!file.type.startsWith("image/")) {
+            setError("이미지 파일만 업로드할 수 있습니다.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropperImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        setCropperImage(null);
         setUploading(true);
         setError("");
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("scope", "contents");
 
+        const formData = new FormData();
+        formData.append("file", croppedBlob, "thumbnail.jpg");
+        formData.append("scope", "contents");
+
+        try {
             const res = await fetch("/api/upload", {
                 method: "POST",
                 body: formData,
@@ -148,7 +166,6 @@ export default function EditContentPage() {
             setError("이미지 업로드 중 오류가 발생했습니다.");
         } finally {
             setUploading(false);
-            e.target.value = "";
         }
     };
 
@@ -227,23 +244,27 @@ export default function EditContentPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="image">대표 이미지 업로드 (선택)</Label>
-                            <Input
-                                id="image"
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageChange}
-                                disabled={saving || uploading}
-                            />
-                            {uploading && (
-                                <p className="text-xs text-gray-500">업로드 중...</p>
-                            )}
+                            <div className="flex items-center gap-3">
+                                <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <Crop className="w-4 h-4" />
+                                    {uploading ? "업로드 중..." : "이미지 선택 및 크롭"}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                        disabled={saving || uploading}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                            <p className="text-xs text-gray-400">1:1 정사각형으로 크롭됩니다 (모바일 최적화)</p>
                         </div>
                     </div>
 
                     {imageUrl && (
                         <div className="space-y-2">
                             <Label>대표 이미지 미리보기</Label>
-                            <div className="relative w-full max-w-md aspect-[4/3] rounded-xl overflow-hidden border border-black/5 bg-gray-50">
+                            <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-black/5 bg-gray-50">
                                 <Image
                                     src={imageUrl}
                                     alt="대표 이미지"
@@ -251,8 +272,25 @@ export default function EditContentPage() {
                                     className="object-cover"
                                     unoptimized
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setImageUrl("")}
+                                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                                >
+                                    <span className="sr-only">삭제</span>
+                                    ✕
+                                </button>
                             </div>
                         </div>
+                    )}
+
+                    {/* 크롭 모달 */}
+                    {cropperImage && (
+                        <ImageCropper
+                            imageSrc={cropperImage}
+                            onCropComplete={handleCropComplete}
+                            onCancel={() => setCropperImage(null)}
+                        />
                     )}
 
                     <div className="space-y-2">

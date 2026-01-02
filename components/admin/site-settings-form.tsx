@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
-import { FileText, Globe, Image, ImageIcon, Tag, Upload, Palette, MousePointer2, Check } from "lucide-react";
+import { FileText, Globe, Image, ImageIcon, Tag, Upload, Palette, MousePointer2, Check, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HeaderStyle, HEADER_STYLES } from "@/lib/header-styles";
+import { ImageCropper } from "@/components/admin/image-cropper";
 
 interface SiteSettingsFormProps {
   initialData: {
@@ -38,8 +39,11 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
     typeof initialData.headerScrollEffect === "boolean" ? initialData.headerScrollEffect : true
   );
   const [uploading, setUploading] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<"logo" | "og" | "favicon" | null>(null);
 
-  const createUploadHandler =
+  // 크롭 없이 직접 업로드 (로고 등 비정사각형 이미지용)
+  const createDirectUploadHandler =
     (setter: (value: string) => void, successMessage: string, failMessage: string) =>
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -68,21 +72,75 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
       }
     };
 
-  const handleLogoUpload = createUploadHandler(
+  // 크롭 모달을 여는 핸들러
+  const createCropHandler =
+    (target: "logo" | "og" | "favicon") =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        showToast("이미지 파일만 업로드할 수 있습니다.", "error");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropperImage(reader.result as string);
+        setCropTarget(target);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    };
+
+  // 크롭 완료 핸들러
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperImage(null);
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", croppedBlob, "cropped.jpg");
+    formData.append("scope", "branding");
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        showToast("업로드에 실패했습니다.", "error");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (cropTarget === "logo") {
+        setSiteLogoUrl(data.url);
+        showToast("로고가 업로드되었습니다.", "success");
+      } else if (cropTarget === "og") {
+        setOgImageUrl(data.url);
+        showToast("OG 이미지가 업로드되었습니다.", "success");
+      } else if (cropTarget === "favicon") {
+        setFaviconUrl(data.url);
+        showToast("파비콘이 업로드되었습니다.", "success");
+      }
+    } catch {
+      showToast("업로드에 실패했습니다.", "error");
+    } finally {
+      setUploading(false);
+      setCropTarget(null);
+    }
+  };
+
+  const handleLogoUpload = createDirectUploadHandler(
     setSiteLogoUrl,
     "로고가 업로드되었습니다.",
     "로고 업로드에 실패했습니다."
   );
-  const handleOgUpload = createUploadHandler(
-    setOgImageUrl,
-    "OG 이미지가 업로드되었습니다.",
-    "OG 이미지 업로드에 실패했습니다."
-  );
-  const handleFaviconUpload = createUploadHandler(
-    setFaviconUrl,
-    "파비콘이 업로드되었습니다.",
-    "파비콘 업로드에 실패했습니다."
-  );
+  const handleLogoCrop = createCropHandler("logo");
+  const handleOgCrop = createCropHandler("og");
+  const handleFaviconCrop = createCropHandler("favicon");
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -159,7 +217,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
               <Upload className="w-3.5 h-3.5" />
-              파일 업로드
+              원본 업로드
               <input
                 type="file"
                 accept="image/*"
@@ -168,8 +226,20 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                 className="hidden"
               />
             </label>
+            <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <Crop className="w-3.5 h-3.5" />
+              크롭 업로드
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoCrop}
+                disabled={isPending || uploading}
+                className="hidden"
+              />
+            </label>
             {uploading && <span className="text-xs text-gray-500">업로드 중...</span>}
           </div>
+          <p className="text-xs text-gray-400">원본: 비율 유지 / 크롭: 1:1 정사각형</p>
           {siteLogoUrl && (
             <div className="mt-2 p-2 bg-white rounded-lg border border-gray-100">
               <img src={siteLogoUrl} alt="로고 미리보기" className="h-10 object-contain" />
@@ -230,18 +300,19 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <Upload className="w-3.5 h-3.5" />
-              파일 업로드
+              <Crop className="w-3.5 h-3.5" />
+              크롭 업로드
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleOgUpload}
+                onChange={handleOgCrop}
                 disabled={isPending || uploading}
                 className="hidden"
               />
             </label>
             {uploading && <span className="text-xs text-gray-500">업로드 중...</span>}
           </div>
+          <p className="text-xs text-gray-400">1:1 정사각형으로 크롭됩니다</p>
           {ogImageUrl && (
             <div className="mt-2 p-2 bg-white rounded-lg border border-gray-100">
               <img src={ogImageUrl} alt="OG 미리보기" className="h-16 object-contain" />
@@ -266,18 +337,19 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <Upload className="w-3.5 h-3.5" />
-              파일 업로드
+              <Crop className="w-3.5 h-3.5" />
+              크롭 업로드
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleFaviconUpload}
+                onChange={handleFaviconCrop}
                 disabled={isPending || uploading}
                 className="hidden"
               />
             </label>
             {uploading && <span className="text-xs text-gray-500">업로드 중...</span>}
           </div>
+          <p className="text-xs text-gray-400">1:1 정사각형으로 크롭됩니다 (권장: 32x32 ~ 512x512)</p>
           {faviconUrl && (
             <div className="mt-2 p-2 bg-white rounded-lg border border-gray-100">
               <img src={faviconUrl} alt="파비콘 미리보기" className="h-8 object-contain" />
@@ -285,6 +357,18 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           )}
         </div>
       </div>
+
+      {/* 크롭 모달 */}
+      {cropperImage && (
+        <ImageCropper
+          imageSrc={cropperImage}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setCropperImage(null);
+            setCropTarget(null);
+          }}
+        />
+      )}
 
       {/* 헤더 스타일 */}
       <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
