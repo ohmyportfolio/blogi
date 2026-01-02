@@ -45,6 +45,9 @@ export default async function AdminLayout({
                     <Link href="/admin/footer" className="block p-2 hover:bg-gray-800 rounded">
                         푸터 설정
                     </Link>
+                    <Link href="/admin/storage" className="block p-2 hover:bg-gray-800 rounded">
+                        스토리지 관리
+                    </Link>
                     <div className="space-y-1">
                         <span className="block p-2 text-gray-400 text-sm">휴지통</span>
                         <Link href="/admin/trash" className="block p-2 pl-4 hover:bg-gray-800 rounded text-sm">
