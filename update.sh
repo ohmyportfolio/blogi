@@ -22,14 +22,17 @@ ensure_app_running() {
   pm2 delete "$APP_NAME" 2>/dev/null || true
   pm2 start "$PM2_CONFIG" --update-env
   pm2 save
-
-  if ss -lptn | rg -q ":${PORT}\\b"; then
-    return 0
-  fi
-
-  echo "Port $PORT is not listening after restart."
-  echo "Check pm2 logs: pm2 logs $APP_NAME --lines 200 --nostream"
-  exit 1
+  local elapsed=0
+  local timeout=30
+  while ! ss -lptn | rg -q ":${PORT}\\b"; do
+    if [ "$elapsed" -ge "$timeout" ]; then
+      echo "Port $PORT is not listening after restart."
+      echo "Check pm2 logs: pm2 logs $APP_NAME --lines 200 --nostream"
+      exit 1
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
 }
 
 ensure_pm2
