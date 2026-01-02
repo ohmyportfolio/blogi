@@ -48,3 +48,4 @@ init.sql
 /public/images/stock-*
 # 랜딩 이미지는 git에 포함 (! 으로 제외 해제)
 !/public/images/landing
+uploads/

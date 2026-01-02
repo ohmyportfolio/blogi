@@ -9,8 +9,10 @@ import {
   $isTextNode,
   $setSelection,
   COMMAND_PRIORITY_EDITOR,
+  COMMAND_PRIORITY_HIGH,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
+  PASTE_COMMAND,
   REDO_COMMAND,
   UNDO_COMMAND,
   type LexicalEditor,
@@ -28,6 +30,7 @@ import {
 } from "@lexical/list";
 import { LinkNode, AutoLinkNode, TOGGLE_LINK_COMMAND, $isLinkNode, createLinkMatcherWithRegExp } from "@lexical/link";
 import { CodeNode, CodeHighlightNode, $createCodeNode, $isCodeNode, registerCodeHighlighting } from "@lexical/code";
+import { $insertDataTransferForRichText } from "@lexical/clipboard";
 import { TableNode, TableCellNode, TableRowNode, INSERT_TABLE_COMMAND } from "@lexical/table";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
@@ -1336,7 +1339,10 @@ const LexicalEditorBody = ({
   initializingRef: React.MutableRefObject<boolean>;
 }) => {
   const [editor] = useLexicalComposerContext();
+  const { showToast } = useToast();
   const lastSelectionRef = useRef<RangeSelection | null>(null);
+  const [isPasting, setIsPasting] = useState(false);
+  const [pasteProgress, setPasteProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
@@ -1348,6 +1354,216 @@ const LexicalEditorBody = ({
       });
     });
   }, [editor]);
+
+  // 이미지 붙여넣기 핸들러
+  useEffect(() => {
+    return editor.registerCommand(
+      PASTE_COMMAND,
+      (event: ClipboardEvent) => {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return false;
+
+        // 1. 클립보드에서 직접 이미지 파일 확인 (스크린샷 등)
+        const items = clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.startsWith("image/") && item.kind === "file") {
+            const file = item.getAsFile();
+            if (!file) continue;
+
+            // HTML 콘텐츠가 없으면 순수 이미지 붙여넣기
+            const hasHtml = clipboardData.types.includes("text/html");
+            if (!hasHtml) {
+              event.preventDefault();
+
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("scope", "posts");
+
+              fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+              })
+                .then((response) => {
+                  if (response.ok) return response.json();
+                  throw new Error("Upload failed");
+                })
+                .then(({ url }) => {
+                  editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+                    src: url,
+                    altText: file.name || "pasted-image",
+                  });
+                })
+                .catch(() => {
+                  showToast("이미지 업로드에 실패했습니다.", "error");
+                });
+
+              return true;
+            }
+          }
+        }
+
+        // 2. HTML 콘텐츠가 있는 경우 - 서식 유지하며 붙여넣기
+        const htmlData = clipboardData.getData("text/html");
+        if (htmlData) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlData, "text/html");
+          const images = doc.querySelectorAll("img");
+
+          // 이미지가 있는 경우
+          if (images.length > 0) {
+            event.preventDefault();
+
+            // 이미지를 placeholder로 교체하고 업로드
+            const imagePlaceholders: { id: string; src: string; alt: string }[] = [];
+
+            images.forEach((img, index) => {
+              const src = img.getAttribute("src");
+              const alt = img.getAttribute("alt") || "pasted-image";
+              if (!src) return;
+
+              const placeholderId = `__img_placeholder_${index}_${Date.now()}__`;
+              imagePlaceholders.push({ id: placeholderId, src, alt });
+
+              // 이미지를 placeholder 텍스트로 교체
+              const placeholder = doc.createTextNode(placeholderId);
+              img.parentNode?.replaceChild(placeholder, img);
+            });
+
+            // 로딩 상태 시작
+            setIsPasting(true);
+            setPasteProgress({ current: 0, total: imagePlaceholders.length });
+
+            // 이미지 업로드
+            let uploadedCount = 0;
+            const uploadPromises = imagePlaceholders.map(async (item) => {
+              try {
+                let uploadedUrl = item.src;
+
+                if (item.src.startsWith("data:")) {
+                  const res = await fetch(item.src);
+                  const blob = await res.blob();
+                  const formData = new FormData();
+                  formData.append("file", blob, "pasted-image.png");
+                  formData.append("scope", "posts");
+                  const response = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    uploadedUrl = data.url;
+                  }
+                } else if (item.src.startsWith("http")) {
+                  const response = await fetch("/api/upload", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ imageUrl: item.src, scope: "posts" }),
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    uploadedUrl = data.url;
+                  }
+                }
+
+                uploadedCount++;
+                setPasteProgress({ current: uploadedCount, total: imagePlaceholders.length });
+                return { ...item, uploadedUrl };
+              } catch {
+                uploadedCount++;
+                setPasteProgress({ current: uploadedCount, total: imagePlaceholders.length });
+                return { ...item, uploadedUrl: item.src };
+              }
+            });
+
+            Promise.all(uploadPromises).then((uploadedItems) => {
+              // placeholder가 포함된 HTML 삽입
+              const htmlWithPlaceholders = doc.body.innerHTML;
+              const dataTransfer = new DataTransfer();
+              dataTransfer.setData("text/html", htmlWithPlaceholders);
+              dataTransfer.setData("text/plain", clipboardData.getData("text/plain"));
+
+              editor.update(() => {
+                let selection = $getSelection();
+                // selection이 없으면 root 끝에 생성
+                if (!$isRangeSelection(selection)) {
+                  const root = $getRoot();
+                  root.selectEnd();
+                  selection = $getSelection();
+                }
+                if ($isRangeSelection(selection)) {
+                  $insertDataTransferForRichText(dataTransfer, selection, editor);
+                }
+              });
+
+              // placeholder를 이미지로 교체
+              setTimeout(() => {
+                uploadedItems.forEach((item) => {
+                  editor.update(() => {
+                    const root = $getRoot();
+                    const textContent = root.getTextContent();
+
+                    // placeholder 찾기
+                    if (textContent.includes(item.id)) {
+                      // 모든 텍스트 노드를 순회하며 placeholder 찾기
+                      const findAndReplace = (node: import("lexical").LexicalNode) => {
+                        if ($isTextNode(node)) {
+                          const text = node.getTextContent();
+                          if (text.includes(item.id)) {
+                            // placeholder 전후로 텍스트 분리
+                            const parts = text.split(item.id);
+                            const parent = node.getParent();
+                            if (parent) {
+                              // 새 노드들 생성
+                              const beforeText = parts[0];
+                              const afterText = parts.slice(1).join(item.id);
+
+                              // placeholder 노드를 이미지로 교체
+                              if (beforeText) {
+                                const beforeNode = $createTextNode(beforeText);
+                                node.insertBefore(beforeNode);
+                              }
+
+                              // 이미지 삽입
+                              const imageNode = $createImageNode({
+                                src: item.uploadedUrl,
+                                altText: item.alt,
+                              });
+                              node.insertBefore(imageNode);
+
+                              if (afterText) {
+                                const afterNode = $createTextNode(afterText);
+                                node.insertBefore(afterNode);
+                              }
+
+                              node.remove();
+                            }
+                          }
+                        } else {
+                          const children = "getChildren" in node ? (node as import("lexical").ElementNode).getChildren() : [];
+                          children.forEach(findAndReplace);
+                        }
+                      };
+
+                      root.getChildren().forEach(findAndReplace);
+                    }
+                  });
+                });
+                // 로딩 상태 해제
+                setIsPasting(false);
+                setPasteProgress({ current: 0, total: 0 });
+              }, 100);
+            });
+
+            return true;
+          }
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH
+    );
+  }, [editor, showToast]);
 
   const [editorHeight, setEditorHeight] = useState(320);
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -1393,6 +1609,27 @@ const LexicalEditorBody = ({
           placeholder={<Placeholder text={placeholder} />}
           ErrorBoundary={LexicalErrorBoundary}
         />
+        {/* 붙여넣기 로딩 오버레이 */}
+        {isPasting && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+            <div className="flex flex-col items-center gap-3 p-4 bg-white rounded-lg shadow-lg border">
+              <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="text-sm text-gray-600">
+                이미지 업로드 중... ({pasteProgress.current}/{pasteProgress.total})
+              </div>
+              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{
+                    width: pasteProgress.total > 0
+                      ? `${(pasteProgress.current / pasteProgress.total) * 100}%`
+                      : "0%",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Resize handle */}
       <div
