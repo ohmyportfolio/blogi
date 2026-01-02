@@ -3,7 +3,8 @@ set -euo pipefail
 
 APP_NAME="danang-vip"
 PORT="${PORT:-3010}"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PM2_CONFIG="$ROOT_DIR/ecosystem.config.cjs"
 
 usage() {
   echo "Usage: $(basename "$0") {start|stop|restart|log|status}"
@@ -15,16 +16,18 @@ ensure_pm2() {
     echo "pm2 is not installed."
     exit 1
   fi
+
+  if [ ! -f "$PM2_CONFIG" ]; then
+    echo "Missing PM2 config: $PM2_CONFIG"
+    exit 1
+  fi
 }
 
 start_app() {
   ensure_pm2
-  if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-    pm2 start "$APP_NAME"
-  else
-    (cd "$ROOT_DIR" && pm2 start npm --name "$APP_NAME" -- start -- -p "$PORT")
-    pm2 save
-  fi
+  pm2 delete "$APP_NAME" 2>/dev/null || true
+  pm2 start "$PM2_CONFIG" --update-env
+  pm2 save
 }
 
 stop_app() {
@@ -34,11 +37,7 @@ stop_app() {
 
 restart_app() {
   ensure_pm2
-  if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-    pm2 restart "$APP_NAME"
-  else
-    start_app
-  fi
+  start_app
 }
 
 logs_app() {

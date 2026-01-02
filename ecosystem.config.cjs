@@ -27,11 +27,14 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [{
     name: 'danang-vip',
-    script: 'npm',
-    args: 'start -- -p 3010',
-    cwd: '/projects/danang-vip',
+    script: 'server.js',
+    cwd: '/projects/danang-vip/.next/standalone',
+    kill_timeout: 5000,
+    autorestart: true,
     env: {
       NODE_ENV: 'production',
+      PORT: 3010,
+      HOSTNAME: '0.0.0.0',
       ...envVars
     }
   }]
