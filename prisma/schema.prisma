@@ -47,6 +47,8 @@ model Category {
   listViewEnabled Boolean    @default(false)
   cardViewLabel   String?
   listViewLabel   String?
+  // 콘텐츠 날짜 표시 설정
+  showDate        Boolean    @default(true)
   // 메인 페이지 노출 설정
   showOnHome      Boolean    @default(false)
   homeItemCount   Int        @default(3)

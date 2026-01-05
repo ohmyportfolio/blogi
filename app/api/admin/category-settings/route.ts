@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     cardViewCount,
     cardViewLabel,
     displayOrder,
+    showDate,
   } = body;
 
   // 유효성 검사: 둘 다 비활성화는 불가
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
     cardViewCount: Math.max(0, Number(cardViewCount) || 0),
     cardViewLabel: cardViewLabel?.trim() || null,
     displayOrder: displayOrder === "list" ? "list" : "card",
+    showDate: showDate !== false, // 기본값 true
   };
 
   // 전체 카테고리에 적용
@@ -104,6 +106,7 @@ export async function GET() {
       cardViewCount: true,
       cardViewLabel: true,
       displayOrder: true,
+      showDate: true,
     },
   });
 

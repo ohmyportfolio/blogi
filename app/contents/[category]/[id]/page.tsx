@@ -93,6 +93,7 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
     const isAdmin = session?.user?.role === "ADMIN";
     const requiresAuth = content.categoryRef?.requiresAuth ?? false;
     const canViewCategory = !requiresAuth || Boolean(session);
+    const showDate = content.categoryRef?.showDate ?? true;
 
     if (!content.isVisible && !isAdmin) {
         notFound();
@@ -135,14 +136,16 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
             </h1>
 
             {/* Meta */}
-            <div className="flex flex-wrap items-center text-gray-500 text-sm mb-8 border-b pb-4 gap-2">
-                <span>{format(content.createdAt, "yyyy.MM.dd")}</span>
-                {content.price && canViewCategory && (
-                    <span className="ml-auto font-bold text-lg text-sky-600">
-                        {content.price}
-                    </span>
-                )}
-            </div>
+            {(showDate || (content.price && canViewCategory)) && (
+                <div className="flex flex-wrap items-center text-gray-500 text-sm mb-8 border-b pb-4 gap-2">
+                    {showDate && <span>{format(content.createdAt, "yyyy.MM.dd")}</span>}
+                    {content.price && canViewCategory && (
+                        <span className={showDate ? "ml-auto font-bold text-lg text-sky-600" : "font-bold text-lg text-sky-600"}>
+                            {content.price}
+                        </span>
+                    )}
+                </div>
+            )}
 
             {/* Content (Rich Text) */}
             {canViewCategory ? (

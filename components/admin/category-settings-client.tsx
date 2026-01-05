@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   Settings2,
+  Calendar,
 } from "lucide-react";
 
 interface CategoryData {
@@ -28,6 +29,7 @@ interface CategoryData {
   cardViewCount: number;
   cardViewLabel: string | null;
   displayOrder: string;
+  showDate: boolean;
 }
 
 interface CategorySettingsClientProps {
@@ -51,6 +53,7 @@ export const CategorySettingsClient = ({
     cardViewCount: 0,
     cardViewLabel: "",
     displayOrder: "card",
+    showDate: true,
   });
 
   // 일괄 적용
@@ -87,6 +90,7 @@ export const CategorySettingsClient = ({
           cardViewCount: bulkSettings.cardViewCount,
           cardViewLabel: bulkSettings.cardViewLabel || null,
           displayOrder: bulkSettings.displayOrder,
+          showDate: bulkSettings.showDate,
         }))
       );
 
@@ -210,6 +214,7 @@ const CategorySettingsItem = ({
     cardViewCount: category.cardViewCount,
     cardViewLabel: category.cardViewLabel || "",
     displayOrder: category.displayOrder,
+    showDate: category.showDate,
   });
 
   // 외부에서 category가 변경되면 로컬 상태도 업데이트
@@ -222,6 +227,7 @@ const CategorySettingsItem = ({
       cardViewCount: category.cardViewCount,
       cardViewLabel: category.cardViewLabel || "",
       displayOrder: category.displayOrder,
+      showDate: category.showDate,
     });
   }, [category]);
 
@@ -292,6 +298,7 @@ interface SettingsData {
   cardViewCount: number;
   cardViewLabel: string;
   displayOrder: string;
+  showDate: boolean;
 }
 
 // 공통 설정 패널
@@ -456,6 +463,32 @@ const SettingsPanel = ({
           </div>
         </div>
       )}
+
+      {/* 날짜 표시 설정 */}
+      <div className={panelClass}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-purple-600" />
+            <span className="font-medium text-sm">콘텐츠 날짜 표시</span>
+            <span className="text-xs text-gray-400">(상세 페이지)</span>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ ...settings, showDate: !settings.showDate })
+            }
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              settings.showDate ? "bg-purple-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                settings.showDate ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+        </div>
+      </div>
 
       {/* 저장 버튼 */}
       <div className="flex justify-end">
