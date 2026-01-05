@@ -22,6 +22,8 @@ export default async function AdminContentsTrashPage() {
     categoryName: content.categoryRef?.name ?? "미분류",
     categorySlug: content.categoryRef?.slug ?? "",
     imageUrl: content.imageUrl,
+    contentMarkdown: content.contentMarkdown ?? "",
+    price: content.price ?? "",
     deletedAt: content.deletedAt ? format(content.deletedAt, "yyyy.MM.dd HH:mm", { locale: ko }) : "",
   }));
 

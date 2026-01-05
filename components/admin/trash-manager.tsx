@@ -4,15 +4,24 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { RotateCcw, Trash2, AlertTriangle } from "lucide-react";
+import { RotateCcw, Trash2, AlertTriangle, Eye, X, MessageSquare } from "lucide-react";
+
+type RecentPost = {
+  id: string;
+  title: string;
+  authorName: string;
+  createdAt: string;
+};
 
 type DeletedBoard = {
   id: string;
   name: string;
   slug: string;
+  description: string;
   menuItemLabel: string;
   postCount: number;
   deletedAt: string;
+  recentPosts: RecentPost[];
 };
 
 interface TrashManagerProps {
@@ -24,6 +33,7 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
   const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [boards, setBoards] = useState<DeletedBoard[]>(initialBoards);
+  const [previewBoard, setPreviewBoard] = useState<DeletedBoard | null>(null);
 
   const handleRestore = async (board: DeletedBoard) => {
     const confirmed = await confirm({
@@ -219,6 +229,15 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setPreviewBoard(board)}
+                  className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                >
+                  <Eye className="w-4 h-4 mr-1" />
+                  미리보기
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleRestore(board)}
                   disabled={isPending}
                   className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -241,6 +260,107 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
           ))}
         </div>
       </div>
+
+      {/* 미리보기 모달 */}
+      {previewBoard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="font-semibold text-lg">{previewBoard.name}</h3>
+                <p className="text-sm text-gray-500">
+                  {previewBoard.menuItemLabel} · {previewBoard.slug}
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewBoard(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 본문 */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* 설명 */}
+              {previewBoard.description && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                  {previewBoard.description}
+                </div>
+              )}
+
+              {/* 게시글 정보 */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <MessageSquare className="w-4 h-4" />
+                  게시글 {previewBoard.postCount}개
+                </div>
+
+                {previewBoard.postCount > 0 && previewBoard.recentPosts.length > 0 ? (
+                  <div className="border rounded-lg divide-y">
+                    {previewBoard.recentPosts.map((post) => (
+                      <div key={post.id} className="p-3 text-sm">
+                        <div className="font-medium text-gray-900 truncate">{post.title}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {post.authorName} · {post.createdAt}
+                        </div>
+                      </div>
+                    ))}
+                    {previewBoard.postCount > 5 && (
+                      <div className="p-2 text-center text-xs text-gray-400">
+                        외 {previewBoard.postCount - 5}개의 게시글
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">게시글이 없습니다.</p>
+                )}
+              </div>
+
+              {previewBoard.postCount > 0 && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                  <AlertTriangle className="w-4 h-4 inline mr-1" />
+                  영구 삭제 시 모든 게시글도 함께 삭제됩니다.
+                </div>
+              )}
+            </div>
+
+            {/* 푸터 */}
+            <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+              <span className="text-sm text-gray-500">삭제일: {previewBoard.deletedAt}</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    handleRestore(previewBoard);
+                    setPreviewBoard(null);
+                  }}
+                  disabled={isPending}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  복구
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    handlePermanentDelete(previewBoard);
+                    setPreviewBoard(null);
+                  }}
+                  disabled={isPending}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  영구 삭제
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { Suspense } from "react";
 import { ContentListSection } from "@/components/contents/content-list-section";
 import { ContentCardSection } from "@/components/contents/content-card-section";
+import { getSiteSettings } from "@/lib/site-settings";
+import type { Metadata } from "next";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -15,6 +17,47 @@ interface CategoryPageProps {
 }
 
 const PAGE_SIZE = 10;
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+    const { category: categorySlug } = await params;
+    const [settings, category] = await Promise.all([
+        getSiteSettings(),
+        prisma.category.findUnique({ where: { slug: categorySlug } }),
+    ]);
+
+    const siteName = settings.siteName || "사이트";
+    const baseUrl = process.env.SITE_URL || "http://localhost:3000";
+
+    if (!category) {
+        return {
+            title: `${categorySlug} | ${siteName}`,
+            robots: { index: false, follow: false },
+        };
+    }
+
+    const title = `${category.name} | ${siteName}`;
+    const description = category.description || settings.siteDescription || settings.siteTagline || "";
+    const ogImage = category.thumbnailUrl || settings.ogImageUrl || settings.siteLogoUrl || undefined;
+    const canonicalPath = `/contents/${category.slug}`;
+    const shouldNoIndex = category.requiresAuth || !category.isVisible;
+
+    return {
+        title,
+        description: description || undefined,
+        alternates: { canonical: `${baseUrl}${canonicalPath}` },
+        openGraph: ogImage
+            ? {
+                title,
+                description: description || undefined,
+                images: [{ url: ogImage }],
+            }
+            : {
+                title,
+                description: description || undefined,
+            },
+        robots: shouldNoIndex ? { index: false, follow: false } : undefined,
+    };
+}
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
     const { category: categorySlug } = await params;

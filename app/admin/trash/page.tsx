@@ -6,7 +6,7 @@ import { ko } from "date-fns/locale";
 export const dynamic = "force-dynamic";
 
 export default async function AdminTrashPage() {
-  // 삭제된 게시판 조회
+  // 삭제된 게시판 조회 (최근 게시글 5개 포함)
   const deletedBoards = await prisma.board.findMany({
     where: { isDeleted: true },
     include: {
@@ -16,6 +16,18 @@ export default async function AdminTrashPage() {
       _count: {
         select: { posts: true },
       },
+      posts: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          author: {
+            select: { name: true },
+          },
+        },
+      },
     },
     orderBy: { deletedAt: "desc" },
   });
@@ -24,9 +36,16 @@ export default async function AdminTrashPage() {
     id: board.id,
     name: board.name,
     slug: board.slug,
+    description: board.description ?? "",
     menuItemLabel: board.menuItem.label,
     postCount: board._count.posts,
     deletedAt: board.deletedAt ? format(board.deletedAt, "yyyy.MM.dd HH:mm", { locale: ko }) : "",
+    recentPosts: board.posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      authorName: post.author?.name ?? "익명",
+      createdAt: format(post.createdAt, "MM.dd", { locale: ko }),
+    })),
   }));
 
   return (
