@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { buildContentHref } from "@/lib/contents";
+import { ProtectedCategoryLink, ProtectedCommunityLink } from "@/components/home/protected-category-link";
+import { ProtectedContentCard } from "@/components/home/protected-content-card";
 
 // 항상 동적으로 렌더링 (사용자 수 체크를 위해)
 export const dynamic = "force-dynamic";
@@ -104,11 +106,11 @@ export default async function Home() {
     }));
 
   // 메인 페이지 대시보드 데이터: 메인 노출 설정된 카테고리
+  // 모든 카테고리를 가져오되 requiresAuth 정보 포함
   const homeCategories = await prisma.category.findMany({
     where: {
       showOnHome: true,
       isVisible: true,
-      ...(canViewRestricted ? {} : { requiresAuth: false }),
     },
     orderBy: { order: "asc" },
     select: {
@@ -116,6 +118,7 @@ export default async function Home() {
       name: true,
       slug: true,
       homeItemCount: true,
+      requiresAuth: true,
     },
   });
 
@@ -208,59 +211,25 @@ export default async function Home() {
       <section className="md:hidden flex-1 flex items-center justify-center px-3 py-2 bg-[#f6f1e8]">
         <div className="grid grid-cols-3 gap-2 w-full max-w-sm">
           {categories.map((category) => (
-            <Link
+            <ProtectedCategoryLink
               key={category.label}
               href={category.href}
-              className="group"
-            >
-              <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                {category.imageUrl ? (
-                  <Image
-                    src={category.imageUrl}
-                    alt={category.label}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 33vw"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2">
-                  <span className="text-white text-xs font-semibold leading-tight block">
-                    {category.label}
-                  </span>
-                </div>
-              </div>
-            </Link>
+              label={category.label}
+              imageUrl={category.imageUrl}
+              requiresAuth={category.requiresAuth}
+              variant="mobile"
+            />
           ))}
           {/* 커뮤니티 메뉴 (후기, 자유게시판) */}
           {communityMenus.map((menu) => (
-            <Link
+            <ProtectedCommunityLink
               key={menu.id}
               href={menu.href}
-              className="group"
-            >
-              <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                {menu.thumbnailUrl ? (
-                  <Image
-                    src={menu.thumbnailUrl}
-                    alt={menu.label}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 33vw"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2">
-                  <span className="text-white text-xs font-semibold leading-tight block">
-                    {menu.label}
-                  </span>
-                </div>
-              </div>
-            </Link>
+              label={menu.label}
+              thumbnailUrl={menu.thumbnailUrl}
+              requiresAuth={menu.requiresAuth}
+              variant="mobile"
+            />
           ))}
         </div>
       </section>
@@ -272,51 +241,25 @@ export default async function Home() {
         <div className="w-full max-w-6xl">
           <div className="grid grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {categories.map((category) => (
-              <Link key={category.label} href={category.href} className="group">
-                <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                  {category.imageUrl ? (
-                    <Image
-                      src={category.imageUrl}
-                      alt={category.label}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <span className="text-white text-sm font-semibold leading-tight block">
-                      {category.label}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <ProtectedCategoryLink
+                key={category.label}
+                href={category.href}
+                label={category.label}
+                imageUrl={category.imageUrl}
+                requiresAuth={category.requiresAuth}
+                variant="desktop"
+              />
             ))}
             {/* 커뮤니티 메뉴 */}
             {communityMenus.map((menu) => (
-              <Link key={menu.id} href={menu.href} className="group">
-                <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                  {menu.thumbnailUrl ? (
-                    <Image
-                      src={menu.thumbnailUrl}
-                      alt={menu.label}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <span className="text-white text-sm font-semibold leading-tight block">
-                      {menu.label}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <ProtectedCommunityLink
+                key={menu.id}
+                href={menu.href}
+                label={menu.label}
+                thumbnailUrl={menu.thumbnailUrl}
+                requiresAuth={menu.requiresAuth}
+                variant="desktop"
+              />
             ))}
           </div>
         </div>
@@ -352,29 +295,15 @@ export default async function Home() {
 
                   <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-3">
                     {contents.map((content) => (
-                      <Link
+                      <ProtectedContentCard
                         key={content.id}
+                        id={content.id}
+                        title={content.title}
+                        imageUrl={content.imageUrl}
+                        createdAt={content.createdAt}
                         href={buildContentHref(category.slug, content.id, content.title)}
-                        className="group rounded-xl md:rounded-2xl border border-black/5 bg-white/90 overflow-hidden shadow-sm hover:shadow-md transition"
-                      >
-                        {content.imageUrl && (
-                          <div className="relative aspect-[4/3] md:aspect-video overflow-hidden">
-                            <Image
-                              src={content.imageUrl}
-                              alt={content.title}
-                              fill
-                              className="object-cover transition-transform group-hover:scale-105"
-                              sizes="(max-width: 768px) 50vw, 33vw"
-                            />
-                          </div>
-                        )}
-                        <div className="p-2 md:p-4">
-                          <h3 className="font-medium text-xs md:text-base line-clamp-2">{content.title}</h3>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-1 md:mt-2">
-                            {format(content.createdAt, "yyyy.MM.dd")}
-                          </p>
-                        </div>
-                      </Link>
+                        requiresAuth={category.requiresAuth}
+                      />
                     ))}
                   </div>
                 </div>
