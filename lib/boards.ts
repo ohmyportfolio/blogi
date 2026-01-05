@@ -55,6 +55,7 @@ export const getBoardsByMenuItemId = async ({
   const boards = await prisma.board.findMany({
     where: {
       menuItemId,
+      isDeleted: false,
       ...(includeHidden ? {} : { isVisible: true }),
     },
     orderBy: { order: "asc" },
@@ -81,6 +82,7 @@ export const getBoards = async ({
   const boards = await prisma.board.findMany({
     where: {
       ...(menuItemId ? { menuItemId } : {}),
+      isDeleted: false,
       ...(includeHidden ? {} : { isVisible: true }),
     },
     include: { menuItem: true },
@@ -134,7 +136,7 @@ export const ensureDefaultBoards = async ({
 
 export const getBoardByKey = async (key: string): Promise<BoardWithGroup | null> => {
   const board = await prisma.board.findFirst({
-    where: { key: { equals: key, mode: "insensitive" } },
+    where: { key: { equals: key, mode: "insensitive" }, isDeleted: false },
     include: { menuItem: true },
   });
   if (!board) return null;

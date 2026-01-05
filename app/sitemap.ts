@@ -4,6 +4,8 @@ import { buildContentHref } from "@/lib/contents";
 
 const baseUrl = process.env.SITE_URL || "http://localhost:3000";
 
+export const revalidate = 3600;
+
 export default async function sitemap() {
   const staticRoutes = ["/", "/community", "/search"];
   const [communityGroups, categories, contents] = await Promise.all([

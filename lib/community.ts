@@ -60,6 +60,7 @@ export const getCommunityGroups = async ({
         order: item.order,
         isVisible: item.isVisible,
         boards: item.boards
+          .filter((board) => !board.isDeleted) // 삭제된 게시판 제외
           .filter((board) => (includeHiddenBoards ? true : board.isVisible))
           .map((board) => ({
             id: board.id,
@@ -150,6 +151,7 @@ export const getBoardByGroupAndSlug = async (
     where: {
       menuItemId: menuItem.id,
       slug: boardSlug,
+      isDeleted: false, // 삭제된 게시판 제외
     },
   });
   if (!board) return null;
@@ -179,7 +181,7 @@ export const buildBoardKeyFromGroup = (groupSlug: string, boardSlug: string) =>
 export const getBoardMapByIds = async (ids: string[]) => {
   if (!ids.length) return new Map<string, { href: string; groupSlug: string; boardSlug: string }>();
   const boards = await prisma.board.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, isDeleted: false },
     include: { menuItem: true },
   });
   const map = new Map<string, { href: string; groupSlug: string; boardSlug: string }>();

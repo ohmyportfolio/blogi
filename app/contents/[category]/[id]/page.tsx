@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RichTextViewer } from "@/components/editor/rich-text-viewer";
@@ -89,6 +89,15 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
     }
 
     const contentCategorySlug = content.categoryRef?.slug ?? category;
+    const canonicalHref = buildContentHref(
+        contentCategorySlug || category,
+        content.id,
+        content.title
+    );
+    const currentHref = `/contents/${category}/${idParam}`;
+    if (currentHref !== canonicalHref) {
+        redirect(canonicalHref);
+    }
     const contentCategoryLabel = content.categoryRef?.name ?? category;
     const isAdmin = session?.user?.role === "ADMIN";
     const requiresAuth = content.categoryRef?.requiresAuth ?? false;
@@ -98,7 +107,10 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
         notFound();
     }
 
-    const seoText = getContentPlainText(content.content, content.contentMarkdown);
+    const seoText = truncateText(
+        getContentPlainText(content.content, content.contentMarkdown),
+        2000
+    );
 
     return (
         <div className="container mx-auto px-4 py-10 max-w-5xl">
