@@ -120,6 +120,8 @@ import {
   INSERT_BUTTON_LINK_COMMAND,
   $createButtonLinkNode,
 } from "@/components/editor/nodes/ButtonLinkNode";
+import { TableActionMenuPlugin } from "@/components/editor/plugins/TableActionMenuPlugin";
+import { TableCellResizerPlugin } from "@/components/editor/plugins/TableCellResizerPlugin";
 import { $convertToMarkdownString } from "@lexical/markdown";
 import type { RangeSelection } from "lexical";
 
@@ -1567,6 +1569,7 @@ const LexicalEditorBody = ({
 
   const [editorHeight, setEditorHeight] = useState(320);
   const resizeRef = useRef<HTMLDivElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1599,6 +1602,7 @@ const LexicalEditorBody = ({
         onEmojiPick={(emoji) => onEmojiPick(emoji, editor, lastSelectionRef.current)}
       />
       <div
+        ref={editorContainerRef}
         className="relative overflow-y-auto"
         style={{ height: editorHeight }}
       >
@@ -1645,6 +1649,10 @@ const LexicalEditorBody = ({
       <LinkPlugin />
       <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
       <TablePlugin hasHorizontalScroll />
+      <TableCellResizerPlugin />
+      {editorContainerRef.current && (
+        <TableActionMenuPlugin anchorElem={editorContainerRef.current} />
+      )}
       <HorizontalRulePlugin />
       <CodeHighlightingPlugin />
       <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />

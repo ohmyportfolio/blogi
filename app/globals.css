@@ -305,6 +305,7 @@
     border-collapse: collapse;
     margin: 1.4rem 0;
     font-size: 0.95em;
+    table-layout: fixed;
   }
 
   .blog-content th,
@@ -319,4 +320,61 @@
     background: color-mix(in oklab, var(--foreground) 6%, transparent);
     font-weight: 600;
   }
+}
+
+/* Lexical Table Selection Styles */
+@layer components {
+  /* 테이블 셀 선택 스타일 */
+  [data-lexical-editor] table td.TableCellNode__selected,
+  [data-lexical-editor] table th.TableCellNode__selected {
+    background-color: rgb(186 230 253 / 0.6) !important;
+    caret-color: transparent;
+  }
+
+  /* 테이블 전체 선택시 */
+  [data-lexical-editor] table.disable-selection {
+    user-select: none;
+  }
+
+  /* 테이블 드래그 핸들러 */
+  [data-lexical-editor] .TableCellResizer {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+  }
+
+  /* 테이블 선택 커서 스타일 */
+  [data-lexical-editor] table {
+    cursor: text;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  [data-lexical-editor] table td,
+  [data-lexical-editor] table th {
+    position: relative;
+    outline: none;
+    word-break: break-word;
+  }
+
+  /* 테이블 선택 시 포커스 스타일 제거 */
+  [data-lexical-editor] table:focus-within {
+    outline: none;
+  }
+}
+
+.TableCellResizerPreview {
+  border: 1px dashed rgba(14, 165, 233, 0.5);
+  background-color: rgba(14, 165, 233, 0.08);
+  pointer-events: none;
+}
+
+.TableCellResizerPreviewLine {
+  background-color: rgb(14 165 233);
+  pointer-events: none;
 }
