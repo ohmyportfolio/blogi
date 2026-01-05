@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import { PostListView } from "@/app/community/post-list-view";
 import { getCommunityGroupBySlug } from "@/lib/community";
+import { MessageSquare, Check } from "lucide-react";
 
 async function PostList({
   boardId,
@@ -170,30 +171,57 @@ export default async function CommunityBoardPage({ params, searchParams }: Commu
         </div>
       </form>
 
-      <div className="mb-8">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {community.boards.map((boardItem) => {
-            const search = new URLSearchParams();
-            if (query) search.set("q", query);
-            search.set("page", "1");
-            const href = `/community/${community.slug}/${boardItem.slug}?${search.toString()}`;
-            const isActive = boardItem.slug === currentBoard.slug;
-            return (
-              <Link
-                key={boardItem.id}
-                href={href}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? "bg-[#0b1320] text-white"
-                    : "bg-white text-gray-600 border border-black/5 hover:bg-gray-50"
-                }`}
-              >
-                {boardItem.name}
-              </Link>
-            );
-          })}
+      {/* 게시판 선택 카드 그리드 */}
+      {community.boards.length > 1 && (
+        <div className="mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {community.boards.map((boardItem) => {
+              const search = new URLSearchParams();
+              if (query) search.set("q", query);
+              search.set("page", "1");
+              const href = `/community/${community.slug}/${boardItem.slug}?${search.toString()}`;
+              const isActive = boardItem.slug === currentBoard.slug;
+              return (
+                <Link
+                  key={boardItem.id}
+                  href={href}
+                  className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                    isActive
+                      ? "border-[#0b1320] bg-[#0b1320] text-white shadow-lg"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                  }`}
+                >
+                  {/* 선택 체크 표시 */}
+                  {isActive && (
+                    <div className="absolute top-2 right-2">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  )}
+
+                  {/* 아이콘 */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                    isActive ? "bg-white/20" : "bg-gray-100"
+                  }`}>
+                    <MessageSquare className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-500"}`} />
+                  </div>
+
+                  {/* 게시판 이름 */}
+                  <span className="font-semibold text-sm text-center">{boardItem.name}</span>
+
+                  {/* 설명 (있는 경우) */}
+                  {boardItem.description && (
+                    <span className={`text-xs mt-1 text-center line-clamp-2 ${
+                      isActive ? "text-white/70" : "text-gray-400"
+                    }`}>
+                      {boardItem.description}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       <PostList
         boardId={currentBoard.id}
