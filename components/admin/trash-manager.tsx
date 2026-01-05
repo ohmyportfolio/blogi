@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { RotateCcw, Trash2, AlertTriangle } from "lucide-react";
+import { RotateCcw, Trash2, AlertTriangle, FileText } from "lucide-react";
 
 type DeletedBoard = {
   id: string;
@@ -15,15 +15,26 @@ type DeletedBoard = {
   deletedAt: string;
 };
 
+type DeletedContent = {
+  id: string;
+  title: string;
+  categoryName: string;
+  categorySlug: string;
+  imageUrl: string | null;
+  deletedAt: string;
+};
+
 interface TrashManagerProps {
   boards: DeletedBoard[];
+  contents: DeletedContent[];
 }
 
-export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
+export const TrashManager = ({ boards: initialBoards, contents: initialContents }: TrashManagerProps) => {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const [boards, setBoards] = useState<DeletedBoard[]>(initialBoards);
+  const [contents, setContents] = useState<DeletedContent[]>(initialContents);
 
   const handleRestore = async (board: DeletedBoard) => {
     const confirmed = await confirm({
@@ -100,17 +111,81 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
     });
   };
 
+  // 콘텐츠 복구
+  const handleRestoreContent = async (content: DeletedContent) => {
+    const confirmed = await confirm({
+      title: "콘텐츠 복구",
+      message: `"${content.title}" 콘텐츠를 복구하시겠습니까?`,
+      confirmText: "복구",
+      variant: "info",
+    });
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const res = await fetch("/api/admin/contents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restore", id: content.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "복구에 실패했습니다.", "error");
+        return;
+      }
+
+      setContents((prev) => prev.filter((c) => c.id !== content.id));
+      showToast(`"${content.title}" 콘텐츠가 복구되었습니다.`, "success");
+    });
+  };
+
+  // 콘텐츠 영구 삭제
+  const handlePermanentDeleteContent = async (content: DeletedContent) => {
+    const confirmed = await confirm({
+      title: "영구 삭제",
+      message: `"${content.title}" 콘텐츠를 영구 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
+      confirmText: "삭제",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const res = await fetch("/api/admin/contents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "permanentDelete", id: content.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "삭제에 실패했습니다.", "error");
+        return;
+      }
+
+      setContents((prev) => prev.filter((c) => c.id !== content.id));
+      showToast(`"${content.title}" 콘텐츠가 영구 삭제되었습니다.`, "success");
+    });
+  };
+
   const handleEmptyTrash = async () => {
-    if (boards.length === 0) {
+    if (boards.length === 0 && contents.length === 0) {
       showToast("휴지통이 비어있습니다.", "info");
       return;
     }
 
     const totalPosts = boards.reduce((sum, b) => sum + b.postCount, 0);
-    let confirmMessage = `휴지통을 비우시겠습니까?\n\n${boards.length}개의 게시판이 영구 삭제됩니다.`;
-    if (totalPosts > 0) {
-      confirmMessage = `휴지통을 비우시겠습니까?\n\n${boards.length}개의 게시판과 총 ${totalPosts}개의 게시글이 영구 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.`;
+    let confirmMessage = `휴지통을 비우시겠습니까?\n\n`;
+    if (boards.length > 0) {
+      confirmMessage += `${boards.length}개의 게시판`;
+      if (totalPosts > 0) {
+        confirmMessage += `(게시글 ${totalPosts}개 포함)`;
+      }
     }
+    if (contents.length > 0) {
+      if (boards.length > 0) confirmMessage += `과 `;
+      confirmMessage += `${contents.length}개의 콘텐츠`;
+    }
+    confirmMessage += `가 영구 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.`;
 
     const firstConfirm = await confirm({
       title: "휴지통 비우기",
@@ -120,20 +195,20 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
     });
     if (!firstConfirm) return;
 
-    if (totalPosts > 0) {
-      const doubleConfirmed = await confirm({
-        title: "최종 확인",
-        message: "마지막 확인: 정말로 모든 항목을 영구 삭제하시겠습니까?",
-        confirmText: "영구 삭제",
-        variant: "danger",
-      });
-      if (!doubleConfirmed) return;
-    }
+    const doubleConfirmed = await confirm({
+      title: "최종 확인",
+      message: "마지막 확인: 정말로 모든 항목을 영구 삭제하시겠습니까?",
+      confirmText: "영구 삭제",
+      variant: "danger",
+    });
+    if (!doubleConfirmed) return;
 
     startTransition(async () => {
-      let deletedCount = 0;
+      let deletedBoardCount = 0;
+      let deletedContentCount = 0;
       let failedCount = 0;
 
+      // 게시판 삭제
       for (const board of boards) {
         const res = await fetch("/api/admin/boards", {
           method: "POST",
@@ -142,7 +217,22 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
         });
 
         if (res.ok) {
-          deletedCount++;
+          deletedBoardCount++;
+        } else {
+          failedCount++;
+        }
+      }
+
+      // 콘텐츠 삭제
+      for (const content of contents) {
+        const res = await fetch("/api/admin/contents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "permanentDelete", id: content.id }),
+        });
+
+        if (res.ok) {
+          deletedContentCount++;
         } else {
           failedCount++;
         }
@@ -150,21 +240,25 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
 
       if (failedCount === 0) {
         setBoards([]);
-        showToast(`${deletedCount}개의 게시판이 영구 삭제되었습니다.`, "success");
+        setContents([]);
+        const messages = [];
+        if (deletedBoardCount > 0) messages.push(`게시판 ${deletedBoardCount}개`);
+        if (deletedContentCount > 0) messages.push(`콘텐츠 ${deletedContentCount}개`);
+        showToast(`${messages.join(", ")}가 영구 삭제되었습니다.`, "success");
       } else {
-        showToast(`${deletedCount}개 삭제, ${failedCount}개 실패`, "error");
+        showToast(`삭제 완료, ${failedCount}개 실패`, "error");
         // 페이지 새로고침하여 상태 동기화
         window.location.reload();
       }
     });
   };
 
-  if (boards.length === 0) {
+  if (boards.length === 0 && contents.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
         <Trash2 className="w-12 h-12 mx-auto text-gray-300 mb-4" />
         <p className="text-gray-500">휴지통이 비어있습니다.</p>
-        <p className="text-sm text-gray-400 mt-1">삭제된 게시판이 여기에 표시됩니다.</p>
+        <p className="text-sm text-gray-400 mt-1">삭제된 게시판과 콘텐츠가 여기에 표시됩니다.</p>
       </div>
     );
   }
@@ -186,63 +280,133 @@ export const TrashManager = ({ boards: initialBoards }: TrashManagerProps) => {
       </div>
 
       {/* 게시판 목록 */}
-      <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
-        <div className="divide-y divide-gray-100">
-          {boards.map((board) => (
-            <div
-              key={board.id}
-              className="flex items-center gap-4 p-4 hover:bg-gray-50/50"
-            >
-              {/* 아이콘 */}
-              <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-gray-400" />
-              </div>
-
-              {/* 정보 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">{board.name}</span>
-                  <span className="text-xs text-gray-400">({board.slug})</span>
-                </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                  <span>그룹: {board.menuItemLabel}</span>
-                  <span>•</span>
-                  <span className={board.postCount > 0 ? "text-amber-600 font-medium" : ""}>
-                    {board.postCount > 0 && <AlertTriangle className="w-3 h-3 inline mr-0.5" />}
-                    게시글 {board.postCount}개
-                  </span>
-                  <span>•</span>
-                  <span>삭제: {board.deletedAt}</span>
-                </div>
-              </div>
-
-              {/* 액션 버튼 */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRestore(board)}
-                  disabled={isPending}
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+      {boards.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-gray-700 px-1">삭제된 게시판</h2>
+          <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
+            <div className="divide-y divide-gray-100">
+              {boards.map((board) => (
+                <div
+                  key={board.id}
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50/50"
                 >
-                  <RotateCcw className="w-4 h-4 mr-1" />
-                  복구
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePermanentDelete(board)}
-                  disabled={isPending}
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  영구 삭제
-                </Button>
-              </div>
+                  {/* 아이콘 */}
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Trash2 className="w-5 h-5 text-gray-400" />
+                  </div>
+
+                  {/* 정보 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900">{board.name}</span>
+                      <span className="text-xs text-gray-400">({board.slug})</span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span>그룹: {board.menuItemLabel}</span>
+                      <span>•</span>
+                      <span className={board.postCount > 0 ? "text-amber-600 font-medium" : ""}>
+                        {board.postCount > 0 && <AlertTriangle className="w-3 h-3 inline mr-0.5" />}
+                        게시글 {board.postCount}개
+                      </span>
+                      <span>•</span>
+                      <span>삭제: {board.deletedAt}</span>
+                    </div>
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRestore(board)}
+                      disabled={isPending}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      복구
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePermanentDelete(board)}
+                      disabled={isPending}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      영구 삭제
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 콘텐츠 목록 */}
+      {contents.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-gray-700 px-1">삭제된 콘텐츠</h2>
+          <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
+            <div className="divide-y divide-gray-100">
+              {contents.map((content) => (
+                <div
+                  key={content.id}
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50/50"
+                >
+                  {/* 썸네일 */}
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {content.imageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={content.imageUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FileText className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+
+                  {/* 정보 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{content.title}</div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span>카테고리: {content.categoryName}</span>
+                      <span>•</span>
+                      <span>삭제: {content.deletedAt}</span>
+                    </div>
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRestoreContent(content)}
+                      disabled={isPending}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      복구
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePermanentDeleteContent(content)}
+                      disabled={isPending}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      영구 삭제
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updated);
 }
 
-// DELETE: Delete content (Admin only)
+// DELETE: Soft delete content (Admin only)
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMIN") {
@@ -90,7 +90,19 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    await prisma.content.delete({ where: { id } });
 
-    return NextResponse.json({ success: true });
+    // Soft delete: 휴지통으로 이동
+    await prisma.content.update({
+        where: { id },
+        data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+            isVisible: false,
+        },
+    });
+
+    return NextResponse.json({
+        success: true,
+        message: "콘텐츠가 휴지통으로 이동되었습니다.",
+    });
 }

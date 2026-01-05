@@ -60,6 +60,7 @@ export default async function Home() {
         where: {
           categoryId: { in: categoryIds },
           isVisible: true,
+          isDeleted: false,
           imageUrl: { not: null },
         },
         orderBy: { createdAt: "desc" },
@@ -153,6 +154,7 @@ export default async function Home() {
           where: {
             categoryId: category.id,
             isVisible: true,
+            isDeleted: false,
           },
           orderBy: { createdAt: "desc" },
           take: category.homeItemCount,

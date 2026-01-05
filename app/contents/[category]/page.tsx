@@ -82,6 +82,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         where: {
             categoryId: category.id,
             isVisible: true,
+            isDeleted: false,
         },
         orderBy: { createdAt: "desc" },
         include: { categoryRef: true },

@@ -45,11 +45,18 @@ async function deleteContent(_: ConfirmActionState, formData: FormData): Promise
       return { error: "유효하지 않은 콘텐츠입니다." };
     }
 
-    await prisma.content.delete({
+    // Soft delete: 휴지통으로 이동
+    await prisma.content.update({
       where: { id: contentId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        isVisible: false,
+      },
     });
 
     revalidatePath("/admin/contents");
+    revalidatePath("/admin/trash");
     return { success: true };
   } catch {
     return { error: "삭제 처리 중 오류가 발생했습니다." };
@@ -115,16 +122,17 @@ export default async function AdminContentsPage({
   const contents = await prisma.content.findMany({
     where: selectedCategory !== "all"
       ? selectedCategoryRecord
-        ? { categoryId: selectedCategoryRecord.id }
+        ? { categoryId: selectedCategoryRecord.id, isDeleted: false }
         : { id: { in: [] } }
-      : undefined,
+      : { isDeleted: false },
     orderBy: { createdAt: "desc" },
     include: { categoryRef: true },
   });
 
-  // 카테고리별 콘텐츠 수 집계
+  // 카테고리별 콘텐츠 수 집계 (삭제되지 않은 것만)
   const categoryCounts = await prisma.content.groupBy({
     by: ["categoryId"],
+    where: { isDeleted: false },
     _count: { id: true },
   });
 
@@ -332,7 +340,7 @@ export default async function AdminContentsPage({
 
                             <ConfirmForm
                               action={deleteContent}
-                              message="콘텐츠를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+                              message="콘텐츠를 휴지통으로 이동하시겠습니까?"
                               hiddenFields={{ contentId: content.id }}
                             >
                               <button
@@ -439,7 +447,7 @@ export default async function AdminContentsPage({
 
                           <ConfirmForm
                             action={deleteContent}
-                            message="콘텐츠를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+                            message="콘텐츠를 휴지통으로 이동하시겠습니까?"
                             hiddenFields={{ contentId: content.id }}
                           >
                             <button
@@ -547,7 +555,7 @@ export default async function AdminContentsPage({
 
                     <ConfirmForm
                       action={deleteContent}
-                      message="콘텐츠를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+                      message="콘텐츠를 휴지통으로 이동하시겠습니까?"
                       hiddenFields={{ contentId: content.id }}
                     >
                       <button

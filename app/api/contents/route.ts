@@ -22,10 +22,12 @@ export async function GET(req: NextRequest) {
                 ? {
                     categoryId: categoryRecord.id,
                     isVisible: isAdmin ? undefined : true,
+                    isDeleted: false,
                 }
                 : { id: { in: [] } }
             : {
                 isVisible: isAdmin ? undefined : true,
+                isDeleted: false,
                 ...(session ? {} : { NOT: { categoryRef: { is: { requiresAuth: true } } } }),
             },
         orderBy: { createdAt: "desc" },

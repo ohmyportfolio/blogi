@@ -32,6 +32,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     const contents = await prisma.content.findMany({
         where: {
             isVisible: true,
+            isDeleted: false,
             ...(session ? {} : { NOT: { categoryRef: { is: { requiresAuth: true } } } }),
             OR: [
                 { title: { contains: query, mode: "insensitive" } },

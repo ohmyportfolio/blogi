@@ -66,19 +66,21 @@ model Comment {
 }
 
 model Content {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   title           String
   content         String
   imageUrl        String?
   price           String?
-  isVisible       Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isVisible       Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   contentMarkdown String?
   categoryId      String
-  contentType     String   @default("RICH")
+  contentType     String    @default("RICH")
   htmlContent     String?
-  categoryRef     Category @relation("categoryRef", fields: [categoryId], references: [id])
+  deletedAt       DateTime?
+  isDeleted       Boolean   @default(false)
+  categoryRef     Category  @relation("categoryRef", fields: [categoryId], references: [id])
 }
 
 model Menu {
