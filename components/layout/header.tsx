@@ -20,6 +20,9 @@ export const Header = async () => {
       communityGroups={communityGroups}
       headerStyle={siteSettings.headerStyle}
       headerScrollEffect={siteSettings.headerScrollEffect}
+      hideSearch={siteSettings.hideSearch}
+      logoSize={siteSettings.logoSize}
+      siteNamePosition={siteSettings.siteNamePosition}
     />
   );
 };

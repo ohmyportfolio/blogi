@@ -11,6 +11,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import type { MenuItemData } from "@/lib/menus";
 import type { HeaderStyle } from "@/lib/header-styles";
+import type { LogoSize, SiteNamePosition } from "@/lib/site-settings";
 import { useScrollHeader } from "@/hooks/use-scroll-header";
 
 interface HeaderClientProps {
@@ -27,7 +28,30 @@ interface HeaderClientProps {
   }[];
   headerStyle?: HeaderStyle;
   headerScrollEffect?: boolean;
+  hideSearch?: boolean;
+  logoSize?: LogoSize;
+  siteNamePosition?: SiteNamePosition;
 }
+
+// 로고 크기에 따른 높이 클래스
+const getLogoSizeClasses = (size: LogoSize = "medium") => {
+  switch (size) {
+    case "small":
+      return { desktop: "h-8", mobile: "h-[40px]" };
+    case "medium":
+      return { desktop: "h-12", mobile: "h-[60px]" };
+    case "large":
+      return { desktop: "h-16", mobile: "h-[80px]" };
+    case "xlarge":
+      return { desktop: "h-20", mobile: "h-[100px]" };
+    case "xxlarge":
+      return { desktop: "h-[100px]", mobile: "h-[120px]" };
+    case "xxxlarge":
+      return { desktop: "h-[150px]", mobile: "h-[150px]" };
+    default:
+      return { desktop: "h-12", mobile: "h-[60px]" };
+  }
+};
 
 export const HeaderClient = ({
   menuItems,
@@ -37,6 +61,9 @@ export const HeaderClient = ({
   communityGroups,
   headerStyle = "classic",
   headerScrollEffect = true,
+  hideSearch = false,
+  logoSize = "medium",
+  siteNamePosition = "logo",
 }: HeaderClientProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -327,50 +354,94 @@ export const HeaderClient = ({
         {isBento ? (
           <div className="container mx-auto px-4 relative py-3">
             <div className="grid gap-3">
-              <div className="grid gap-3 items-center lg:grid-cols-[auto_minmax(0,1fr)_auto]">
-                <Link
-                  href="/"
-                  className={cn("flex items-center gap-3 px-4 py-2", getBentoTileClasses())}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={siteLogoUrl}
-                    alt={`${siteName} 로고`}
-                    className="h-12 object-contain"
-                  />
-                  <div className="hidden sm:flex flex-col leading-none">
-                    <span className="font-display text-xl tracking-tight">{siteName}</span>
-                    {siteTagline ? (
-                      <span className={cn("text-[10px] uppercase tracking-[0.3em]", taglineClass)}>
-                        {siteTagline}
-                      </span>
-                    ) : null}
-                  </div>
-                </Link>
-
-                <form
-                  action="/search"
-                  method="get"
-                  className={cn("relative w-full px-4 py-2", getBentoTileClasses())}
-                >
-                  <Input
-                    name="q"
-                    type="search"
-                    className={getInputClasses()}
-                    placeholder="검색어를 입력하세요"
-                  />
-                  <Search className={cn("absolute right-3 top-2.5 h-5 w-5", getIconClasses())} />
-                </form>
-
-                <div className={cn("flex items-center gap-x-4 text-sm px-4 py-2", getBentoTileClasses())}>
-                  {session ? (
-                    <>
+              <div className={cn(
+                "grid gap-3 items-center",
+                hideSearch
+                  ? "lg:grid-cols-[auto_1fr_auto]"
+                  : "lg:grid-cols-[auto_minmax(0,1fr)_auto]"
+              )}>
+                {/* 검색 숨김 시: 왼쪽 유저 정보 */}
+                {hideSearch && (
+                  <div className={cn("flex items-center gap-x-4 text-sm px-4 py-2", getBentoTileClasses())}>
+                    {session ? (
                       <Link
                         href="/profile"
                         className={cn(userNameClass, "hover:underline transition cursor-pointer")}
                       >
                         {session.user?.name || session.user?.email}님
                       </Link>
+                    ) : (
+                      <Link href="/login" className={cn(getTextClasses(false), "transition")}>
+                        로그인
+                      </Link>
+                    )}
+                  </div>
+                )}
+
+                {/* 로고 (+ 사이트명 로고 우측일 때) */}
+                <Link
+                  href="/"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2",
+                    getBentoTileClasses(),
+                    hideSearch && "justify-center"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={siteLogoUrl}
+                    alt={`${siteName} 로고`}
+                    className={cn("object-contain", getLogoSizeClasses(logoSize).desktop)}
+                  />
+                  {siteNamePosition === "logo" && (
+                    <span className={cn(
+                      "font-display tracking-tight",
+                      hideSearch ? "text-sm" : "text-xl"
+                    )}>
+                      {siteName}
+                    </span>
+                  )}
+                </Link>
+
+                {/* 사이트명 (header1) + 검색 폼 */}
+                {!hideSearch ? (
+                  <div className={cn("flex items-center gap-3 px-4 py-2", getBentoTileClasses())}>
+                    {siteNamePosition === "header1" && (
+                      <span className="font-display text-sm tracking-tight whitespace-nowrap">
+                        {siteName}
+                      </span>
+                    )}
+                    <form action="/search" method="get" className="relative w-full">
+                      <Input
+                        name="q"
+                        type="search"
+                        className={getInputClasses()}
+                        placeholder="검색어를 입력하세요"
+                      />
+                      <Search className={cn("absolute right-3 top-2.5 h-5 w-5", getIconClasses())} />
+                    </form>
+                  </div>
+                ) : (
+                  siteNamePosition === "header1" && (
+                    <div className={cn("flex items-center justify-center px-4 py-2", getBentoTileClasses())}>
+                      <span className="font-display text-sm tracking-tight">
+                        {siteName}
+                      </span>
+                    </div>
+                  )
+                )}
+
+                <div className={cn("flex items-center gap-x-4 text-sm px-4 py-2", getBentoTileClasses())}>
+                  {session ? (
+                    <>
+                      {!hideSearch && (
+                        <Link
+                          href="/profile"
+                          className={cn(userNameClass, "hover:underline transition cursor-pointer")}
+                        >
+                          {session.user?.name || session.user?.email}님
+                        </Link>
+                      )}
                       {session.user?.role === "ADMIN" && (
                         <Link href="/admin" className={cn(getTextClasses(false), "transition flex items-center gap-1")}>
                           <Settings className="w-4 h-4" />
@@ -387,9 +458,11 @@ export const HeaderClient = ({
                     </>
                   ) : (
                     <>
-                      <Link href="/login" className={cn(getTextClasses(false), "transition")}>
-                        로그인
-                      </Link>
+                      {!hideSearch && (
+                        <Link href="/login" className={cn(getTextClasses(false), "transition")}>
+                          로그인
+                        </Link>
+                      )}
                       <Link href="/register" className={cn(getTextClasses(false), "transition")}>
                         회원가입
                       </Link>
@@ -412,9 +485,28 @@ export const HeaderClient = ({
         ) : (
           <div className="container mx-auto px-4 relative">
             <div className={cn(
-              "flex items-center justify-between gap-3 py-3",
-              "transition-all duration-300"
+              "flex items-center gap-3 py-3",
+              "transition-all duration-300",
+              hideSearch ? "justify-center" : "justify-between"
             )}>
+              {/* 검색 숨김 시: 왼쪽 유저 정보 */}
+              {hideSearch && (
+                <div className="hidden md:flex items-center gap-x-4 text-sm absolute left-4">
+                  {session ? (
+                    <Link
+                      href="/profile"
+                      className={cn(userNameClass, "hover:underline transition cursor-pointer")}
+                    >
+                      {session.user?.name || session.user?.email}님
+                    </Link>
+                  ) : (
+                    <Link href="/login" className={cn(getTextClasses(false), "transition")}>
+                      로그인
+                    </Link>
+                  )}
+                </div>
+              )}
+
               <button
                 className="md:hidden p-2 rounded-full border border-white/10 bg-white/10 hover:bg-white/20 transition"
                 onClick={() => setIsSidebarOpen(true)}
@@ -423,45 +515,72 @@ export const HeaderClient = ({
                 <Menu className="w-6 h-6" />
               </button>
 
-              <Link href="/" className="flex items-center gap-3">
+              {/* 로고 (+ 사이트명 로고 우측일 때) */}
+              <Link href="/" className={cn(
+                "flex items-center gap-3",
+                hideSearch && "justify-center"
+              )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteLogoUrl}
                   alt={`${siteName} 로고`}
                   className={cn(
                     "transition-all duration-300 object-contain",
-                    headerStyle === "classic" ? "h-14" : "h-12"
+                    getLogoSizeClasses(logoSize).desktop
                   )}
                 />
-                <div className="hidden sm:flex flex-col leading-none">
-                  <span className="font-display text-xl tracking-tight">{siteName}</span>
-                  {siteTagline ? (
-                    <span className={cn("text-[10px] uppercase tracking-[0.3em]", taglineClass)}>
-                      {siteTagline}
-                    </span>
-                  ) : null}
-                </div>
+                {siteNamePosition === "logo" && (
+                  <span className={cn(
+                    "font-display tracking-tight",
+                    hideSearch ? "text-sm" : "text-xl"
+                  )}>
+                    {siteName}
+                  </span>
+                )}
               </Link>
 
-              <form action="/search" method="get" className="hidden md:flex relative w-[360px]">
-                <Input
-                  name="q"
-                  type="search"
-                  className={getInputClasses()}
-                  placeholder="검색어를 입력하세요"
-                />
-                <Search className={cn("absolute right-3 top-2.5 h-5 w-5", getIconClasses())} />
-              </form>
+              {/* 사이트명 (header1 위치일 때) + 검색 폼 */}
+              {!hideSearch ? (
+                <div className="hidden md:flex items-center gap-4">
+                  {siteNamePosition === "header1" && (
+                    <span className="font-display text-sm tracking-tight whitespace-nowrap">
+                      {siteName}
+                    </span>
+                  )}
+                  <form action="/search" method="get" className="relative w-[360px]">
+                    <Input
+                      name="q"
+                      type="search"
+                      className={getInputClasses()}
+                      placeholder="검색어를 입력하세요"
+                    />
+                    <Search className={cn("absolute right-3 top-2.5 h-5 w-5", getIconClasses())} />
+                  </form>
+                </div>
+              ) : (
+                /* 검색 숨김일 때 사이트명 header1 위치 표시 */
+                siteNamePosition === "header1" && (
+                  <span className="hidden md:block font-display text-sm tracking-tight">
+                    {siteName}
+                  </span>
+                )
+              )}
 
-              <div className="hidden md:flex items-center gap-x-4 text-sm">
+              {/* 우측 유저 정보 */}
+              <div className={cn(
+                "hidden md:flex items-center gap-x-4 text-sm",
+                hideSearch && "absolute right-4"
+              )}>
                 {session ? (
                   <>
-                    <Link
-                      href="/profile"
-                      className={cn(userNameClass, "hover:underline transition cursor-pointer")}
-                    >
-                      {session.user?.name || session.user?.email}님
-                    </Link>
+                    {!hideSearch && (
+                      <Link
+                        href="/profile"
+                        className={cn(userNameClass, "hover:underline transition cursor-pointer")}
+                      >
+                        {session.user?.name || session.user?.email}님
+                      </Link>
+                    )}
                     {session.user?.role === "ADMIN" && (
                       <Link href="/admin" className={cn(getTextClasses(false), "transition flex items-center gap-1")}>
                         <Settings className="w-4 h-4" />
@@ -478,9 +597,11 @@ export const HeaderClient = ({
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className={cn(getTextClasses(false), "transition")}>
-                      로그인
-                    </Link>
+                    {!hideSearch && (
+                      <Link href="/login" className={cn(getTextClasses(false), "transition")}>
+                        로그인
+                      </Link>
+                    )}
                     <Link href="/register" className={cn(getTextClasses(false), "transition")}>
                       회원가입
                     </Link>
@@ -504,67 +625,143 @@ export const HeaderClient = ({
         )}
       </header>
 
-      {/* Mobile Header Bar - 2 rows */}
+      {/* Mobile Header Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0b1320] shadow-lg pt-2">
-        {/* Row 1: Menu + Search + Login */}
-        <div className="flex items-center px-2 h-11 gap-2 border-b border-white/10">
-          {/* Left: Hamburger Menu */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
-            aria-label="메뉴 열기"
-          >
-            <Menu className="w-5 h-5 text-white" />
-          </button>
+        {hideSearch ? (
+          /* 검색 숨김: 2행 레이아웃 - 상단에 메뉴/로그인, 하단에 로고 */
+          <>
+            {/* Row 1: Menu + (사이트명 header1일 때) + Login */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 relative">
+              {/* Left: Hamburger Menu */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
+                aria-label="메뉴 열기"
+              >
+                <Menu className="w-5 h-5 text-white" />
+              </button>
 
-          {/* Center: Search */}
-          <form action="/search" method="get" className="flex-1">
-            <div className="relative">
-              <Input
-                name="q"
-                type="search"
-                placeholder="검색..."
-                className="h-8 pl-3 pr-8 bg-white text-gray-900 text-sm placeholder:text-gray-400 border-0 rounded-lg"
-              />
-              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              {/* Center: Site Name (header1 position) */}
+              {siteNamePosition === "header1" && (
+                <span className="text-white font-display text-sm tracking-wide absolute left-1/2 -translate-x-1/2">
+                  {siteName}
+                </span>
+              )}
+
+              {/* Right: Login */}
+              {session ? (
+                <Link
+                  href="/profile"
+                  className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
+                >
+                  {session.user?.name?.slice(0, 4) || "회원"}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-white text-sm font-semibold whitespace-nowrap px-2 hover:text-white/80 transition"
+                >
+                  로그인
+                </Link>
+              )}
             </div>
-          </form>
 
-          {/* Right: Login */}
-          {session ? (
-            <Link
-              href="/profile"
-              className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
-            >
-              {session.user?.name?.slice(0, 4) || "회원"}
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="text-white text-sm font-semibold whitespace-nowrap px-2 hover:text-white/80 transition"
-            >
-              로그인
-            </Link>
-          )}
-        </div>
+            {/* Row 2: Centered Logo (+ Site Name if position is logo) */}
+            <div className="flex items-center justify-center py-3">
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src={siteLogoUrl}
+                  alt={siteName}
+                  width={200}
+                  height={150}
+                  className={cn("w-auto object-contain", getLogoSizeClasses(logoSize).mobile)}
+                  unoptimized
+                />
+                {siteNamePosition === "logo" && (
+                  <span className="text-white font-display text-sm tracking-wide">
+                    {siteName}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </>
+        ) : (
+          /* 검색 표시: 기존 2행 레이아웃 */
+          <>
+            {/* Row 1: Menu + Search + Login */}
+            <div className="flex items-center px-2 h-11 gap-2 border-b border-white/10">
+              {/* Left: Hamburger Menu */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
+                aria-label="메뉴 열기"
+              >
+                <Menu className="w-5 h-5 text-white" />
+              </button>
 
-        {/* Row 2: Logo + Site Name */}
-        <div className="flex items-center justify-center gap-3 py-1">
-          <Link href="/" className="flex items-center gap-3">
-            <Image
-              src={siteLogoUrl}
-              alt={siteName}
-              width={200}
-              height={70}
-              className="h-[70px] w-auto object-contain"
-              unoptimized
-            />
-            <div className="h-10 w-px bg-white/20" />
-            <span className="text-white font-display text-xl tracking-wide">
-              {siteName}
-            </span>
-          </Link>
-        </div>
+              {/* Center: Search */}
+              <form action="/search" method="get" className="flex-1">
+                <div className="relative">
+                  <Input
+                    name="q"
+                    type="search"
+                    placeholder="검색..."
+                    className="h-8 pl-3 pr-8 bg-white text-gray-900 text-sm placeholder:text-gray-400 border-0 rounded-lg"
+                  />
+                  <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
+              </form>
+
+              {/* Right: Login */}
+              {session ? (
+                <Link
+                  href="/profile"
+                  className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
+                >
+                  {session.user?.name?.slice(0, 4) || "회원"}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-white text-sm font-semibold whitespace-nowrap px-2 hover:text-white/80 transition"
+                >
+                  로그인
+                </Link>
+              )}
+            </div>
+
+            {/* Row 2: Logo (+ Site Name if position is logo) */}
+            <div className="flex items-center justify-center gap-3 py-1 relative">
+              {/* 사이트명 header1일 때 가운데 표시 */}
+              {siteNamePosition === "header1" && (
+                <span className="text-white font-display text-sm tracking-wide absolute left-1/2 -translate-x-1/2 top-1">
+                  {siteName}
+                </span>
+              )}
+              <Link href="/" className={cn(
+                "flex items-center gap-3",
+                siteNamePosition === "header1" && "mt-5"
+              )}>
+                <Image
+                  src={siteLogoUrl}
+                  alt={siteName}
+                  width={200}
+                  height={100}
+                  className={cn("w-auto object-contain", getLogoSizeClasses(logoSize).mobile)}
+                  unoptimized
+                />
+                {siteNamePosition === "logo" && (
+                  <>
+                    <div className="h-10 w-px bg-white/20" />
+                    <span className="text-white font-display text-xl tracking-wide">
+                      {siteName}
+                    </span>
+                  </>
+                )}
+              </Link>
+            </div>
+          </>
+        )}
       </div>
 
       {isSidebarOpen && (

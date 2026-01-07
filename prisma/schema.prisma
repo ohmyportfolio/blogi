@@ -204,6 +204,10 @@ model SiteSettings {
   socialAlignment        String   @default("center")
   // 메인 대시보드 모바일 노출 설정
   showHomeDashboardOnMobile Boolean @default(true)
+  // 헤더 검색 및 로고 설정
+  hideSearch               Boolean @default(false)
+  logoSize                 String  @default("medium")
+  siteNamePosition         String  @default("logo")  // "logo" | "header1"
 }
 
 model User {

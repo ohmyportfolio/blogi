@@ -30,6 +30,9 @@ export default async function AdminSiteSettingsPage() {
             faviconUrl: settings?.faviconUrl ?? "",
             headerStyle: settings?.headerStyle ?? "classic",
             headerScrollEffect: settings?.headerScrollEffect ?? true,
+            hideSearch: settings?.hideSearch ?? false,
+            logoSize: settings?.logoSize ?? "medium",
+            siteNamePosition: settings?.siteNamePosition ?? "logo",
           }}
         />
       </div>

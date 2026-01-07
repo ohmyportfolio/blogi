@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { HeaderStyle, isValidHeaderStyle } from "@/lib/header-styles";
 
+export type LogoSize = "small" | "medium" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+export type SiteNamePosition = "logo" | "header1";
+
 export type SiteSettingsSnapshot = {
   siteName?: string | null;
   siteLogoUrl?: string | null;
@@ -11,6 +14,10 @@ export type SiteSettingsSnapshot = {
   // 헤더 스타일 설정
   headerStyle: HeaderStyle;
   headerScrollEffect: boolean;
+  // 헤더 검색 및 로고 설정
+  hideSearch: boolean;
+  logoSize: LogoSize;
+  siteNamePosition: SiteNamePosition;
 };
 
 export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
@@ -24,6 +31,20 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
       ? settings.headerStyle
       : "classic";
 
+  // logoSize 유효성 검사
+  const validLogoSizes: LogoSize[] = ["small", "medium", "large", "xlarge", "xxlarge", "xxxlarge"];
+  const logoSize: LogoSize =
+    settings?.logoSize && validLogoSizes.includes(settings.logoSize as LogoSize)
+      ? (settings.logoSize as LogoSize)
+      : "medium";
+
+  // siteNamePosition 유효성 검사
+  const validPositions: SiteNamePosition[] = ["logo", "header1"];
+  const siteNamePosition: SiteNamePosition =
+    settings?.siteNamePosition && validPositions.includes(settings.siteNamePosition as SiteNamePosition)
+      ? (settings.siteNamePosition as SiteNamePosition)
+      : "logo";
+
   return {
     siteName: settings?.siteName ?? null,
     siteLogoUrl: settings?.siteLogoUrl ?? null,
@@ -33,5 +54,8 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
     faviconUrl: settings?.faviconUrl ?? null,
     headerStyle,
     headerScrollEffect: settings?.headerScrollEffect ?? true,
+    hideSearch: settings?.hideSearch ?? false,
+    logoSize,
+    siteNamePosition,
   };
 };

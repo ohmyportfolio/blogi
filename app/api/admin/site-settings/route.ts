@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     faviconUrl,
     headerStyle,
     headerScrollEffect,
+    hideSearch,
+    logoSize,
+    siteNamePosition,
   } = body;
 
   const data: Record<string, unknown> = {
@@ -48,6 +51,15 @@ export async function POST(req: NextRequest) {
   }
   if (typeof headerScrollEffect === "boolean") {
     data.headerScrollEffect = headerScrollEffect;
+  }
+  if (typeof hideSearch === "boolean") {
+    data.hideSearch = hideSearch;
+  }
+  if (typeof logoSize === "string" && ["small", "medium", "large", "xlarge", "xxlarge", "xxxlarge"].includes(logoSize)) {
+    data.logoSize = logoSize;
+  }
+  if (typeof siteNamePosition === "string" && ["logo", "header1"].includes(siteNamePosition)) {
+    data.siteNamePosition = siteNamePosition;
   }
 
   const settings = await prisma.siteSettings.upsert({

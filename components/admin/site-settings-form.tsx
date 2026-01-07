@@ -5,10 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
-import { FileText, Globe, Image, ImageIcon, Tag, Upload, Palette, MousePointer2, Check, Crop } from "lucide-react";
+import { FileText, Globe, Image, ImageIcon, Tag, Upload, Palette, MousePointer2, Check, Crop, SearchX, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HeaderStyle, HEADER_STYLES } from "@/lib/header-styles";
 import { ImageCropper } from "@/components/admin/image-cropper";
+import type { LogoSize, SiteNamePosition } from "@/lib/site-settings";
+
+const SITE_NAME_POSITIONS: { value: SiteNamePosition; label: string; description: string }[] = [
+  { value: "logo", label: "로고 우측", description: "로고 옆에 표시" },
+  { value: "header1", label: "헤더 1행", description: "상단 행에 표시" },
+];
+
+const LOGO_SIZES: { value: LogoSize; label: string; description: string }[] = [
+  { value: "small", label: "작음", description: "32px" },
+  { value: "medium", label: "보통", description: "48px" },
+  { value: "large", label: "크게", description: "64px" },
+  { value: "xlarge", label: "매우 크게", description: "80px" },
+  { value: "xxlarge", label: "특대", description: "100px" },
+  { value: "xxxlarge", label: "최대", description: "150px" },
+];
 
 interface SiteSettingsFormProps {
   initialData: {
@@ -20,6 +35,9 @@ interface SiteSettingsFormProps {
     faviconUrl?: string | null;
     headerStyle?: string | null;
     headerScrollEffect?: boolean | null;
+    hideSearch?: boolean | null;
+    logoSize?: string | null;
+    siteNamePosition?: string | null;
   };
 }
 
@@ -37,6 +55,15 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
   );
   const [headerScrollEffect, setHeaderScrollEffect] = useState(
     typeof initialData.headerScrollEffect === "boolean" ? initialData.headerScrollEffect : true
+  );
+  const [hideSearch, setHideSearch] = useState(
+    typeof initialData.hideSearch === "boolean" ? initialData.hideSearch : false
+  );
+  const [logoSize, setLogoSize] = useState<LogoSize>(
+    (initialData.logoSize as LogoSize) || "medium"
+  );
+  const [siteNamePosition, setSiteNamePosition] = useState<SiteNamePosition>(
+    (initialData.siteNamePosition as SiteNamePosition) || "logo"
   );
   const [uploading, setUploading] = useState(false);
   const [cropperImage, setCropperImage] = useState<string | null>(null);
@@ -154,6 +181,9 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
         faviconUrl: faviconUrl.trim() || null,
         headerStyle,
         headerScrollEffect,
+        hideSearch,
+        logoSize,
+        siteNamePosition,
       };
       const res = await fetch("/api/admin/site-settings", {
         method: "POST",
@@ -443,6 +473,109 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           <p className="text-xs text-gray-400">
             스크롤 시 헤더에 그림자/블러 효과가 적용됩니다. (클래식 제외)
           </p>
+        </div>
+      </div>
+
+      {/* 검색 숨김 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+        <div className={`p-2.5 rounded-lg ${hideSearch ? "bg-orange-50 text-orange-600" : "bg-gray-100 text-gray-400"}`}>
+          <SearchX className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">검색 숨김</label>
+            <button
+              type="button"
+              onClick={() => setHideSearch(!hideSearch)}
+              disabled={isPending}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hideSearch ? "bg-orange-500" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  hideSearch ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">
+            헤더에서 검색바를 숨깁니다. 모바일에서는 첫 번째 헤더 행도 함께 숨겨집니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 로고 크기 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+        <div className="p-2.5 rounded-lg bg-purple-50 text-purple-600">
+          <Maximize2 className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-4">
+          <div>
+            <label className="text-sm font-medium">로고 크기</label>
+            <p className="text-xs text-gray-400 mt-1">헤더에 표시되는 로고의 크기를 선택하세요.</p>
+          </div>
+          <div className="grid grid-cols-6 gap-2">
+            {LOGO_SIZES.map((size) => (
+              <button
+                key={size.value}
+                type="button"
+                onClick={() => setLogoSize(size.value)}
+                disabled={isPending}
+                className={cn(
+                  "relative p-3 rounded-xl border-2 text-center transition-all",
+                  logoSize === size.value
+                    ? "border-purple-500 bg-purple-50/50"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                )}
+              >
+                {logoSize === size.value && (
+                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+                <div className="font-medium text-sm">{size.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{size.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 사이트명 위치 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+        <div className="p-2.5 rounded-lg bg-teal-50 text-teal-600">
+          <Tag className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-4">
+          <div>
+            <label className="text-sm font-medium">사이트명 위치</label>
+            <p className="text-xs text-gray-400 mt-1">헤더에서 사이트명이 표시되는 위치를 선택하세요.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {SITE_NAME_POSITIONS.map((pos) => (
+              <button
+                key={pos.value}
+                type="button"
+                onClick={() => setSiteNamePosition(pos.value)}
+                disabled={isPending}
+                className={cn(
+                  "relative p-3 rounded-xl border-2 text-center transition-all",
+                  siteNamePosition === pos.value
+                    ? "border-teal-500 bg-teal-50/50"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                )}
+              >
+                {siteNamePosition === pos.value && (
+                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+                <div className="font-medium text-sm">{pos.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{pos.description}</div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
