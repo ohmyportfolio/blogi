@@ -184,14 +184,14 @@ export const Footer = async () => {
                             <Link
                                 key={`${link.key}-${link.url}`}
                                 href={link.url}
-                                className="hover:opacity-80 transition flex items-center gap-1.5"
+                                className="hover:opacity-80 transition flex flex-col items-center gap-1"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={link.label}
                             >
                                 {getSocialIcon(link.key, settings.socialIconStyle)}
                                 {settings.showSocialLabels && (
-                                    <span className="text-xs text-white/70">{link.label}</span>
+                                    <span className="text-[10px] text-white/60">{link.label}</span>
                                 )}
                             </Link>
                         ))}
