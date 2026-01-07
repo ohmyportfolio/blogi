@@ -208,6 +208,9 @@ model SiteSettings {
   hideSearch               Boolean @default(false)
   logoSize                 String  @default("medium")
   siteNamePosition         String  @default("logo")  // "logo" | "header1"
+  // 모바일 상단 사이트명 표시
+  showMobileTopSiteName    Boolean @default(true)
+  showMobileTopSiteNameSize String  @default("md")
 }
 
 model User {

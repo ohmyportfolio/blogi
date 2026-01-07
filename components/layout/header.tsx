@@ -23,6 +23,8 @@ export const Header = async () => {
       hideSearch={siteSettings.hideSearch}
       logoSize={siteSettings.logoSize}
       siteNamePosition={siteSettings.siteNamePosition}
+      showMobileTopSiteName={siteSettings.showMobileTopSiteName}
+      showMobileTopSiteNameSize={siteSettings.showMobileTopSiteNameSize}
     />
   );
 };

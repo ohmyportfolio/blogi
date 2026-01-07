@@ -13,7 +13,7 @@ export default async function AdminSiteSettingsPage() {
           <div>
             <h1 className="font-display text-3xl">사이트 설정</h1>
             <p className="text-sm text-gray-500 mt-2">
-              로고와 사이트 이름을 변경하면 헤더/사이드바/푸터에 반영됩니다.
+              배너 이미지와 사이트 이름을 변경하면 상단/사이드바/푸터에 반영됩니다.
             </p>
           </div>
         </div>
@@ -32,6 +32,8 @@ export default async function AdminSiteSettingsPage() {
             hideSearch: settings?.hideSearch ?? false,
             logoSize: settings?.logoSize ?? "medium",
             siteNamePosition: settings?.siteNamePosition ?? "logo",
+            showMobileTopSiteName: settings?.showMobileTopSiteName ?? true,
+            showMobileTopSiteNameSize: settings?.showMobileTopSiteNameSize ?? "md",
           }}
         />
       </div>

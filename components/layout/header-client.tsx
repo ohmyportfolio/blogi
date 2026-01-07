@@ -11,7 +11,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import type { MenuItemData } from "@/lib/menus";
 import type { HeaderStyle } from "@/lib/header-styles";
-import type { LogoSize, SiteNamePosition } from "@/lib/site-settings";
+import type { LogoSize, MobileTopSiteNameSize, SiteNamePosition } from "@/lib/site-settings";
 import { useScrollHeader } from "@/hooks/use-scroll-header";
 
 interface HeaderClientProps {
@@ -31,9 +31,11 @@ interface HeaderClientProps {
   hideSearch?: boolean;
   logoSize?: LogoSize;
   siteNamePosition?: SiteNamePosition;
+  showMobileTopSiteName?: boolean;
+  showMobileTopSiteNameSize?: MobileTopSiteNameSize;
 }
 
-// 로고 크기에 따른 높이 클래스
+// 배너 높이에 따른 클래스 (내부적으로 로고 스케일로 사용)
 const getLogoSizeClasses = (size: LogoSize = "medium") => {
   switch (size) {
     case "small":
@@ -53,6 +55,25 @@ const getLogoSizeClasses = (size: LogoSize = "medium") => {
   }
 };
 
+const getMobileHeaderOffsetPx = (size: LogoSize = "medium") => {
+  switch (size) {
+    case "small":
+      return 132;
+    case "medium":
+      return 152;
+    case "large":
+      return 172;
+    case "xlarge":
+      return 192;
+    case "xxlarge":
+      return 212;
+    case "xxxlarge":
+      return 242;
+    default:
+      return 152;
+  }
+};
+
 export const HeaderClient = ({
   menuItems,
   siteName,
@@ -64,12 +85,16 @@ export const HeaderClient = ({
   hideSearch = false,
   logoSize = "medium",
   siteNamePosition = "logo",
+  showMobileTopSiteName = true,
+  showMobileTopSiteNameSize = "md",
 }: HeaderClientProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
   const { showToast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
   const groupMap = useMemo(
     () => new Map(communityGroups.map((group) => [group.menuItemId, group])),
@@ -183,6 +208,17 @@ export const HeaderClient = ({
     showToast("로그인이 필요합니다. 로그인 후 이용해주세요.", "info");
     router.push(`/login?callbackUrl=${encodeURIComponent(href)}`);
     closeSidebar();
+  };
+
+  const handleMobileSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = mobileSearchQuery.trim();
+    if (!query) {
+      showToast("검색어를 입력해주세요.", "info");
+      return;
+    }
+    setIsSearchOpen(false);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
   const renderMenuLink = (route: MenuItemData, isMobile = false) => {
@@ -346,6 +382,14 @@ export const HeaderClient = ({
   // 스타일별 사이트명/태그라인 색상
   const taglineClass = headerStyle === "classic" ? "text-white/60" : "text-gray-500";
   const userNameClass = headerStyle === "classic" ? "text-white/70" : "text-gray-600";
+  const showTopSiteName = showMobileTopSiteName;
+  const mobileTopNameSizeClass =
+    showMobileTopSiteNameSize === "sm"
+      ? "text-sm"
+      : showMobileTopSiteNameSize === "lg"
+      ? "text-lg"
+      : "text-base";
+  const mobileHeaderOffset = getMobileHeaderOffsetPx(logoSize);
 
   return (
     <>
@@ -378,7 +422,7 @@ export const HeaderClient = ({
                   </div>
                 )}
 
-                {/* 로고 (+ 사이트명 로고 우측일 때) */}
+                {/* 배너 이미지 */}
                 <Link
                   href="/"
                   className={cn(
@@ -390,7 +434,7 @@ export const HeaderClient = ({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={siteLogoUrl}
-                    alt={`${siteName} 로고`}
+                    alt={`${siteName} 배너`}
                     className={cn("object-contain", getLogoSizeClasses(logoSize).desktop)}
                   />
                   {siteNamePosition === "logo" && (
@@ -515,7 +559,7 @@ export const HeaderClient = ({
                 <Menu className="w-6 h-6" />
               </button>
 
-              {/* 로고 (+ 사이트명 로고 우측일 때) */}
+              {/* 배너 이미지 */}
               <Link href="/" className={cn(
                 "flex items-center gap-3",
                 hideSearch && "justify-center"
@@ -523,7 +567,7 @@ export const HeaderClient = ({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteLogoUrl}
-                  alt={`${siteName} 로고`}
+                  alt={`${siteName} 배너`}
                   className={cn(
                     "transition-all duration-300 object-contain",
                     getLogoSizeClasses(logoSize).desktop
@@ -627,142 +671,124 @@ export const HeaderClient = ({
 
       {/* Mobile Header Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0b1320] shadow-lg pt-2">
-        {hideSearch ? (
-          /* 검색 숨김: 2행 레이아웃 - 상단에 메뉴/로그인, 하단에 로고 */
-          <>
-            {/* Row 1: Menu + (사이트명 header1일 때) + Login */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 relative">
-              {/* Left: Hamburger Menu */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
-                aria-label="메뉴 열기"
+        <>
+          {/* Row 1: Menu + (Site Name) + Search Icon + Login */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 relative">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-11 h-11 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition flex items-center justify-center"
+              aria-label="메뉴 열기"
+            >
+              <Menu className="w-5 h-5 text-white" />
+            </button>
+
+            {showTopSiteName && (
+              <span
+                className={cn(
+                  "text-white font-display tracking-wide absolute left-1/2 -translate-x-1/2",
+                  mobileTopNameSizeClass
+                )}
               >
-                <Menu className="w-5 h-5 text-white" />
-              </button>
+                {siteName}
+              </span>
+            )}
 
-              {/* Center: Site Name (header1 position) */}
-              {siteNamePosition === "header1" && (
-                <span className="text-white font-display text-sm tracking-wide absolute left-1/2 -translate-x-1/2">
-                  {siteName}
-                </span>
+            <div className="flex items-center gap-1">
+              {!hideSearch && (
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(true)}
+                  aria-label="검색"
+                  className="w-11 h-11 rounded-lg bg-white/10 hover:bg-white/20 transition flex items-center justify-center"
+                >
+                  <Search className="w-5 h-5 text-white" />
+                </button>
               )}
-
-              {/* Right: Login */}
               {session ? (
                 <Link
                   href="/profile"
-                  className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
+                  className="text-white text-sm font-medium px-2 h-11 flex items-center truncate max-w-[96px] hover:text-white/80 transition"
                 >
                   {session.user?.name?.slice(0, 4) || "회원"}
                 </Link>
               ) : (
                 <Link
                   href="/login"
-                  className="text-white text-sm font-semibold whitespace-nowrap px-2 hover:text-white/80 transition"
+                  className="text-white text-sm font-semibold whitespace-nowrap px-2 h-11 flex items-center hover:text-white/80 transition"
                 >
                   로그인
                 </Link>
               )}
             </div>
+          </div>
 
-            {/* Row 2: Centered Logo (+ Site Name if position is logo) */}
-            <div className="flex items-center justify-center py-3">
-              <Link href="/" className="flex items-center gap-2">
-                <Image
-                  src={siteLogoUrl}
-                  alt={siteName}
-                  width={200}
-                  height={150}
-                  className={cn("w-auto object-contain", getLogoSizeClasses(logoSize).mobile)}
-                  unoptimized
-                />
-                {siteNamePosition === "logo" && (
-                  <span className="text-white font-display text-sm tracking-wide">
-                    {siteName}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </>
-        ) : (
-          /* 검색 표시: 기존 2행 레이아웃 */
-          <>
-            {/* Row 1: Menu + Search + Login */}
-            <div className="flex items-center px-2 h-11 gap-2 border-b border-white/10">
-              {/* Left: Hamburger Menu */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-lg bg-[#2d5a87] hover:bg-[#3d6a97] transition"
-                aria-label="메뉴 열기"
+          {/* Row 2: Banner Image (image only) */}
+          <div className="flex items-center justify-center py-3">
+            <Link href="/" className="flex items-center">
+              <Image
+                src={siteLogoUrl}
+                alt={`${siteName} 배너`}
+                width={240}
+                height={140}
+                className={cn("w-auto object-contain", getLogoSizeClasses(logoSize).mobile)}
+                unoptimized
+              />
+            </Link>
+          </div>
+        </>
+      </div>
+      <div className="md:hidden" style={{ height: mobileHeaderOffset }} aria-hidden />
+
+      {isSearchOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-[70] bg-black/60"
+          onClick={() => setIsSearchOpen(false)}
+        >
+          <div
+            className="absolute left-0 right-0 top-0 mt-16 px-4"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="rounded-2xl bg-white p-4 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-gray-900">검색</div>
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition"
+                  aria-label="검색 닫기"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+              <form
+                action="/search"
+                method="get"
+                className="mt-3"
+                onSubmit={handleMobileSearchSubmit}
               >
-                <Menu className="w-5 h-5 text-white" />
-              </button>
-
-              {/* Center: Search */}
-              <form action="/search" method="get" className="flex-1">
                 <div className="relative">
                   <Input
                     name="q"
                     type="search"
-                    placeholder="검색..."
-                    className="h-8 pl-3 pr-8 bg-white text-gray-900 text-sm placeholder:text-gray-400 border-0 rounded-lg"
+                    placeholder="검색어를 입력하세요"
+                    autoFocus
+                    value={mobileSearchQuery}
+                    onChange={(event) => setMobileSearchQuery(event.target.value)}
+                    className="h-11 pl-4 pr-11 bg-gray-100 text-gray-900 placeholder:text-gray-500 border-0 rounded-xl"
                   />
-                  <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center"
+                    aria-label="검색 실행"
+                  >
+                    <Search className="w-4 h-4 text-gray-600" />
+                  </button>
                 </div>
               </form>
-
-              {/* Right: Login */}
-              {session ? (
-                <Link
-                  href="/profile"
-                  className="text-white text-sm font-medium px-2 truncate max-w-[80px] hover:text-white/80 transition"
-                >
-                  {session.user?.name?.slice(0, 4) || "회원"}
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="text-white text-sm font-semibold whitespace-nowrap px-2 hover:text-white/80 transition"
-                >
-                  로그인
-                </Link>
-              )}
             </div>
-
-            {/* Row 2: Logo (+ Site Name if position is logo) */}
-            <div className="flex items-center justify-center gap-3 py-1 relative">
-              {/* 사이트명 header1일 때 가운데 표시 */}
-              {siteNamePosition === "header1" && (
-                <span className="text-white font-display text-sm tracking-wide absolute left-1/2 -translate-x-1/2 top-1">
-                  {siteName}
-                </span>
-              )}
-              <Link href="/" className={cn(
-                "flex items-center gap-3",
-                siteNamePosition === "header1" && "mt-5"
-              )}>
-                <Image
-                  src={siteLogoUrl}
-                  alt={siteName}
-                  width={200}
-                  height={100}
-                  className={cn("w-auto object-contain", getLogoSizeClasses(logoSize).mobile)}
-                  unoptimized
-                />
-                {siteNamePosition === "logo" && (
-                  <>
-                    <div className="h-10 w-px bg-white/20" />
-                    <span className="text-white font-display text-xl tracking-wide">
-                      {siteName}
-                    </span>
-                  </>
-                )}
-              </Link>
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {isSidebarOpen && (
         <div className="md:hidden fixed inset-0 bg-black/60 z-50" onClick={closeSidebar} />
@@ -779,7 +805,7 @@ export const HeaderClient = ({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={siteLogoUrl}
-              alt={`${siteName} 로고`}
+              alt={`${siteName} 배너`}
               className="h-12 w-auto object-contain"
             />
           </Link>

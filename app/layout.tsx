@@ -68,7 +68,7 @@ export default function RootLayout({
           <ToastProvider>
             <ConfirmProvider>
               <Header />
-              <main className="flex-1 flex flex-col bg-transparent pt-[130px] md:pt-0">
+              <main className="flex-1 flex flex-col bg-transparent pt-0">
                 {children}
               </main>
               <ScrollToTop />

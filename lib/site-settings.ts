@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { HeaderStyle } from "@/lib/header-styles";
 
 export type LogoSize = "small" | "medium" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+export type MobileTopSiteNameSize = "sm" | "md" | "lg";
 export type SiteNamePosition = "logo" | "header1";
 
 export type SiteSettingsSnapshot = {
@@ -18,6 +19,8 @@ export type SiteSettingsSnapshot = {
   hideSearch: boolean;
   logoSize: LogoSize;
   siteNamePosition: SiteNamePosition;
+  showMobileTopSiteName: boolean;
+  showMobileTopSiteNameSize: MobileTopSiteNameSize;
 };
 
 export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
@@ -41,6 +44,13 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
       ? (settings.siteNamePosition as SiteNamePosition)
       : "logo";
 
+  const validMobileTopSiteNameSizes: MobileTopSiteNameSize[] = ["sm", "md", "lg"];
+  const showMobileTopSiteNameSize: MobileTopSiteNameSize =
+    settings?.showMobileTopSiteNameSize &&
+    validMobileTopSiteNameSizes.includes(settings.showMobileTopSiteNameSize as MobileTopSiteNameSize)
+      ? (settings.showMobileTopSiteNameSize as MobileTopSiteNameSize)
+      : "md";
+
   return {
     siteName: settings?.siteName ?? null,
     siteLogoUrl: settings?.siteLogoUrl ?? null,
@@ -53,5 +63,7 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
     hideSearch: settings?.hideSearch ?? false,
     logoSize,
     siteNamePosition,
+    showMobileTopSiteName: settings?.showMobileTopSiteName ?? true,
+    showMobileTopSiteNameSize,
   };
 };

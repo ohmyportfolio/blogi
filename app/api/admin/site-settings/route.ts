@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
     hideSearch,
     logoSize,
     siteNamePosition,
+    showMobileTopSiteName,
+    showMobileTopSiteNameSize,
   } = body;
 
   const data: Record<string, unknown> = {
@@ -54,6 +56,12 @@ export async function POST(req: NextRequest) {
   }
   if (typeof siteNamePosition === "string" && ["logo", "header1"].includes(siteNamePosition)) {
     data.siteNamePosition = siteNamePosition;
+  }
+  if (typeof showMobileTopSiteName === "boolean") {
+    data.showMobileTopSiteName = showMobileTopSiteName;
+  }
+  if (typeof showMobileTopSiteNameSize === "string" && ["sm", "md", "lg"].includes(showMobileTopSiteNameSize)) {
+    data.showMobileTopSiteNameSize = showMobileTopSiteNameSize;
   }
 
   const settings = await prisma.siteSettings.upsert({
