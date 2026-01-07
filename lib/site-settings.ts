@@ -4,6 +4,7 @@ import { HeaderStyle } from "@/lib/header-styles";
 export type LogoSize = "small" | "medium" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
 export type MobileTopSiteNameSize = "sm" | "md" | "lg";
 export type SiteNamePosition = "logo" | "header1";
+export type SplashLogoSize = "small" | "medium" | "large" | "xlarge";
 
 export type SiteSettingsSnapshot = {
   siteName?: string | null;
@@ -21,6 +22,11 @@ export type SiteSettingsSnapshot = {
   siteNamePosition: SiteNamePosition;
   showMobileTopSiteName: boolean;
   showMobileTopSiteNameSize: MobileTopSiteNameSize;
+  // 스플래시 스크린 설정
+  splashEnabled: boolean;
+  splashBackgroundColor: string;
+  splashLogoUrl?: string | null;
+  splashLogoSize: SplashLogoSize;
 };
 
 export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
@@ -65,5 +71,12 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
     siteNamePosition,
     showMobileTopSiteName: settings?.showMobileTopSiteName ?? true,
     showMobileTopSiteNameSize,
+    // 스플래시 스크린 설정
+    splashEnabled: settings?.splashEnabled ?? false,
+    splashBackgroundColor: settings?.splashBackgroundColor ?? "#ffffff",
+    splashLogoUrl: settings?.splashLogoUrl ?? null,
+    splashLogoSize: (["small", "medium", "large", "xlarge"].includes(settings?.splashLogoSize ?? "")
+      ? settings?.splashLogoSize
+      : "medium") as SplashLogoSize,
   };
 };

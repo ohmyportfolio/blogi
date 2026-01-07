@@ -35,8 +35,8 @@ export function ProtectedCategoryLink({
 
   if (variant === "mobile") {
     return (
-      <Link href={href} className="group" onClick={handleClick}>
-        <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+      <Link href={href} className="group block w-full" onClick={handleClick}>
+        <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -61,8 +61,8 @@ export function ProtectedCategoryLink({
 
   // desktop variant
   return (
-    <Link href={href} className="group" onClick={handleClick}>
-      <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+    <Link href={href} className="group block w-full" onClick={handleClick}>
+      <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -113,8 +113,8 @@ export function ProtectedCommunityLink({
 
   if (variant === "mobile") {
     return (
-      <Link href={href} className="group" onClick={handleClick}>
-        <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+      <Link href={href} className="group block w-full" onClick={handleClick}>
+        <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -139,8 +139,8 @@ export function ProtectedCommunityLink({
 
   // desktop variant
   return (
-    <Link href={href} className="group" onClick={handleClick}>
-      <div className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+    <Link href={href} className="group block w-full" onClick={handleClick}>
+      <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}

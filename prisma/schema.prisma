@@ -211,6 +211,11 @@ model SiteSettings {
   // 모바일 상단 사이트명 표시
   showMobileTopSiteName    Boolean @default(true)
   showMobileTopSiteNameSize String  @default("md")
+  // 스플래시 스크린 설정
+  splashEnabled            Boolean @default(false)
+  splashBackgroundColor    String?
+  splashLogoUrl            String?
+  splashLogoSize           String  @default("medium")
 }
 
 model User {

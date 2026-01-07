@@ -60,6 +60,9 @@ export default async function AdminLayout({
                         <Link href="/admin/home-settings" className="block rounded p-2 hover:bg-gray-800">
                             홈 노출 설정
                         </Link>
+                        <Link href="/admin/splash-settings" className="block rounded p-2 hover:bg-gray-800">
+                            스플래시 설정
+                        </Link>
                         <Link href="/admin/footer" className="block rounded p-2 hover:bg-gray-800">
                             푸터 설정
                         </Link>

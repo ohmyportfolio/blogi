@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { SplashScreen } from "@/components/layout/splash-screen";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
@@ -54,11 +55,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getSiteSettings();
+
+  // 스플래시 로고: splashLogoUrl → siteLogoUrl → 기본 로고
+  const splashLogoUrl = settings.splashLogoUrl || settings.siteLogoUrl || "/logo.png";
+
   return (
     <html lang="ko">
       <body
@@ -67,6 +73,12 @@ export default function RootLayout({
         <AuthProvider>
           <ToastProvider>
             <ConfirmProvider>
+              <SplashScreen
+                enabled={settings.splashEnabled}
+                backgroundColor={settings.splashBackgroundColor}
+                logoUrl={splashLogoUrl}
+                logoSize={settings.splashLogoSize}
+              />
               <Header />
               <main className="flex-1 flex flex-col bg-transparent pt-0">
                 {children}
