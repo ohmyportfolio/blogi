@@ -154,7 +154,7 @@ export const Footer = async () => {
         return null;
     }
     return (
-        <footer className="relative overflow-hidden bg-[#0b1320] text-white py-4 md:py-8 border-t border-white/10">
+        <footer className="relative overflow-hidden bg-[#0b1320] text-white py-5 md:py-10 border-t border-white/10">
             <div className="absolute inset-0 bg-[radial-gradient(700px_420px_at_90%_0%,rgba(14,165,166,0.2),transparent_60%)]" />
             <div className="container mx-auto px-4 text-center relative space-y-2 md:space-y-3">
                 {(settings.showTerms || settings.showPrivacy) && (
