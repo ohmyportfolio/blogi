@@ -138,7 +138,7 @@ export const HeaderClient = ({
             : "backdrop-blur-md bg-gray-50/70"
         );
       default: // classic
-        return "relative w-full overflow-hidden bg-[#0b1320] text-white";
+        return "relative z-40 w-full overflow-visible bg-[#0b1320] text-white";
     }
   };
 
@@ -198,7 +198,6 @@ export const HeaderClient = ({
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
-    setOpenCommunityId(null);
   };
 
   // 메뉴는 모두 보이고, 클릭 시 로그인 필요 여부 체크
@@ -334,15 +333,6 @@ export const HeaderClient = ({
           </button>
           {openCommunityId === communityKey && (
             <div className="pb-3">
-              {communityHref && (
-                <Link
-                  href={communityHref}
-                  className="block px-8 py-2 text-sm text-white/70 hover:text-white"
-                  onClick={closeSidebar}
-                >
-                  전체 보기
-                </Link>
-              )}
               {list.length > 0 ? list : (
                 <span className="block px-8 py-2 text-xs text-white/40">게시판 없음</span>
               )}
@@ -361,21 +351,14 @@ export const HeaderClient = ({
         ) : (
           <span className={linkClass}>{label}</span>
         )}
-        <div className="absolute left-0 top-full mt-2 min-w-[180px] rounded-xl border border-black/10 bg-white/95 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
-          {communityHref && (
-            <>
-              <Link
-                href={communityHref}
-                className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-              >
-                전체 보기
-              </Link>
-              <div className="border-t border-black/5" />
-            </>
-          )}
+        {/* 투명한 브릿지 영역으로 메뉴와 드롭다운 연결 */}
+        <div className="absolute left-0 top-full h-2 w-full" />
+        <div className="absolute left-0 top-full z-50 pt-2 min-w-[180px] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
+          <div className="rounded-xl border border-black/10 bg-white/95 shadow-lg overflow-hidden">
           {list.length > 0 ? list : (
             <span className="block px-4 py-3 text-xs text-gray-400">게시판 없음</span>
           )}
+          </div>
         </div>
       </div>
     );
@@ -518,7 +501,7 @@ export const HeaderClient = ({
               </div>
 
               <div className={cn("px-3 py-2", getBentoTileClasses())}>
-                <nav className="flex items-center gap-2 overflow-x-auto overflow-y-hidden pb-1">
+                <nav className="flex items-center gap-2 overflow-x-auto md:overflow-x-visible overflow-y-visible pb-1 scrollbar-hide">
                   {visibleMenuItems.map((route) =>
                     route.linkType === "community"
                       ? renderCommunityMenu(route)
@@ -659,7 +642,7 @@ export const HeaderClient = ({
             </div>
 
             <div className="hidden md:block transition-all duration-300 pb-4">
-              <nav className="flex items-center gap-2 overflow-x-auto overflow-y-hidden pb-1">
+              <nav className="flex items-center gap-2 overflow-x-auto md:overflow-x-visible overflow-y-visible pb-1 scrollbar-hide">
                 {visibleMenuItems.map((route) =>
                   route.linkType === "community"
                     ? renderCommunityMenu(route)

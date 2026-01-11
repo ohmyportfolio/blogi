@@ -10,14 +10,15 @@ import { auth } from "@/auth";
 import { buildContentHref } from "@/lib/contents";
 import { ProtectedCategoryLink, ProtectedCommunityLink } from "@/components/home/protected-category-link";
 import { ProtectedContentCard } from "@/components/home/protected-content-card";
+import { needsAdminSetup } from "@/lib/admin-setup";
 
 // 항상 동적으로 렌더링 (사용자 수 체크를 위해)
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   // 초기 설정이 필요한지 확인
-  const userCount = await prisma.user.count();
-  if (userCount === 0) {
+  const needsSetup = await needsAdminSetup();
+  if (needsSetup) {
     redirect("/setup");
   }
 

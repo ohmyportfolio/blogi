@@ -3,7 +3,7 @@ module.exports = {
     {
       name: process.env.PM2_APP_NAME || "blogi",
       script: "node_modules/.bin/next",
-      args: `start -p ${process.env.PORT || 3000}`,
+      args: `start -p ${process.env.PORT || 3010}`,
       cwd: process.env.APP_CWD || __dirname,
       kill_timeout: 5000,
       autorestart: true,

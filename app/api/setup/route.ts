@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { needsAdminSetup } from "@/lib/admin-setup";
 
 export async function GET() {
-    const userCount = await prisma.user.count();
-    return NextResponse.json({ needsSetup: userCount === 0 });
+    const needsSetup = await needsAdminSetup();
+    return NextResponse.json({ needsSetup });
 }

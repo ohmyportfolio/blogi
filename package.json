@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "prisma generate && next dev",
+    "dev": "prisma generate && next dev -p 3010",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "next start -p 3010",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",
+    "db:seed": "npx prisma db seed",
     "content:backfill-html": "tsx scripts/backfill-html-content.ts"
   },
   "dependencies": {

@@ -76,7 +76,7 @@ IMAGE_REMOTE_HOST="your-domain.com"
 
 ```bash
 export PM2_APP_NAME=blogi
-export PORT=3000
+export PORT=3010
 export APP_CWD=/path/to/blogi
 
 pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env

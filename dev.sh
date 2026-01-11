@@ -44,7 +44,7 @@ get_env_value() {
 
 print_connection_info() {
   local port database_url auth_url site_url uploads_dir uploads_url
-  port="${PORT:-3000}"
+  port="${PORT:-3010}"
   database_url="$(get_env_value "DATABASE_URL" "$ENV_FILE")"
   auth_url="$(get_env_value "AUTH_URL" "$ENV_FILE")"
   site_url="$(get_env_value "SITE_URL" "$ENV_FILE")"

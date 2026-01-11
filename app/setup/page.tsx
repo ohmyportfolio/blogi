@@ -85,7 +85,7 @@ export default function SetupPage() {
                 <div className="bg-white py-8 px-6 shadow rounded-lg">
                     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-sm text-blue-800">
-                            첫 번째로 생성되는 계정은 자동으로 관리자 권한이 부여됩니다.
+                            관리자 계정이 없으면 이 계정이 자동으로 관리자 권한으로 생성됩니다.
                         </p>
                     </div>
 
