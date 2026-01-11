@@ -171,3 +171,7 @@ Next.js가 모든 `/uploads/...` 요청을 직접 처리합니다.
 
 - 개발/운영 모두 동일한 `UPLOADS_URL`(`/uploads`) 사용 가능
 - 배포 방식: `next start`
+
+## 9) 운영 메모
+
+- `public/images` 정리 전 백업: `~\/public-images-20260111144924/`
