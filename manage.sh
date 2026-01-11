@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="danang-vip"
-PORT="${PORT:-3010}"
+APP_NAME="${APP_NAME:-blogi}"
+PORT="${PORT:-3000}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PM2_CONFIG="$ROOT_DIR/ecosystem.config.cjs"
 

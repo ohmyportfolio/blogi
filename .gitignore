@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -44,8 +45,6 @@ next-env.d.ts
 /data
 init.sql
 *.db
-/public/uploads
-/public/images/stock-*
-# 랜딩 이미지는 git에 포함 (! 으로 제외 해제)
-!/public/images/landing
 uploads/
+.dev.pid
+.dev.log

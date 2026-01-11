@@ -25,14 +25,13 @@ export type MenuItemData = {
 };
 
 export const DEFAULT_MAIN_MENU: MenuItemData[] = [
-  { label: "카지노", href: "/contents/casino", order: 1, linkType: "category" },
-  { label: "다낭 유흥", href: "/contents/nightlife", order: 2, linkType: "category" },
-  { label: "프로모션", href: "/contents/promotion", order: 3, linkType: "category" },
-  { label: "VIP 여행", href: "/contents/vip-trip", order: 4, requiresAuth: true, linkType: "category" },
-  { label: "여행 TIP", href: "/contents/tip", order: 5, linkType: "category" },
-  { label: "호텔 & 풀빌라", href: "/contents/hotel-villa", order: 6, linkType: "category" },
-  { label: "골프 & 레저", href: "/contents/golf", order: 7, linkType: "category" },
-  { label: "커뮤니티", href: "/community/community-1", order: 8, linkType: "community" },
+  { label: "블로그", href: "/contents/blog", order: 1, linkType: "category" },
+  { label: "뉴스", href: "/contents/news", order: 2, linkType: "category" },
+  { label: "튜토리얼", href: "/contents/tutorials", order: 3, linkType: "category" },
+  { label: "리소스", href: "/contents/resources", order: 4, linkType: "category" },
+  { label: "쇼케이스", href: "/contents/showcase", order: 5, linkType: "category" },
+  { label: "공지", href: "/contents/notice", order: 6, linkType: "category" },
+  { label: "커뮤니티", href: "/community/community-1", order: 7, linkType: "community" },
 ];
 
 

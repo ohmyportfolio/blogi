@@ -4,15 +4,13 @@
 
 ## 환경 정보
 
-### 현재 환경: 운영 (Production)
+### 현재 환경: 로컬 개발 (기본)
 
-- **서버**: 103.167.151.104
-- **프로젝트 경로**: `/projects/danang-vip`
-- **도메인**: https://gc.lumejs.com
-- **포트**: 3010
-- **프로세스 매니저**: PM2
+- **프로젝트 경로**: 로컬 워크스페이스
+- **기본 포트**: 3000
+- **PM2 앱 이름**: `blogi`
 
-> **중요**: 이 서버는 **운영 환경**입니다. 코드 변경 시 주의가 필요합니다.
+> 운영 환경으로 배포할 경우, `PM2_APP_NAME`, `PORT`, `APP_CWD`를 환경변수로 지정하세요.
 
 ---
 
@@ -39,24 +37,21 @@
 npm run build
 
 # 빌드 성공 시 PM2 재시작
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save
 ```
 
 ### 2. 환경변수 변경 시
 
 `.env` 파일 수정 후:
 1. `npm run build` 재실행 (Next.js는 빌드 시점에 환경변수 로드)
-2. `pm2 delete danang-vip && pm2 start ecosystem.config.cjs` (PM2 환경변수 새로 로드)
+2. `pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env` (PM2 환경변수 새로 로드)
 
 ### 3. DB 스키마 변경 시
 
 **⚠️ Shadow Database 권한 문제 해결**
 
-이 프로젝트는 운영 DB를 사용하며 shadow database 생성 권한이 없습니다.
-
-**해결 방법**:
-1. `.env`에 `SHADOW_DATABASE_URL` 추가 (별도 DB 사용 시)
-2. 또는 수동 마이그레이션:
+권한 제한이 있는 운영 DB에서는 shadow database 생성이 실패할 수 있습니다.
+필요 시 `SHADOW_DATABASE_URL`을 별도 DB로 지정하거나 수동 마이그레이션을 사용합니다.
 
 ```bash
 # 1. schema.prisma 수정
@@ -73,19 +68,12 @@ npx prisma migrate resolve --applied [마이그레이션_폴더명]
 npx prisma generate
 ```
 
-**정상 작동 시**:
-```bash
-npx prisma migrate dev --name "변경_설명"
-# 또는 운영 환경에서
-npm run db:deploy
-```
-
 ### 4. 커밋 전 체크리스트
 
 - [ ] `npm run build` 성공 확인
 - [ ] 타입 에러 없음
 - [ ] PM2 재시작 후 정상 동작 확인
-- [ ] `pm2 logs danang-vip`에서 에러 없음
+- [ ] `pm2 logs blogi`에서 에러 없음
 
 ---
 
@@ -94,10 +82,10 @@ npm run db:deploy
 ### PM2
 ```bash
 pm2 list                    # 상태 확인
-pm2 logs danang-vip         # 로그 확인
-pm2 logs danang-vip --lines 50  # 최근 50줄
-pm2 restart danang-vip      # 재시작 (환경변수 유지)
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs  # 완전 재시작
+pm2 logs blogi              # 로그 확인
+pm2 logs blogi --lines 50   # 최근 50줄
+pm2 restart blogi           # 재시작 (환경변수 유지)
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env  # 완전 재시작
 ```
 
 ### Git
@@ -109,7 +97,7 @@ git add -A && git commit -m "메시지" && git push
 ### Prisma
 ```bash
 npx prisma generate         # 클라이언트 생성
-npx prisma studio           # DB GUI
+npx prisma studio           # DB GUI (localhost:5555)
 npm run db:deploy           # 마이그레이션 적용
 ```
 
@@ -128,22 +116,19 @@ npm run db:deploy           # 마이그레이션 적용
 `.env`에 다음 추가:
 ```env
 AUTH_TRUST_HOST=true
-AUTH_URL="https://gc.lumejs.com"
+AUTH_URL="https://your-domain.com"
+SITE_URL="https://your-domain.com"
 ```
 이후 재빌드 및 PM2 재시작
 
 ### PM2 환경변수 미적용
 
-**증상**: `.env` 변경했는데 적용 안됨
-
 **해결**: `pm2 restart`가 아닌 아래 명령 사용:
 ```bash
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save
 ```
 
 ### useSearchParams Suspense 에러
-
-**증상**: 빌드 시 Suspense boundary 에러
 
 **해결**: `useSearchParams()`를 사용하는 컴포넌트를 `<Suspense>`로 감싸기
 
@@ -153,7 +138,7 @@ pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
 
 - Next.js 16.1.0 (App Router)
 - TypeScript
-- PostgreSQL 17 + Prisma ORM
+- PostgreSQL + Prisma ORM
 - NextAuth.js v5 (Auth.js)
 - Tailwind CSS
 - Lexical Editor
@@ -185,3 +170,10 @@ prisma/
 ├── schema.prisma   # DB 스키마
 └── migrations/     # 마이그레이션 파일
 ```
+
+---
+
+## 셋업 메모 (2026-01-11)
+
+- `postgres:18`부터는 `/var/lib/postgresql` 마운트가 필요함. `/var/lib/postgresql/data`로 마운트하면 컨테이너가 부팅 실패.
+- 5432 포트를 사용 중이던 기존 PostgreSQL 컨테이너를 먼저 중지해야 했음.

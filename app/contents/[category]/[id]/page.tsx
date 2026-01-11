@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: ContentDetailPageProps): Prom
       settings.ogImageUrl ||
       settings.siteBannerUrl ||
       settings.siteLogoUrl ||
-      "/logo.png";
+      "/default-logo.svg";
     const canonicalPath = buildContentHref(
         content.categoryRef?.slug ?? category,
         content.id

@@ -1,14 +1,16 @@
 module.exports = {
-  apps: [{
-    name: 'danang-vip',
-    script: 'node_modules/.bin/next',
-    args: 'start -p 3010',
-    cwd: '/projects/danang-vip',
-    kill_timeout: 5000,
-    autorestart: true,
-    env: {
-      NODE_ENV: 'production',
-      HOSTNAME: '0.0.0.0'
-    }
-  }]
+  apps: [
+    {
+      name: process.env.PM2_APP_NAME || "blogi",
+      script: "node_modules/.bin/next",
+      args: `start -p ${process.env.PORT || 3000}`,
+      cwd: process.env.APP_CWD || __dirname,
+      kill_timeout: 5000,
+      autorestart: true,
+      env: {
+        NODE_ENV: "production",
+        HOSTNAME: "0.0.0.0",
+      },
+    },
+  ],
 };

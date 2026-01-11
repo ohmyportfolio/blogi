@@ -1214,7 +1214,7 @@ export function RichTextEditor({
 
   const initialConfig = useMemo(
     () => ({
-      namespace: "danang-editor",
+      namespace: "blogi-editor",
       theme: lexicalTheme,
       nodes: [
         HeadingNode,

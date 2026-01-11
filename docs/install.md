@@ -1,6 +1,6 @@
 # 프로젝트 설치 및 운영 셋업
 
-이 문서는 현재 프로젝트의 개발/운영 셋업에 필요한 최소 정보를 정리합니다.
+이 문서는 Blogi의 개발/운영 셋업에 필요한 최소 정보를 정리합니다.
 
 ## 1) 공통 환경 변수
 
@@ -14,97 +14,81 @@
 
 ## 2) 개발 환경 (로컬)
 
-### PostgreSQL 준비
+### PostgreSQL (Docker)
 
-로컬 PostgreSQL에서 아래 계정/DB를 사용합니다.
+```bash
+# 5432 포트가 이미 사용 중이면 기존 컨테이너를 중지하세요.
+# 예: docker stop <container_name>
 
-- 사용자: `danang_vip_user`
-- 데이터베이스: `danang_vip`
-- 포트: `5432`
-
-예시 SQL:
-
-```sql
-CREATE ROLE danang_vip_user LOGIN PASSWORD '<PASSWORD>';
-CREATE DATABASE danang_vip OWNER danang_vip_user;
+docker run -d \
+  --name postgres-18 \
+  -e POSTGRES_USER=blogi \
+  -e POSTGRES_PASSWORD='blogi1234!' \
+  -e POSTGRES_DB=blogi \
+  -p 5432:5432 \
+  -v postgres-18-data:/var/lib/postgresql \
+  postgres:18
 ```
 
 ### 기본 동작
 
-개발 환경에서는 기본적으로 `public/uploads`에 파일이 저장됩니다.
+개발 환경에서는 기본적으로 `./uploads`에 파일이 저장됩니다.
 `UPLOADS_DIR`와 `UPLOADS_URL`을 설정하지 않으면 아래 값이 사용됩니다.
 
-- `UPLOADS_DIR=./public/uploads`
+- `UPLOADS_DIR=./uploads`
 - `UPLOADS_URL=/uploads`
 
 ### 개발 서버 실행
 
 ```bash
 npm install
-npm run db:migrate
+npx prisma migrate dev --name init
 npm run dev
 ```
 
-## 3) 운영 환경 (gc.lumejs.com)
+## 3) 운영 환경 (일반)
 
 ### 배포 방식
 
 - **실행 방식**: `next start` (PM2로 관리)
 - **파일 서빙**: Next.js가 직접 처리 (`app/uploads/[[...path]]/route.ts`)
-- **Nginx 역할**: SSL 종료, 리버스 프록시만 담당
-
-### 현재 운영 설정
-
-| 항목 | 값 |
-|------|-----|
-| 업로드 저장 경로 | `/data/danang-vip/uploads` (NFS 마운트) |
-| 업로드 URL | `/uploads` |
-| PM2 앱 이름 | `danang-vip` |
-| 포트 | 3010 |
+- **리버스 프록시**: Nginx/Traefik 등 자유롭게 선택
 
 ### 운영 환경 변수 (.env)
 
 ```env
-DATABASE_URL="postgresql://danang_vip_user:<PASSWORD>@localhost:5432/danang_vip?schema=public"
-AUTH_SECRET="<운영용 시크릿 키>"
+DATABASE_URL="postgresql://blogi:<PASSWORD>@localhost:5432/blogi?schema=public"
+AUTH_SECRET="<production-secret>"
 AUTH_TRUST_HOST=true
-AUTH_URL="https://gc.lumejs.com"
+AUTH_URL="https://your-domain.com"
+SITE_URL="https://your-domain.com"
 
 # Uploads
-UPLOADS_DIR=/data/danang-vip/uploads
+UPLOADS_DIR=/data/blogi/uploads
 UPLOADS_URL=/uploads
 
-# Pexels
-PEXELS_API_KEY="<API 키>"
-IMAGE_REMOTE_HOST="gc.lumejs.com"
+# Pexels (optional)
+PEXELS_API_KEY="<API KEY>"
+IMAGE_REMOTE_HOST="your-domain.com"
 ```
 
-### Nginx 설정 (SSL/프록시 전용)
+### PM2 실행
 
-파일: `/etc/nginx/sites-available/gc.lumejs.com`
+```bash
+export PM2_APP_NAME=blogi
+export PORT=3000
+export APP_CWD=/path/to/blogi
 
-```nginx
-server {
-    server_name gc.lumejs.com;
-    client_max_body_size 10M;
-
-    location / {
-        proxy_pass http://localhost:3010;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env
+pm2 save
 ```
 
 ### 디렉토리 권한
 
-앱 서버(PM2)가 `/data/danang-vip/uploads` 경로에 쓰기 권한을 가져야 합니다.
+앱 서버(PM2)가 `/data/blogi/uploads` 경로에 쓰기 권한을 가져야 합니다.
 
 ```bash
-chmod -R 755 /data/danang-vip/uploads
+chmod -R 755 /data/blogi/uploads
 ```
 
 ## 4) 업로드 동작 확인
@@ -117,7 +101,7 @@ chmod -R 755 /data/danang-vip/uploads
 클라이언트에서 서버 업로드 파일을 내려받아 동기화할 때는 아래 스크립트를 사용합니다.
 
 - 스크립트: `scripts/sync-uploads.sh`
-- 운영 서버 경로: `/data/danang-vip/uploads`
+- 운영 서버 경로: `/data/blogi/uploads`
 - 로컬 경로: `./uploads`
 
 사용 방법:
@@ -145,14 +129,12 @@ chmod -R 755 /data/danang-vip/uploads
 
 ## 5) 운영 체크리스트
 
-- [ ] `/data/danang-vip/uploads` 디렉토리 생성 및 권한 확인 (`chmod 755`)
-- [ ] `.env`에 `UPLOADS_DIR=/data/danang-vip/uploads` 설정
-- [ ] Nginx `client_max_body_size 10M` 설정
-- [ ] `nginx -t && systemctl reload nginx`
+- [ ] `/data/blogi/uploads` 디렉토리 생성 및 권한 확인 (`chmod 755`)
+- [ ] `.env`에 `UPLOADS_DIR=/data/blogi/uploads` 설정
 - [ ] `npm run build`
-- [ ] `pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save`
+- [ ] `pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save`
 - [ ] 파일 업로드 테스트
-- [ ] 업로드 후 `/data/danang-vip/uploads/`에 파일 저장 확인
+- [ ] 업로드 후 `/data/blogi/uploads/`에 파일 저장 확인
 
 ## 6) Next.js 이미지 최적화 설정
 
@@ -182,20 +164,10 @@ Next.js가 모든 `/uploads/...` 요청을 직접 처리합니다.
 
 - `app/uploads/[[...path]]/route.ts` - 파일 서빙 담당
 - `UPLOADS_DIR` 환경변수 경로에서 파일을 읽어서 응답
-- Nginx 없이도 완전히 독립적으로 동작
 
-### Nginx 역할
-
-| 역할 | 설명 |
-|------|------|
-| SSL 종료 | HTTPS 인증서 처리 |
-| 리버스 프록시 | localhost:3010으로 요청 전달 |
-| 업로드 크기 제한 | `client_max_body_size 10M` |
-
-**파일 서빙은 Next.js가 담당하므로 Nginx alias 설정 불필요**
+---
 
 ## 8) 참고
 
-- 개발/운영 모두 동일한 `UPLOADS_URL`(`/uploads`)을 사용
-- 모든 요청은 Next.js가 처리 (Nginx 의존성 없음)
-- 배포 방식: `next start` (standalone 모드 사용 안함)
+- 개발/운영 모두 동일한 `UPLOADS_URL`(`/uploads`) 사용 가능
+- 배포 방식: `next start`

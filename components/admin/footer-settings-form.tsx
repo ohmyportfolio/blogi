@@ -244,7 +244,7 @@ export const FooterSettingsForm = ({ initialData }: FooterSettingsFormProps) => 
           <Input
             value={copyrightText}
             onChange={(event) => setCopyrightText(event.target.value)}
-            placeholder="예) Copyright © Danang VIP Tour. All rights reserved."
+            placeholder="예) Copyright © Blogi. All rights reserved."
             disabled={isPending}
             className="bg-white"
           />

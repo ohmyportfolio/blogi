@@ -4,10 +4,10 @@ set -euo pipefail
 # Client-side sync for server uploads.
 # Update SERVER_USER or REMOTE_UPLOADS_DIR if your environment differs.
 
-SERVER_HOST="${SERVER_HOST:-103.167.151.104}"
+SERVER_HOST="${SERVER_HOST:-your-server-host}"
 SERVER_PORT="${SERVER_PORT:-22}"
 SERVER_USER="${SERVER_USER:-root}"
-REMOTE_UPLOADS_DIR="${REMOTE_UPLOADS_DIR:-/data/danang-vip/uploads}"
+REMOTE_UPLOADS_DIR="${REMOTE_UPLOADS_DIR:-/data/blogi/uploads}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_DIR="${LOCAL_DIR:-${SCRIPT_DIR}/../uploads}"
 ENV_FILE="${ENV_FILE:-${SCRIPT_DIR}/../.env}"

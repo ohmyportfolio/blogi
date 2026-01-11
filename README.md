@@ -1,217 +1,91 @@
-# Danang VIP
+# Blogi
 
-Next.js 커뮤니티 플랫폼
+노코드 블로그형 웹사이트 제작도구 플랫폼.
 
-## Production URL
+## Quick Start (Local)
 
-https://gc.lumejs.com
-
-## Tech Stack
-
-- **Framework**: Next.js 16.1.0
-- **Database**: PostgreSQL 17 + Prisma ORM
-- **Authentication**: NextAuth.js (Auth.js v5)
-- **Styling**: Tailwind CSS
-- **Editor**: Lexical Rich Text Editor
-- **Process Manager**: PM2
-
----
-
-## 환경 구분
-
-| 환경 | 서버 | 포트 | URL |
-|------|------|------|-----|
-| **운영(Production)** | 103.167.151.104 | 3010 | https://gc.lumejs.com |
-| **개발(Development)** | localhost | 3000 | http://localhost:3000 |
-
----
-
-## 운영 환경 (Production)
-
-### 현재 서버 정보
-
-- **서버 IP**: 103.167.151.104
-- **프로젝트 경로**: `/projects/danang-vip`
-- **Node.js**: v22.17.0
-- **PM2 앱 이름**: `danang-vip`
-- **포트**: 3010
-
-### 필수 환경변수 (.env)
-
-```env
-# Database
-DATABASE_URL="postgresql://danang_vip_user:danang_vip@localhost:5432/danang_vip?schema=public"
-
-# NextAuth (중요!)
-AUTH_SECRET="your-secret-key"
-AUTH_TRUST_HOST=true
-AUTH_URL="https://gc.lumejs.com"
-
-# Pexels API
-PEXELS_API_KEY="your-pexels-api-key"
-```
-
-> **주의**: `AUTH_TRUST_HOST=true`와 `AUTH_URL`이 없으면 "UntrustedHost" 에러 발생!
-
-### PM2 관리 명령어
+### 1) PostgreSQL (Docker)
 
 ```bash
-# 상태 확인
-pm2 list
-pm2 show danang-vip
+# 기존 5432 포트를 사용하는 컨테이너가 있으면 먼저 중지
+# 예: docker stop <container_name>
 
-# 로그 확인
-pm2 logs danang-vip
-pm2 logs danang-vip --lines 50
-
-# 재시작 (환경변수 변경 없을 때)
-pm2 restart danang-vip
-
-# 완전 재시작 (환경변수 변경 시 - 권장)
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
-
-# 저장 (서버 재부팅 시 자동 시작)
-pm2 save
-pm2 startup
+docker run -d \
+  --name postgres-18 \
+  -e POSTGRES_USER=blogi \
+  -e POSTGRES_PASSWORD='blogi1234!' \
+  -e POSTGRES_DB=blogi \
+  -p 5432:5432 \
+  -v postgres-18-data:/var/lib/postgresql \
+  postgres:18
 ```
 
-### 배포 절차
+### 2) 환경 변수
 
 ```bash
-# 1. 코드 풀
-git pull
+cp .env.example .env
+```
 
-# 2. 의존성 설치 (package.json 변경 시)
+### 3) 설치 및 마이그레이션
+
+```bash
 npm install
-
-# 3. Prisma 클라이언트 생성 (스키마 변경 시)
-npx prisma generate
-
-# 4. DB 마이그레이션 (스키마 변경 시)
-npm run db:deploy
-
-# 5. 빌드
-npm run build
-
-# 6. PM2 재시작
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
-```
-
-### 자주 발생하는 문제
-
-#### 1. AuthJS "UntrustedHost" 에러
-```
-[auth][error] UntrustedHost: Host must be trusted
-```
-**해결**: `.env`에 `AUTH_TRUST_HOST=true` 추가 후 재빌드 & PM2 재시작
-
-#### 2. PM2 환경변수 미적용
-**해결**: `pm2 restart`가 아닌 `pm2 delete && pm2 start ecosystem.config.cjs` 사용
-
-#### 3. 빌드 후에도 변경 미적용
-**원인**: Next.js는 빌드 시점에 환경변수를 읽음
-**해결**: `.env` 변경 후 반드시 `npm run build` 재실행
-
----
-
-## 개발 환경 (Development)
-
-### 로컬 설정
-
-```bash
-# 의존성 설치
-npm install
-
-# Prisma 클라이언트 생성
-npx prisma generate
-
-# 개발 서버 실행
+npx prisma migrate dev --name init
 npm run dev
 ```
 
-http://localhost:3000 에서 확인
+http://localhost:3000
 
-### 개발용 환경변수 (.env)
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16.1.0 (App Router)
+- **Database**: PostgreSQL + Prisma ORM
+- **Authentication**: NextAuth.js (Auth.js v5)
+- **Styling**: Tailwind CSS
+- **Editor**: Lexical Rich Text Editor
+
+---
+
+## 환경 변수 요약
 
 ```env
-DATABASE_URL="postgresql://danang_vip_user:danang_vip@localhost:5432/danang_vip?schema=public"
-AUTH_SECRET="dev-secret-key"
+DATABASE_URL="postgresql://blogi:blogi1234!@localhost:5432/blogi?schema=public"
+AUTH_SECRET="change-me"
+AUTH_TRUST_HOST=true
+AUTH_URL="http://localhost:3000"
+SITE_URL="http://localhost:3000"
+UPLOADS_DIR="./uploads"
+UPLOADS_URL="/uploads"
+IMAGE_REMOTE_HOST="localhost"
 ```
 
-### DB 관련 명령어
+---
+
+## 배포 (PM2)
 
 ```bash
-# 마이그레이션 생성 (개발)
-npm run db:migrate
-
-# 마이그레이션 적용 (운영)
-npm run db:deploy
-
-# Prisma Studio (DB GUI)
-npx prisma studio
+npm run build
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env
+pm2 save
 ```
+
+- `ecosystem.config.cjs`는 `PM2_APP_NAME`, `PORT`, `APP_CWD` 환경변수를 지원합니다.
+- 배포 업데이트 스크립트: `./update.sh`
+- 관리 스크립트: `./manage.sh start|stop|restart|log|status`
 
 ---
 
-## 프로젝트 구조
+## 업로드
 
-```
-/projects/danang-vip
-├── app/                    # Next.js App Router 페이지
-│   ├── admin/              # 관리자 페이지
-│   ├── api/                # API 라우트
-│   ├── community/          # 커뮤니티 페이지
-│   └── contents/           # 콘텐츠 페이지
-├── components/             # React 컴포넌트
-│   ├── admin/              # 관리자 컴포넌트
-│   ├── layout/             # 레이아웃 컴포넌트
-│   └── ui/                 # UI 컴포넌트
-├── lib/                    # 유틸리티 함수
-├── prisma/                 # DB 스키마 & 마이그레이션
-├── public/                 # 정적 파일
-├── actions/                # Server Actions
-├── ecosystem.config.cjs    # PM2 설정 파일
-└── .env                    # 환경변수 (gitignore)
-```
+- 기본 저장 경로: `./uploads`
+- URL 프리픽스: `/uploads`
+
+Next.js가 `/uploads/...` 요청을 직접 처리합니다.
 
 ---
 
-## 업로드 설정
+## 문서
 
-### 환경변수
-
-```env
-# 업로드 파일 저장 경로 (기본값: ./uploads)
-UPLOADS_DIR=/data/danang-vip/uploads
-
-# 업로드 URL 프리픽스 (기본값: /uploads)
-UPLOADS_URL=/uploads
-```
-
-### Nginx 설정 (SSL/프록시 전용)
-
-Nginx는 SSL 종료와 프록시 역할만 담당합니다. 파일 서빙은 Next.js가 직접 처리합니다.
-
-파일: `/etc/nginx/sites-available/gc.lumejs.com`
-
-```nginx
-server {
-    server_name gc.lumejs.com;
-    client_max_body_size 10M;
-
-    location / {
-        proxy_pass http://localhost:3010;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
----
-
-## 상세 문서
-
-- [설치 및 운영 가이드](docs/install.md) - 환경 설정, 업로드 설정, 체크리스트
+- [설치/운영 가이드](docs/install.md)

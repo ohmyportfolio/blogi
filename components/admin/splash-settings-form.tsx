@@ -88,7 +88,7 @@ export const SplashSettingsForm = ({ initialData }: SplashSettingsFormProps) => 
     });
   };
 
-  const effectiveLogoUrl = splashLogoUrl || initialData.siteLogoUrl || "/logo.png";
+  const effectiveLogoUrl = splashLogoUrl || initialData.siteLogoUrl || "/default-logo.svg";
 
   const SaveButton = () => (
     <Button type="submit" disabled={isPending}>

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="danang-vip"
-PORT="${PORT:-3010}"
+APP_NAME="${APP_NAME:-blogi}"
+PORT="${PORT:-3000}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PM2_CONFIG="$ROOT_DIR/ecosystem.config.cjs"
 
@@ -36,12 +36,25 @@ ensure_app_running() {
 }
 
 port_listening() {
-  if command -v rg >/dev/null 2>&1; then
-    ss -lptn | rg -q ":${PORT}\\b"
+  if command -v ss >/dev/null 2>&1; then
+    if command -v rg >/dev/null 2>&1; then
+      ss -lptn | rg -q ":${PORT}\\b"
+      return $?
+    fi
+    ss -lptn | grep -q ":${PORT}[[:space:]]"
     return $?
   fi
 
-  ss -lptn | grep -q ":${PORT}[[:space:]]"
+  if command -v lsof >/dev/null 2>&1; then
+    if command -v rg >/dev/null 2>&1; then
+      lsof -iTCP -sTCP:LISTEN -nP | rg -q ":${PORT}\\b"
+      return $?
+    fi
+    lsof -iTCP -sTCP:LISTEN -nP | grep -q ":${PORT}[[:space:]]"
+    return $?
+  fi
+
+  return 0
 }
 
 ensure_pm2

@@ -32,22 +32,19 @@ AI 에이전트가 이 프로젝트에서 작업할 때 따라야 할 규칙과 
 
 ## 환경 인식
 
-### 현재 환경: 운영 (Production)
+### 현재 환경: 로컬 개발 (기본)
 
 | 항목 | 값 |
 |------|-----|
-| 환경 | **운영 (Production)** |
-| 서버 | 103.167.151.104 |
-| 경로 | /projects/danang-vip |
-| 도메인 | https://gc.lumejs.com |
-| 포트 | 3010 |
-| PM2 앱 | danang-vip |
+| 환경 | 로컬 개발 |
+| 포트 | 3000 |
+| PM2 앱 | blogi |
 
 ---
 
 ## 작업 규칙
 
-### 운영 환경에서의 규칙
+### 공통 규칙
 
 1. **코드 변경 시 반드시 빌드 테스트**
    ```bash
@@ -56,9 +53,9 @@ AI 에이전트가 이 프로젝트에서 작업할 때 따라야 할 규칙과 
 
 2. **빌드 성공 후에만 커밋/푸시**
 
-3. **PM2 재시작 필수** (코드 변경 배포 시)
+3. **PM2 재시작 필수** (배포 시)
    ```bash
-   pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
+   pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save
    ```
 
 4. **환경변수(.env) 변경 시**
@@ -78,21 +75,22 @@ AI 에이전트가 이 프로젝트에서 작업할 때 따라야 할 규칙과 
 
 - [ ] `npm run build` 성공
 - [ ] `git add -A && git commit && git push`
-- [ ] `pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save`
-- [ ] `pm2 logs danang-vip` 에러 확인
+- [ ] `pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save`
+- [ ] `pm2 logs blogi` 에러 확인
 
 ### 환경변수 변경
 
 - [ ] `.env` 수정
 - [ ] `npm run build` (재빌드 필수!)
-- [ ] `pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save`
+- [ ] `pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save`
 - [ ] 기능 테스트
 
 ### DB 스키마 변경
 
 **⚠️ Shadow Database 권한 이슈**
 
-이 프로젝트는 운영 DB를 직접 사용하므로 shadow database 생성 권한이 없습니다.
+운영 DB가 권한 제한인 경우 shadow database 생성이 실패할 수 있습니다.
+필요 시 `SHADOW_DATABASE_URL`을 별도 DB로 지정하거나, 수동 마이그레이션을 사용합니다.
 
 **수동 마이그레이션 절차**:
 ```bash
@@ -109,13 +107,6 @@ npx prisma migrate resolve --applied [마이그레이션_폴더명]
 # 5. Prisma Client 재생성
 npx prisma generate
 ```
-
-**정상 작동 체크리스트**:
-- [ ] `prisma/schema.prisma` 수정
-- [ ] 마이그레이션 생성 (`npx prisma migrate dev` 또는 수동)
-- [ ] `npx prisma generate`
-- [ ] `npm run build`
-- [ ] PM2 재시작
 
 ---
 
@@ -186,11 +177,12 @@ const MyComponent = () => {
 ```bash
 # .env에 추가
 AUTH_TRUST_HOST=true
-AUTH_URL="https://gc.lumejs.com"
+AUTH_URL="https://your-domain.com"
+SITE_URL="https://your-domain.com"
 
 # 재빌드 & 재시작
 npm run build
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs && pm2 save
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env && pm2 save
 ```
 
 ### 2. Prisma Shadow Database 에러
@@ -203,12 +195,7 @@ Please make sure the database user has permission to create databases.
 
 **원인**: 운영 DB 권한으로 shadow database 생성 불가
 
-**해결**: 수동 마이그레이션 (위의 "DB 스키마 변경" 섹션 참조)
-
-또는 `.env`에 별도 shadow DB 추가:
-```bash
-SHADOW_DATABASE_URL="postgresql://user:pass@host:port/shadow_db"
-```
+**해결**: 수동 마이그레이션 또는 `SHADOW_DATABASE_URL` 지정
 
 ### 3. Suspense boundary 에러
 
@@ -217,30 +204,6 @@ useSearchParams() should be wrapped in a suspense boundary
 ```
 
 **해결**: 컴포넌트를 `<Suspense>`로 감싸기
-
-```tsx
-import { Suspense } from "react";
-
-function MyComponent() {
-  const searchParams = useSearchParams();
-  // ...
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <MyComponent />
-    </Suspense>
-  );
-}
-```
-
-### 4. 타입 에러
-
-**빌드 전에 항상 타입 체크**:
-```bash
-npm run build
-```
 
 ---
 
@@ -251,15 +214,15 @@ npm run build
 ```bash
 # 상태
 pm2 list
-pm2 show danang-vip
+pm2 show blogi
 
 # 로그
-pm2 logs danang-vip
-pm2 logs danang-vip --lines 50 --nostream
+pm2 logs blogi
+pm2 logs blogi --lines 50 --nostream
 
 # 재시작
-pm2 restart danang-vip                    # 단순 재시작
-pm2 delete danang-vip && pm2 start ecosystem.config.cjs  # 환경변수 새로 로드
+pm2 restart blogi                    # 단순 재시작
+pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env  # 환경변수 새로 로드
 
 # 저장
 pm2 save
@@ -293,24 +256,12 @@ npm run dev              # 개발 서버 (포트 3000)
 
 ---
 
-## 환경별 차이
-
-| 항목 | 개발 | 운영 |
-|------|------|------|
-| 서버 | localhost | 103.167.151.104 |
-| 포트 | 3000 | 3010 |
-| 명령어 | `npm run dev` | PM2 |
-| DB 마이그레이션 | `npm run db:migrate` | `npm run db:deploy` |
-| AUTH_TRUST_HOST | 불필요 | **필수** |
-| AUTH_URL | 불필요 | **필수** |
-
----
-
 ## 중요 파일
 
 | 파일 | 설명 |
 |------|------|
 | `.env` | 환경변수 (gitignore) |
+| `.env.example` | 환경변수 템플릿 |
 | `ecosystem.config.cjs` | PM2 설정 |
 | `prisma/schema.prisma` | DB 스키마 |
 | `auth.ts` | NextAuth 설정 |
@@ -324,4 +275,11 @@ npm run dev              # 개발 서버 (포트 3000)
 - 설치 관련 메모 사항은 `docs/install.md`에 작성합니다.
 
 ### Prisma Studio
-- http://localhost:5556/
+- http://localhost:5555/
+
+---
+
+## 셋업 메모 (2026-01-11)
+
+- `postgres:18`부터는 `/var/lib/postgresql` 마운트가 필요함. `/var/lib/postgresql/data`로 마운트하면 컨테이너가 부팅 실패.
+- 5432 포트를 사용 중이던 기존 PostgreSQL 컨테이너를 먼저 중지해야 했음.
