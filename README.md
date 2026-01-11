@@ -34,7 +34,7 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
-http://localhost:3000
+http://localhost:3010
 
 ---
 
@@ -54,8 +54,8 @@ http://localhost:3000
 DATABASE_URL="postgresql://blogi:blogi1234!@localhost:5432/blogi?schema=public"
 AUTH_SECRET="change-me"
 AUTH_TRUST_HOST=true
-AUTH_URL="http://localhost:3000"
-SITE_URL="http://localhost:3000"
+AUTH_URL="http://localhost:3010"
+SITE_URL="http://localhost:3010"
 UPLOADS_DIR="./uploads"
 UPLOADS_URL="/uploads"
 IMAGE_REMOTE_HOST="localhost"

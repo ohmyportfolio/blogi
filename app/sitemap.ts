@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { buildContentHref } from "@/lib/contents";
 import { getRestrictedCategoryIdsFromMenu } from "@/lib/category-auth";
 
-const baseUrl = process.env.SITE_URL || "http://localhost:3000";
+const baseUrl = process.env.SITE_URL || "http://localhost:3010";
 
 export const revalidate = 3600;
 

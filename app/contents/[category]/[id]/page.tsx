@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: ContentDetailPageProps): Prom
         content.categoryRef?.slug ?? category,
         content.id
     );
-    const baseUrl = process.env.SITE_URL || "http://localhost:3000";
+    const baseUrl = process.env.SITE_URL || "http://localhost:3010";
     const menuRequiresAuth = await getMenuCategoryRequiresAuth({
         categoryId: content.categoryRef?.id,
         categorySlug: content.categoryRef?.slug ?? category,

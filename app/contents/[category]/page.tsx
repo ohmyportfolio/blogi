@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     ]);
 
     const siteName = settings.siteName || "사이트";
-    const baseUrl = process.env.SITE_URL || "http://localhost:3000";
+    const baseUrl = process.env.SITE_URL || "http://localhost:3010";
 
     if (!category) {
         return {
