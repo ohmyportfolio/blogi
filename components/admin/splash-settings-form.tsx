@@ -190,7 +190,7 @@ export const SplashSettingsForm = ({ initialData }: SplashSettingsFormProps) => 
                   업로드
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleLogoUpload}
                     disabled={isPending || uploading}
                     className="hidden"

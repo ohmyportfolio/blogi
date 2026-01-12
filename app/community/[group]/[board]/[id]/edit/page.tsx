@@ -253,7 +253,7 @@ export default function EditPage() {
           <Input
             id="attachments"
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/gif,image/webp"
             multiple
             onChange={handleAttachmentChange}
             disabled={saving || uploading}

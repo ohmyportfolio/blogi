@@ -11,12 +11,14 @@ interface ImageCropperProps {
   imageSrc: string;
   onCropComplete: (croppedBlob: Blob) => void;
   onCancel: () => void;
+  outputSize?: number;
 }
 
 export function ImageCropper({
   imageSrc,
   onCropComplete,
   onCancel,
+  outputSize = 400,
 }: ImageCropperProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -43,7 +45,7 @@ export function ImageCropper({
 
     setIsProcessing(true);
     try {
-      const croppedBlob = await getCroppedImage(imageSrc, croppedAreaPixels);
+      const croppedBlob = await getCroppedImage(imageSrc, croppedAreaPixels, outputSize);
       onCropComplete(croppedBlob);
     } catch (error) {
       console.error("이미지 크롭 실패:", error);

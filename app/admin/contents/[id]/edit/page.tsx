@@ -258,7 +258,7 @@ export default function EditContentPage() {
                                     {uploading ? "업로드 중..." : "이미지 선택 및 크롭"}
                                     <input
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/png,image/jpeg,image/gif,image/webp"
                                         onChange={handleFileSelect}
                                         disabled={saving || uploading}
                                         className="hidden"

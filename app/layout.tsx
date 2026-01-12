@@ -30,6 +30,10 @@ const jetbrainsMono = JetBrains_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
+  const metadataBase =
+    typeof process.env.SITE_URL === "string" && process.env.SITE_URL.trim()
+      ? new URL(process.env.SITE_URL)
+      : undefined;
   const title = settings.siteName || "사이트";
   const description =
     settings.siteDescription || settings.siteTagline || "사이트 소개 내용을 입력해주세요.";
@@ -63,6 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    metadataBase,
     openGraph: ogImage
       ? {
           title,

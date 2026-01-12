@@ -516,7 +516,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
               원본 업로드
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/gif,image/webp"
                 onChange={handleBannerUpload}
                 disabled={isPending || uploading}
                 className="hidden"
@@ -527,7 +527,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
               크롭 업로드
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/gif,image/webp"
                 onChange={handleBannerCrop}
                 disabled={isPending || uploading}
                 className="hidden"
@@ -624,7 +624,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                   원본 업로드
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleLogoLightUpload}
                     disabled={isPending || uploading}
                     className="hidden"
@@ -635,7 +635,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                   크롭 업로드
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleLogoLightCrop}
                     disabled={isPending || uploading}
                     className="hidden"
@@ -669,7 +669,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                   원본 업로드
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleLogoDarkUpload}
                     disabled={isPending || uploading}
                     className="hidden"
@@ -680,7 +680,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                   크롭 업로드
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleLogoDarkCrop}
                     disabled={isPending || uploading}
                     className="hidden"
@@ -892,7 +892,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
               크롭 업로드
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/gif,image/webp"
                 onChange={handleOgCrop}
                 disabled={isPending || uploading}
                 className="hidden"
@@ -925,7 +925,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
                 크롭 업로드
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
                   onChange={handleFaviconCrop}
                   disabled={isPending || uploading}
                   className="hidden"
@@ -1083,6 +1083,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
       {cropperImage && (
         <ImageCropper
           imageSrc={cropperImage}
+          outputSize={cropTarget === "favicon" ? 512 : 400}
           onCropComplete={handleCropComplete}
           onCancel={() => {
             setCropperImage(null);
