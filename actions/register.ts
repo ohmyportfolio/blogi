@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { RegisterSchema } from "@/schemas";
 import { needsAdminSetup } from "@/lib/admin-setup";
 
+const SEED_USER_EMAIL = "seed@blogi.local";
+
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
     const validatedFields = RegisterSchema.safeParse(values);
 
@@ -30,7 +32,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     const needsSetup = await needsAdminSetup();
     const shouldCreateAdmin = needsSetup;
 
-    await prisma.user.create({
+    const createdUser = await prisma.user.create({
         data: {
             name,
             email,
@@ -42,6 +44,23 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     });
 
     if (shouldCreateAdmin) {
+        const seedUser = await prisma.user.findUnique({
+            where: { email: SEED_USER_EMAIL },
+            select: { id: true },
+        });
+        if (seedUser) {
+            await prisma.post.updateMany({
+                where: { authorId: seedUser.id },
+                data: { authorId: createdUser.id },
+            });
+            const [remainingPosts, remainingComments] = await Promise.all([
+                prisma.post.count({ where: { authorId: seedUser.id } }),
+                prisma.comment.count({ where: { authorId: seedUser.id } }),
+            ]);
+            if (remainingPosts === 0 && remainingComments === 0) {
+                await prisma.user.delete({ where: { id: seedUser.id } });
+            }
+        }
         return { success: "최초 관리자 계정이 생성되었습니다. 바로 로그인하실 수 있습니다." };
     }
 

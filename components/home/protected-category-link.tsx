@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -24,6 +25,7 @@ export function ProtectedCategoryLink({
   const { data: session } = useSession();
   const router = useRouter();
   const { showToast } = useToast();
+  const [imageError, setImageError] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     if (requiresAuth && !session) {
@@ -33,17 +35,20 @@ export function ProtectedCategoryLink({
     }
   };
 
+  const showImage = imageUrl && !imageError;
+
   if (variant === "mobile") {
     return (
       <Link href={href} className="group block w-full" onClick={handleClick}>
         <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
-          {imageUrl ? (
+          {showImage ? (
             <Image
               src={imageUrl}
               alt={label}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 768px) 33vw"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
@@ -63,13 +68,14 @@ export function ProtectedCategoryLink({
   return (
     <Link href={href} className="group block w-full" onClick={handleClick}>
       <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
-        {imageUrl ? (
+        {showImage ? (
           <Image
             src={imageUrl}
             alt={label}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
@@ -102,6 +108,7 @@ export function ProtectedCommunityLink({
   const { data: session } = useSession();
   const router = useRouter();
   const { showToast } = useToast();
+  const [imageError, setImageError] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     if (requiresAuth && !session) {
@@ -111,17 +118,20 @@ export function ProtectedCommunityLink({
     }
   };
 
+  const showImage = thumbnailUrl && !imageError;
+
   if (variant === "mobile") {
     return (
       <Link href={href} className="group block w-full" onClick={handleClick}>
         <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
-          {thumbnailUrl ? (
+          {showImage ? (
             <Image
               src={thumbnailUrl}
               alt={label}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 768px) 33vw"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />
@@ -141,13 +151,14 @@ export function ProtectedCommunityLink({
   return (
     <Link href={href} className="group block w-full" onClick={handleClick}>
       <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
-        {thumbnailUrl ? (
+        {showImage ? (
           <Image
             src={thumbnailUrl}
             alt={label}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-600" />

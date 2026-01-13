@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { buildBoardKey } from "@/lib/boards";
 import { buildCommunityHref, extractCommunitySlug } from "@/lib/community";
+import { getDefaultThumbnailForLinkType, DEFAULT_CONTENT_THUMBNAIL_URL } from "@/lib/branding";
 
 const requireAdmin = async () => {
   const session = await auth();
@@ -171,6 +172,7 @@ export async function POST(req: NextRequest) {
           isVisible: data.isVisible ?? true,
           order: data.order ?? 0,
           requiresAuth: typeof data.requiresAuth === "boolean" ? data.requiresAuth : false,
+          thumbnailUrl: DEFAULT_CONTENT_THUMBNAIL_URL,
         },
       });
       linkedCategoryId = category.id;
@@ -194,6 +196,7 @@ export async function POST(req: NextRequest) {
         badgeText: data.badgeText || null,
         linkType,
         linkedCategoryId,
+        thumbnailUrl: data.thumbnailUrl || getDefaultThumbnailForLinkType(linkType),
       },
     });
     // 커뮤니티 게시판은 관리자 메뉴에서 직접 생성합니다.

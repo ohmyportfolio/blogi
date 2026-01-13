@@ -12,6 +12,7 @@ import { TableNode, TableCellNode, TableRowNode } from "@lexical/table";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { lexicalTheme } from "@/components/editor/lexical-theme";
 import { ImageNode } from "@/components/editor/nodes/ImageNode";
+import { CalloutNode } from "@/components/editor/nodes/CalloutNode";
 import { $createParagraphNode, $createTextNode, $getRoot, type LexicalEditor } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
@@ -67,6 +68,7 @@ export function RichTextViewer({ content, className }: RichTextViewerProps) {
       TableCellNode,
       HorizontalRuleNode,
       ImageNode,
+      CalloutNode,
     ],
     onError: (error: Error) => {
       throw error;

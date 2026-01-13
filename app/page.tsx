@@ -287,27 +287,29 @@ export default async function Home() {
       {/* Categories */}
       <section className="hidden md:flex flex-1 items-center justify-center px-4 py-8 bg-[var(--theme-content-bg)]">
         <div className="w-full max-w-6xl">
-          <div className="grid grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {categories.map((category) => (
-              <ProtectedCategoryLink
-                key={category.label}
-                href={category.href}
-                label={category.label}
-                imageUrl={category.imageUrl}
-                requiresAuth={category.requiresAuth}
-                variant="desktop"
-              />
+              <div key={category.label} className="w-[calc(25%_-_12px)] lg:w-[calc(20%_-_13px)]">
+                <ProtectedCategoryLink
+                  href={category.href}
+                  label={category.label}
+                  imageUrl={category.imageUrl}
+                  requiresAuth={category.requiresAuth}
+                  variant="desktop"
+                />
+              </div>
             ))}
             {/* 커뮤니티 메뉴 */}
             {communityMenus.map((menu) => (
-              <ProtectedCommunityLink
-                key={menu.id}
-                href={menu.href}
-                label={menu.label}
-                thumbnailUrl={menu.thumbnailUrl}
-                requiresAuth={menu.requiresAuth}
-                variant="desktop"
-              />
+              <div key={menu.id} className="w-[calc(25%_-_12px)] lg:w-[calc(20%_-_13px)]">
+                <ProtectedCommunityLink
+                  href={menu.href}
+                  label={menu.label}
+                  thumbnailUrl={menu.thumbnailUrl}
+                  requiresAuth={menu.requiresAuth}
+                  variant="desktop"
+                />
+              </div>
             ))}
           </div>
         </div>
