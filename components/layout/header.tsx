@@ -38,6 +38,9 @@ export const Header = async () => {
       hideSearch={siteSettings.hideSearch}
       logoSize={siteSettings.siteLogoSize}
       bannerSize={siteSettings.logoSize}
+      bannerWidth={siteSettings.bannerWidth}
+      bannerMaxHeight={siteSettings.bannerMaxHeight}
+      bannerPosition={siteSettings.bannerPosition}
       siteNamePosition={siteSettings.siteNamePosition}
       showMobileTopSiteName={siteSettings.showMobileTopSiteName}
       showMobileTopSiteNameSize={siteSettings.showMobileTopSiteNameSize}

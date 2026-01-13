@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import type { MenuItemData } from "@/lib/menus";
 import type { HeaderStyle } from "@/lib/header-styles";
-import type { LogoSize, MobileTopSiteNameSize, SiteNamePosition } from "@/lib/site-settings";
+import type { LogoSize, MobileTopSiteNameSize, SiteNamePosition, BannerWidth, BannerMaxHeight, BannerPosition } from "@/lib/site-settings";
 import { useScrollHeader } from "@/hooks/use-scroll-header";
 
 interface HeaderClientProps {
@@ -32,10 +32,64 @@ interface HeaderClientProps {
   hideSearch?: boolean;
   logoSize?: LogoSize;
   bannerSize?: LogoSize;
+  bannerWidth?: BannerWidth;
+  bannerMaxHeight?: BannerMaxHeight;
+  bannerPosition?: BannerPosition;
   siteNamePosition?: SiteNamePosition;
   showMobileTopSiteName?: boolean;
   showMobileTopSiteNameSize?: MobileTopSiteNameSize;
 }
+
+// 배너 가로 비율 클래스
+const getBannerWidthClass = (size: BannerWidth = "medium") => {
+  switch (size) {
+    case "xsmall":   return "w-[40%]";
+    case "small":    return "w-[50%]";
+    case "medium":   return "w-[60%]";
+    case "large":    return "w-[70%]";
+    case "xlarge":   return "w-[80%]";
+    case "xxlarge":  return "w-[90%]";
+    case "xxxlarge": return "w-full";
+    default:         return "w-[60%]";
+  }
+};
+
+// 배너 최대 높이 클래스 (프리셋 값만 - Tailwind는 빌드 시점에 클래스 스캔)
+const getBannerMaxHeightClass = (height: string) => {
+  switch (height) {
+    case "40":   return "max-h-[40px]";
+    case "60":   return "max-h-[60px]";
+    case "80":   return "max-h-[80px]";
+    case "100":  return "max-h-[100px]";
+    case "120":  return "max-h-[120px]";
+    default:     return "";  // 커스텀 값은 인라인 스타일로 처리
+  }
+};
+
+// 배너 최대 높이 인라인 스타일 (커스텀 값용)
+const getBannerMaxHeightStyle = (height: string): React.CSSProperties => {
+  // 프리셋 값은 클래스로 처리하므로 스타일 없음
+  const presets = ["", "none", "40", "60", "80", "100", "120"];
+  if (presets.includes(height)) return {};
+
+  // 커스텀 픽셀 값
+  const parsed = parseInt(height, 10);
+  if (!isNaN(parsed) && parsed >= 1 && parsed <= 500) {
+    return { maxHeight: `${parsed}px` };
+  }
+
+  return {};
+};
+
+// 배너 이미지 위치 클래스
+const getBannerPositionClass = (position: BannerPosition = "center") => {
+  switch (position) {
+    case "top":    return "object-top";
+    case "center": return "object-center";
+    case "bottom": return "object-bottom";
+    default:       return "object-center";
+  }
+};
 
 // 배너/로고 크기에 따른 클래스 (공통 스케일)
 const getLogoSizeClasses = (size: LogoSize = "medium") => {
@@ -59,25 +113,43 @@ const getLogoSizeClasses = (size: LogoSize = "medium") => {
   }
 };
 
-const getMobileHeaderOffsetPx = (size: LogoSize = "medium") => {
+// 배너 높이의 기본값 (bannerMaxHeight 미설정 시)
+const getDefaultBannerHeightPx = (size: LogoSize = "medium") => {
   switch (size) {
-    case "xsmall":
-      return 112;
-    case "small":
-      return 132;
-    case "medium":
-      return 152;
-    case "large":
-      return 172;
-    case "xlarge":
-      return 192;
-    case "xxlarge":
-      return 212;
-    case "xxxlarge":
-      return 242;
-    default:
-      return 152;
+    case "xsmall":   return 32;
+    case "small":    return 40;
+    case "medium":   return 60;
+    case "large":    return 80;
+    case "xlarge":   return 100;
+    case "xxlarge":  return 120;
+    case "xxxlarge": return 150;
+    default:         return 60;
   }
+};
+
+// 모바일 헤더 오프셋 계산 (상단바 ~60px + 배너 영역 패딩 24px + 배너 높이)
+const getMobileHeaderOffsetPx = (
+  bannerSize: LogoSize,
+  bannerMaxHeight: string,
+  measuredBannerHeight: number
+) => {
+  const BASE_OFFSET = 84; // 상단바(~60px) + 배너 영역 패딩(~24px)
+
+  // 실제 측정된 배너 높이가 있으면 그것을 사용 (가장 정확)
+  if (measuredBannerHeight > 0) {
+    return BASE_OFFSET + measuredBannerHeight;
+  }
+
+  // bannerMaxHeight가 설정된 경우 해당 값 사용
+  if (bannerMaxHeight && bannerMaxHeight !== "" && bannerMaxHeight !== "none") {
+    const parsed = parseInt(bannerMaxHeight, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 500) {
+      return BASE_OFFSET + parsed;
+    }
+  }
+
+  // 그렇지 않으면 bannerSize 기반 기본 높이 사용
+  return BASE_OFFSET + getDefaultBannerHeightPx(bannerSize);
 };
 
 export const HeaderClient = ({
@@ -92,6 +164,9 @@ export const HeaderClient = ({
   hideSearch = false,
   logoSize = "medium",
   bannerSize = "medium",
+  bannerWidth = "medium",
+  bannerMaxHeight = "none",
+  bannerPosition = "center",
   siteNamePosition = "logo",
   showMobileTopSiteName = true,
   showMobileTopSiteNameSize = "md",
@@ -103,6 +178,15 @@ export const HeaderClient = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [bannerHeight, setBannerHeight] = useState<number>(0);
+  const bannerContainerRef = useRef<HTMLDivElement>(null);
+
+  // 배너 컨테이너 높이 측정
+  const measureBannerHeight = useCallback(() => {
+    if (bannerContainerRef.current) {
+      setBannerHeight(bannerContainerRef.current.offsetHeight);
+    }
+  }, []);
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
   const groupMap = useMemo(
     () => new Map(communityGroups.map((group) => [group.menuItemId, group])),
@@ -377,7 +461,7 @@ export const HeaderClient = ({
       : showMobileTopSiteNameSize === "lg"
       ? "text-lg"
       : "text-base";
-  const mobileHeaderOffset = getMobileHeaderOffsetPx(bannerSize);
+  const mobileHeaderOffset = getMobileHeaderOffsetPx(bannerSize, bannerMaxHeight, bannerHeight);
 
   // classic 스타일일 때 테마 색상 사용
   const themedHeaderStyle = {
@@ -720,15 +804,22 @@ export const HeaderClient = ({
           </div>
 
           {/* Row 2: Banner Image (image only) */}
-          <div className="flex items-center justify-center py-3">
-            <Link href="/" className="flex items-center">
+          <div ref={bannerContainerRef} className="flex items-center justify-center py-3">
+            <Link href="/" className={cn("flex items-center", getBannerWidthClass(bannerWidth))}>
                 <Image
                   src={siteBannerUrl}
-                  alt={`${siteName} 로고`}
-                  width={240}
-                  height={140}
-                  className={cn("w-auto object-contain", getLogoSizeClasses(bannerSize).mobile)}
+                  alt={`${siteName} 배너`}
+                  width={1200}
+                  height={630}
+                  className={cn(
+                    "w-full h-auto",
+                    bannerMaxHeight !== "" && bannerMaxHeight !== "none" && "object-cover",
+                    getBannerMaxHeightClass(bannerMaxHeight),
+                    getBannerPositionClass(bannerPosition)
+                  )}
+                  style={getBannerMaxHeightStyle(bannerMaxHeight)}
                   unoptimized
+                  onLoad={measureBannerHeight}
                 />
             </Link>
           </div>

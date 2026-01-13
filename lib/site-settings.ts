@@ -7,6 +7,9 @@ export type LogoSize = "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxl
 export type MobileTopSiteNameSize = "sm" | "md" | "lg";
 export type SiteNamePosition = "logo" | "header1";
 export type SplashLogoSize = "small" | "medium" | "large" | "xlarge";
+export type BannerWidth = "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+export type BannerMaxHeight = string; // "" (빈 문자열) = 제한없음, "1"~"500" 숫자 문자열
+export type BannerPosition = "top" | "center" | "bottom";
 
 export type SiteSettingsSnapshot = {
   siteName?: string | null;
@@ -16,6 +19,9 @@ export type SiteSettingsSnapshot = {
   siteLogoMode: "light" | "dark";
   siteLogoSize: LogoSize;
   siteBannerUrl?: string | null;
+  bannerWidth: BannerWidth;
+  bannerMaxHeight: string; // "" = 제한없음, "1"~"500" 숫자
+  bannerPosition: BannerPosition;
   siteTagline?: string | null;
   siteDescription?: string | null;
   ogImageUrl?: string | null;
@@ -88,6 +94,26 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
   const logoMode =
     settings?.siteLogoMode === "dark" ? "dark" : "light";
 
+  // 배너 설정 유효성 검사
+  const validBannerWidths: BannerWidth[] = ["xsmall", "small", "medium", "large", "xlarge", "xxlarge", "xxxlarge"];
+  const bannerWidth: BannerWidth =
+    settings?.bannerWidth && validBannerWidths.includes(settings.bannerWidth as BannerWidth)
+      ? (settings.bannerWidth as BannerWidth)
+      : "xxxlarge"; // 기본값 100%
+
+  // bannerMaxHeight: 빈 문자열이면 제한없음, 1~500 범위의 숫자 문자열
+  const rawMaxHeight = settings?.bannerMaxHeight ?? "";
+  const parsedHeight = parseInt(rawMaxHeight, 10);
+  const bannerMaxHeight: string =
+    rawMaxHeight === "" ? "" :
+    (!isNaN(parsedHeight) && parsedHeight >= 1 && parsedHeight <= 500) ? String(parsedHeight) : "";
+
+  const validBannerPositions: BannerPosition[] = ["top", "center", "bottom"];
+  const bannerPosition: BannerPosition =
+    settings?.bannerPosition && validBannerPositions.includes(settings.bannerPosition as BannerPosition)
+      ? (settings.bannerPosition as BannerPosition)
+      : "center";
+
   return {
     siteName: settings?.siteName ?? null,
     siteLogoUrl: legacyLogo ?? DEFAULT_LOGO_URL,
@@ -96,6 +122,9 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
     siteLogoMode: logoMode,
     siteLogoSize,
     siteBannerUrl: settings?.siteBannerUrl ?? null,
+    bannerWidth,
+    bannerMaxHeight,
+    bannerPosition,
     siteTagline: settings?.siteTagline ?? null,
     siteDescription: settings?.siteDescription ?? null,
     ogImageUrl: settings?.ogImageUrl ?? null,

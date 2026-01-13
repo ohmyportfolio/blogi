@@ -26,6 +26,9 @@ export async function POST(req: NextRequest) {
     siteLogoMode,
     siteLogoSize,
     siteBannerUrl,
+    bannerWidth,
+    bannerMaxHeight,
+    bannerPosition,
     siteTagline,
     siteDescription,
     ogImageUrl,
@@ -115,6 +118,31 @@ export async function POST(req: NextRequest) {
   }
   if (typeof showMobileTopSiteNameSize === "string" && ["sm", "md", "lg"].includes(showMobileTopSiteNameSize)) {
     data.showMobileTopSiteNameSize = showMobileTopSiteNameSize;
+  }
+  if (
+    typeof bannerWidth === "string" &&
+    ["xsmall", "small", "medium", "large", "xlarge", "xxlarge", "xxxlarge"].includes(bannerWidth)
+  ) {
+    data.bannerWidth = bannerWidth;
+  }
+  if (typeof bannerMaxHeight === "string") {
+    // 빈 문자열, 프리셋 값, 또는 1~500 범위의 숫자
+    if (bannerMaxHeight === "" || bannerMaxHeight === "none") {
+      data.bannerMaxHeight = "";
+    } else if (["40", "60", "80", "100", "120"].includes(bannerMaxHeight)) {
+      data.bannerMaxHeight = bannerMaxHeight;
+    } else {
+      const parsed = parseInt(bannerMaxHeight, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 500) {
+        data.bannerMaxHeight = String(parsed);
+      }
+    }
+  }
+  if (
+    typeof bannerPosition === "string" &&
+    ["top", "center", "bottom"].includes(bannerPosition)
+  ) {
+    data.bannerPosition = bannerPosition;
   }
 
   const settings = await prisma.siteSettings.upsert({

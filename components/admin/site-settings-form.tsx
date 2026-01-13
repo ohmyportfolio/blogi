@@ -9,7 +9,7 @@ import { FileText, Globe, Image, ImageIcon, Tag, Upload, MousePointer2, Check, C
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/admin/image-cropper";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import type { LogoSize, MobileTopSiteNameSize } from "@/lib/site-settings";
+import type { LogoSize, MobileTopSiteNameSize, BannerWidth, BannerMaxHeight, BannerPosition } from "@/lib/site-settings";
 
 const LOGO_SIZES: { value: LogoSize; label: string; description: string }[] = [
   { value: "xsmall", label: "더 작게", description: "24px" },
@@ -27,6 +27,31 @@ const MOBILE_TOP_NAME_SIZES: { value: MobileTopSiteNameSize; label: string; desc
   { value: "lg", label: "크게", description: "18px" },
 ];
 
+const BANNER_WIDTHS: { value: BannerWidth; label: string; description: string }[] = [
+  { value: "xsmall", label: "40%", description: "가장 작게" },
+  { value: "small", label: "50%", description: "작게" },
+  { value: "medium", label: "60%", description: "보통" },
+  { value: "large", label: "70%", description: "크게" },
+  { value: "xlarge", label: "80%", description: "매우 크게" },
+  { value: "xxlarge", label: "90%", description: "특대" },
+  { value: "xxxlarge", label: "100%", description: "꽉 참" },
+];
+
+const BANNER_MAX_HEIGHTS: { value: BannerMaxHeight; label: string; description: string }[] = [
+  { value: "none", label: "제한없음", description: "원본 비율" },
+  { value: "40", label: "40px", description: "매우 작게" },
+  { value: "60", label: "60px", description: "작게" },
+  { value: "80", label: "80px", description: "보통" },
+  { value: "100", label: "100px", description: "크게" },
+  { value: "120", label: "120px", description: "매우 크게" },
+];
+
+const BANNER_POSITIONS: { value: BannerPosition; label: string; description: string }[] = [
+  { value: "top", label: "상단", description: "위쪽 표시" },
+  { value: "center", label: "중앙", description: "가운데 표시" },
+  { value: "bottom", label: "하단", description: "아래쪽 표시" },
+];
+
 const DEFAULT_LOGO_LIGHT = "/logo.svg";
 const DEFAULT_LOGO_DARK = "/logo_white.svg";
 
@@ -39,6 +64,9 @@ interface SiteSettingsFormProps {
     siteLogoMode?: "light" | "dark" | string | null;
     siteLogoSize?: string | null;
     siteBannerUrl?: string | null;
+    bannerWidth?: string | null;
+    bannerMaxHeight?: string | null;
+    bannerPosition?: string | null;
     siteTagline?: string | null;
     siteDescription?: string | null;
     ogImageUrl?: string | null;
@@ -80,6 +108,21 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
     (initialData.siteLogoSize as LogoSize) || (initialData.logoSize as LogoSize) || "medium"
   );
   const [siteBannerUrl, setSiteBannerUrl] = useState(initialData.siteBannerUrl ?? "");
+  const [bannerWidth, setBannerWidth] = useState<BannerWidth>(
+    (initialData.bannerWidth as BannerWidth) || "medium"
+  );
+  const [bannerMaxHeight, setBannerMaxHeight] = useState<string>(
+    initialData.bannerMaxHeight ?? ""
+  );
+  const [customHeight, setCustomHeight] = useState<string>(() => {
+    const initial = initialData.bannerMaxHeight ?? "";
+    // 프리셋 값이 아니면 커스텀 값으로 간주
+    const presets = ["", "none", "40", "60", "80", "100", "120"];
+    return presets.includes(initial) ? "" : initial;
+  });
+  const [bannerPosition, setBannerPosition] = useState<BannerPosition>(
+    (initialData.bannerPosition as BannerPosition) || "center"
+  );
   const [siteTagline, setSiteTagline] = useState(initialData.siteTagline ?? "");
   const [siteDescription, setSiteDescription] = useState(initialData.siteDescription ?? "");
   const [ogImageUrl, setOgImageUrl] = useState(initialData.ogImageUrl ?? "");
@@ -390,6 +433,9 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
         siteLogoMode,
         siteLogoSize,
         siteBannerUrl: siteBannerUrl.trim() || null,
+        bannerWidth,
+        bannerMaxHeight,
+        bannerPosition,
         siteTagline: siteTagline.trim() || null,
         siteDescription: siteDescription.trim() || null,
         ogImageUrl: ogImageUrl.trim() || null,
@@ -543,7 +589,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
         </div>
       </div>
 
-      {/* 배너 높이 */}
+      {/* 배너 너비 */}
       <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
         <div className="p-2.5 rounded-lg bg-purple-50 text-purple-600">
           <Maximize2 className="w-5 h-5" />
@@ -551,25 +597,25 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
         <div className="flex-1 space-y-4">
           <div>
             <div className="flex items-center gap-1.5">
-              <label className="text-sm font-medium">배너 높이</label>
-              <HelpTooltip content="모바일 배너 영역의 높이를 선택하세요." />
+              <label className="text-sm font-medium">배너 너비</label>
+              <HelpTooltip content="모바일 배너의 가로 크기를 화면 비율로 설정합니다." />
             </div>
           </div>
-          <div className="grid grid-cols-6 gap-2">
-            {LOGO_SIZES.map((size) => (
+          <div className="grid grid-cols-7 gap-2">
+            {BANNER_WIDTHS.map((size) => (
               <button
                 key={size.value}
                 type="button"
-                onClick={() => setLogoSize(size.value)}
+                onClick={() => setBannerWidth(size.value)}
                 disabled={isPending}
                 className={cn(
                   "relative p-3 rounded-xl border-2 text-center transition-all",
-                  logoSize === size.value
+                  bannerWidth === size.value
                     ? "border-purple-500 bg-purple-50/50"
                     : "border-gray-200 hover:border-gray-300 bg-white"
                 )}
               >
-                {logoSize === size.value && (
+                {bannerWidth === size.value && (
                   <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
                     <Check className="w-2.5 h-2.5 text-white" />
                   </div>
@@ -581,6 +627,142 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           </div>
         </div>
       </div>
+
+      {/* 배너 최대 높이 */}
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+        <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-600">
+          <Maximize2 className="w-5 h-5" />
+        </div>
+        <div className="flex-1 space-y-4">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-sm font-medium">배너 최대 높이</label>
+              <HelpTooltip content="배너의 최대 높이를 제한합니다. 프리셋 선택 또는 커스텀 값(1~500px)을 입력할 수 있습니다." />
+            </div>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {BANNER_MAX_HEIGHTS.map((size) => {
+              const isSelected = size.value === "none"
+                ? (bannerMaxHeight === "" || bannerMaxHeight === "none")
+                : bannerMaxHeight === size.value;
+              return (
+                <button
+                  key={size.value}
+                  type="button"
+                  onClick={() => {
+                    setBannerMaxHeight(size.value === "none" ? "" : size.value);
+                    setCustomHeight("");
+                  }}
+                  disabled={isPending}
+                  className={cn(
+                    "relative p-3 rounded-xl border-2 text-center transition-all",
+                    isSelected
+                      ? "border-indigo-500 bg-indigo-50/50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  )}
+                >
+                  {isSelected && (
+                    <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                  <div className="font-medium text-sm">{size.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{size.description}</div>
+                </button>
+              );
+            })}
+            {/* 커스텀 입력 버튼 */}
+            <button
+              type="button"
+              onClick={() => {
+                const preset = ["", "none", "40", "60", "80", "100", "120"];
+                if (!preset.includes(bannerMaxHeight)) return; // 이미 커스텀 모드
+                setCustomHeight("150");
+                setBannerMaxHeight("150");
+              }}
+              disabled={isPending}
+              className={cn(
+                "relative p-3 rounded-xl border-2 text-center transition-all",
+                !["", "none", "40", "60", "80", "100", "120"].includes(bannerMaxHeight)
+                  ? "border-indigo-500 bg-indigo-50/50"
+                  : "border-gray-200 hover:border-gray-300 bg-white"
+              )}
+            >
+              {!["", "none", "40", "60", "80", "100", "120"].includes(bannerMaxHeight) && (
+                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
+              <div className="font-medium text-sm">커스텀</div>
+              <div className="text-xs text-gray-500 mt-0.5">직접 입력</div>
+            </button>
+          </div>
+          {/* 커스텀 픽셀 입력 필드 */}
+          {!["", "none", "40", "60", "80", "100", "120"].includes(bannerMaxHeight) && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={500}
+                value={customHeight}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCustomHeight(val);
+                  const num = parseInt(val, 10);
+                  if (!isNaN(num) && num >= 1 && num <= 500) {
+                    setBannerMaxHeight(String(num));
+                  }
+                }}
+                placeholder="1~500"
+                className="w-24"
+                disabled={isPending}
+              />
+              <span className="text-sm text-gray-500">px (1~500 범위)</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 배너 이미지 위치 (높이 제한 시에만 표시) */}
+      {bannerMaxHeight !== "" && bannerMaxHeight !== "none" && (
+        <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+          <div className="p-2.5 rounded-lg bg-cyan-50 text-cyan-600">
+            <Maximize2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1 space-y-4">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <label className="text-sm font-medium">배너 이미지 위치</label>
+                <HelpTooltip content="높이가 제한될 때 이미지의 어느 부분을 표시할지 선택합니다." />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {BANNER_POSITIONS.map((pos) => (
+                <button
+                  key={pos.value}
+                  type="button"
+                  onClick={() => setBannerPosition(pos.value)}
+                  disabled={isPending}
+                  className={cn(
+                    "relative p-3 rounded-xl border-2 text-center transition-all",
+                    bannerPosition === pos.value
+                      ? "border-cyan-500 bg-cyan-50/50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  )}
+                >
+                  {bannerPosition === pos.value && (
+                    <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-cyan-500 flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                  <div className="font-medium text-sm">{pos.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{pos.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 로고 이미지 */}
       <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">

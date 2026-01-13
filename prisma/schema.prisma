@@ -216,9 +216,13 @@ model SiteSettings {
   showHomeDashboardOnMobile Boolean @default(true)
   // 헤더 검색 및 로고 설정
   hideSearch               Boolean @default(false)
-  logoSize                 String  @default("medium")
-  siteLogoSize             String  @default("medium")
+  logoSize                 String  @default("xsmall")
+  siteLogoSize             String  @default("xsmall")
   siteNamePosition         String  @default("logo")  // "logo" | "header1"
+  // 배너 설정
+  bannerWidth              String  @default("xxxlarge")  // xsmall~xxxlarge (40%~100%), 기본 100%
+  bannerMaxHeight          String  @default("")          // 빈 문자열=제한없음, 1~500 숫자
+  bannerPosition           String  @default("center")    // top / center / bottom
   // 모바일 상단 사이트명 표시
   showMobileTopSiteName    Boolean @default(true)
   showMobileTopSiteNameSize String  @default("md")

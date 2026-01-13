@@ -316,6 +316,7 @@ async function main() {
         siteLogoUrl: DEFAULT_LOGO_WHITE_URL,
         siteLogoUrlDark: DEFAULT_LOGO_WHITE_URL,
         siteLogoMode: "dark",
+        siteBannerUrl: DEFAULT_CONTENT_BANNER_URL,
       },
     }));
 
