@@ -52,6 +52,7 @@ model Category {
   // 메인 페이지 노출 설정
   showOnHome      Boolean    @default(false)
   homeItemCount   Int        @default(3)
+  cardColumns     Int        @default(3)
   // 태그 필터 설정
   tagFilterEnabled Boolean   @default(false)
   contents        Content[]  @relation("categoryRef")
@@ -218,6 +219,8 @@ model SiteSettings {
   socialAlignment        String   @default("center")
   // 메인 대시보드 모바일 노출 설정
   showHomeDashboardOnMobile Boolean @default(true)
+  // 홈 메뉴 그리드 행별 열 수 배열 (예: [3,3,3])
+  homeGridLayout            Json?
   // 헤더 검색 및 로고 설정
   hideSearch               Boolean @default(false)
   logoSize                 String  @default("xsmall")

@@ -3,6 +3,7 @@ import { getMenuByKey } from "@/lib/menus";
 import BoardHomeSettingsClient from "@/components/admin/board-home-settings-client";
 import CategoryHomeSettingsClient from "@/components/admin/category-home-settings-client";
 import MobileDashboardToggle from "@/components/admin/mobile-dashboard-toggle";
+import HomeGridLayoutClient from "@/components/admin/home-grid-layout-client";
 
 export default async function AdminHomeSettingsPage() {
   const [categories, menu, siteSettings] = await Promise.all([
@@ -16,12 +17,13 @@ export default async function AdminHomeSettingsPage() {
         showOnHome: true,
         homeItemCount: true,
         requiresAuth: true,
+        cardColumns: true,
       },
     }),
     getMenuByKey("main"),
     prisma.siteSettings.findUnique({
       where: { key: "default" },
-      select: { showHomeDashboardOnMobile: true },
+      select: { showHomeDashboardOnMobile: true, homeGridLayout: true },
     }),
   ]);
 
@@ -60,6 +62,17 @@ export default async function AdminHomeSettingsPage() {
     })
   );
 
+  // 홈 메뉴 그리드용: 카테고리 + 커뮤니티 메뉴 이름 순서대로
+  const menuCategories = menu.items
+    .filter((item) => item.linkType === "category" && item.href)
+    .map((item) => item.label);
+  const menuCommunities = communityItems.map((item) => item.label);
+  const allMenuNames = [...menuCategories, ...menuCommunities];
+
+  const savedLayout = Array.isArray(siteSettings?.homeGridLayout)
+    ? (siteSettings.homeGridLayout as number[])
+    : [];
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
@@ -75,6 +88,13 @@ export default async function AdminHomeSettingsPage() {
       <MobileDashboardToggle
         initialValue={siteSettings?.showHomeDashboardOnMobile ?? true}
       />
+
+      {allMenuNames.length > 0 && (
+        <HomeGridLayoutClient
+          menuNames={allMenuNames}
+          initialLayout={savedLayout}
+        />
+      )}
 
       <section className="space-y-4">
         <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">

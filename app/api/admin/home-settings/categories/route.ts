@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const categoryId = body.categoryId || body.id;
-  const { showOnHome, homeItemCount } = body;
+  const { showOnHome, homeItemCount, cardColumns } = body;
 
   if (!categoryId) {
     return NextResponse.json({ error: "카테고리 ID가 필요합니다." }, { status: 400 });
@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
     data: {
       showOnHome: Boolean(showOnHome),
       homeItemCount: Math.max(1, Math.min(10, Number(homeItemCount) || 3)),
+      ...(cardColumns !== undefined && {
+        cardColumns: Math.min(3, Math.max(1, Number(cardColumns) || 3)),
+      }),
     },
   });
 
