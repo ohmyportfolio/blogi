@@ -11,6 +11,7 @@ import { ArrowLeft, Crop } from "lucide-react";
 import Image from "next/image";
 import { lexicalJsonToPlainText } from "@/lib/lexical";
 import { ImageCropper } from "@/components/admin/image-cropper";
+import { formatPriceInput, formatPrice } from "@/lib/utils";
 
 type CategoryOption = {
     id: string;
@@ -378,10 +379,15 @@ export default function EditContentPage() {
                             <Input
                                 id="price"
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                placeholder="예: ₩100,000 또는 문의"
+                                onChange={(e) => setPrice(formatPriceInput(e.target.value))}
+                                placeholder="예: 150000, 200~300만원, 문의"
                                 disabled={saving}
                             />
+                            {price && (
+                                <p className="text-xs text-gray-500">
+                                    표시: <span className="font-medium text-sky-700">{formatPrice(price)}</span>
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-2">

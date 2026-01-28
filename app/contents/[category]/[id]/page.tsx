@@ -13,6 +13,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { markdownToHtml } from "@/lib/markdown";
 import type { Metadata } from "next";
 import { getMenuCategoryRequiresAuth } from "@/lib/category-auth";
+import { formatPrice } from "@/lib/utils";
 
 interface ContentDetailPageProps {
     params: Promise<{
@@ -118,6 +119,7 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
     const requiresAuth = Boolean(content.categoryRef?.requiresAuth || menuRequiresAuth);
     const canViewCategory = !requiresAuth || Boolean(session);
     const showDate = content.categoryRef?.showDate ?? true;
+    const tagFilterEnabled = content.categoryRef?.tagFilterEnabled ?? false;
 
     if (!content.isVisible && !isAdmin) {
         notFound();
@@ -153,14 +155,11 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
                     {contentCategoryLabel}
                 </Badge>
                 {content.tags && content.tags.length > 0 &&
-                    content.tags.map((ct) => (
-                        <Link
-                            key={ct.tag.id}
-                            href={`/contents/${contentCategorySlug || category}?tag=${ct.tag.slug}`}
-                        >
+                    content.tags.map((ct) => {
+                        const badge = (
                             <Badge
                                 variant="secondary"
-                                className={`text-xs cursor-pointer hover:opacity-80 ${
+                                className={`text-xs ${tagFilterEnabled ? "cursor-pointer hover:opacity-80" : ""} ${
                                     ct.tag.categoryId === null
                                         ? "bg-amber-50 text-amber-700 border border-amber-200"
                                         : "bg-blue-50 text-blue-700 border border-blue-200"
@@ -168,8 +167,23 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
                             >
                                 {ct.tag.name}
                             </Badge>
-                        </Link>
-                    ))}
+                        );
+                        if (!tagFilterEnabled) {
+                            return (
+                                <span key={ct.tag.id}>
+                                    {badge}
+                                </span>
+                            );
+                        }
+                        return (
+                            <Link
+                                key={ct.tag.id}
+                                href={`/contents/${contentCategorySlug || category}?tagId=${ct.tag.id}`}
+                            >
+                                {badge}
+                            </Link>
+                        );
+                    })}
             </div>
 
             {/* Title */}
@@ -183,7 +197,7 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
                     {showDate && <span>{format(content.createdAt, "yyyy.MM.dd")}</span>}
                     {content.price && canViewCategory && (
                         <span className={showDate ? "ml-auto font-bold text-lg text-sky-600" : "font-bold text-lg text-sky-600"}>
-                            {content.price}
+                            {formatPrice(content.price)}
                         </span>
                     )}
                 </div>

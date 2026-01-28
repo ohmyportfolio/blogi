@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { TagFilter } from "@/components/contents/tag-filter";
+import { redirect } from "next/navigation";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -18,6 +19,7 @@ interface CategoryPageProps {
     searchParams: Promise<{
         listPage?: string;
         cardPage?: string;
+        tagId?: string;
         tag?: string;
     }>;
 }
@@ -78,7 +80,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
     const { category: categorySlug } = await params;
-    const { listPage: listPageParam, cardPage: cardPageParam, tag: tagSlug } = await searchParams;
+    const {
+        listPage: listPageParam,
+        cardPage: cardPageParam,
+        tagId: tagIdParam,
+        tag: tagSlugParam,
+    } = await searchParams;
     const session = await auth();
 
     const category = await prisma.category.findUnique({
@@ -169,9 +176,19 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         : [];
 
     // 태그 필터링 조건
-    const activeTag = tagFilterEnabled && tagSlug
-        ? categoryTags.find((t) => t.slug === tagSlug)
+    const activeTag = tagFilterEnabled && tagIdParam
+        ? categoryTags.find((t) => t.id === tagIdParam)
+        : tagFilterEnabled && tagSlugParam
+            ? categoryTags.find((t) => t.slug === tagSlugParam)
         : null;
+
+    if (tagFilterEnabled && !tagIdParam && tagSlugParam && activeTag) {
+        const params = new URLSearchParams();
+        if (listPageParam) params.set("listPage", listPageParam);
+        if (cardPageParam) params.set("cardPage", cardPageParam);
+        params.set("tagId", activeTag.id);
+        redirect(`/contents/${categorySlug}?${params.toString()}`);
+    }
 
     // 전체 콘텐츠 조회
     const allContents = await prisma.content.findMany({
@@ -205,7 +222,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     <TagFilter
                         tags={categoryTags}
                         categorySlug={categorySlug}
-                        activeTagSlug={tagSlug}
+                        activeTagId={activeTag?.id}
                     />
                 )}
 
@@ -328,7 +345,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 <TagFilter
                     tags={categoryTags}
                     categorySlug={categorySlug}
-                    activeTagSlug={tagSlug}
+                    activeTagId={activeTag?.id}
                 />
             )}
 

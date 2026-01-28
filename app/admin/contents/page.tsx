@@ -6,6 +6,7 @@ import { ConfirmForm, type ConfirmActionState } from "@/components/admin/confirm
 import { auth } from "@/auth";
 import { Eye, EyeOff, Pencil, Trash2, ImageIcon, Plus, Filter } from "lucide-react";
 import { buildContentIndexUrl, isPublicIndexable, submitIndexNow } from "@/lib/indexnow";
+import { formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -346,7 +347,7 @@ export default async function AdminContentsPage({
                                 </span>
                                 <span className="text-xs text-gray-400">{format(content.createdAt, "yyyy-MM-dd")}</span>
                                 {content.price && (
-                                  <span className="text-xs text-gray-500 font-medium">{content.price}</span>
+                                  <span className="text-xs text-gray-500 font-medium">{formatPrice(content.price)}</span>
                                 )}
                               </div>
                             </div>
@@ -453,7 +454,7 @@ export default async function AdminContentsPage({
                               </span>
                               <span className="text-xs text-gray-400">{format(content.createdAt, "yyyy-MM-dd")}</span>
                               {content.price && (
-                                <span className="text-xs text-gray-500 font-medium">{content.price}</span>
+                                <span className="text-xs text-gray-500 font-medium">{formatPrice(content.price)}</span>
                               )}
                             </div>
                           </div>
@@ -561,7 +562,7 @@ export default async function AdminContentsPage({
                         </span>
                         <span className="text-xs text-gray-400">{format(content.createdAt, "yyyy-MM-dd")}</span>
                         {content.price && (
-                          <span className="text-xs text-gray-500 font-medium">{content.price}</span>
+                          <span className="text-xs text-gray-500 font-medium">{formatPrice(content.price)}</span>
                         )}
                       </div>
                     </div>

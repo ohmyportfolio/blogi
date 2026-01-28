@@ -3,10 +3,10 @@ import Link from "next/link";
 interface TagFilterProps {
     tags: { id: string; name: string; slug: string; categoryId: string | null }[];
     categorySlug: string;
-    activeTagSlug?: string;
+    activeTagId?: string;
 }
 
-export function TagFilter({ tags, categorySlug, activeTagSlug }: TagFilterProps) {
+export function TagFilter({ tags, categorySlug, activeTagId }: TagFilterProps) {
     if (tags.length === 0) return null;
 
     return (
@@ -14,7 +14,7 @@ export function TagFilter({ tags, categorySlug, activeTagSlug }: TagFilterProps)
             <Link
                 href={`/contents/${categorySlug}`}
                 className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
-                    !activeTagSlug
+                    !activeTagId
                         ? "bg-foreground text-background"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
@@ -22,12 +22,12 @@ export function TagFilter({ tags, categorySlug, activeTagSlug }: TagFilterProps)
                 전체
             </Link>
             {tags.map((tag) => {
-                const isActive = activeTagSlug === tag.slug;
+                const isActive = activeTagId === tag.id;
                 const isGlobal = tag.categoryId === null;
                 return (
                     <Link
                         key={tag.id}
-                        href={`/contents/${categorySlug}?tag=${tag.slug}`}
+                        href={`/contents/${categorySlug}?tagId=${tag.id}`}
                         className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
                             isActive
                                 ? isGlobal

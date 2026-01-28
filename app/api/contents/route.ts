@@ -81,6 +81,33 @@ export async function POST(req: NextRequest) {
             ? await markdownToHtml(contentMarkdown.trim())
             : null;
 
+    let validatedTagIds: string[] = [];
+    if (tagIds !== undefined) {
+        if (!Array.isArray(tagIds) || tagIds.some((id) => typeof id !== "string")) {
+            return NextResponse.json({ error: "태그 형식이 올바르지 않습니다." }, { status: 400 });
+        }
+        validatedTagIds = Array.from(
+            new Set(tagIds.map((id: string) => id.trim()).filter(Boolean))
+        );
+        if (validatedTagIds.length > 0) {
+            const validTags = await prisma.tag.findMany({
+                where: {
+                    id: { in: validatedTagIds },
+                    OR: [{ categoryId: categoryRef.id }, { categoryId: null }],
+                },
+                select: { id: true },
+            });
+            const validTagIds = new Set(validTags.map((tag) => tag.id));
+            const invalidTagIds = validatedTagIds.filter((id) => !validTagIds.has(id));
+            if (invalidTagIds.length > 0) {
+                return NextResponse.json(
+                    { error: "유효하지 않은 태그가 포함되어 있습니다." },
+                    { status: 400 }
+                );
+            }
+        }
+    }
+
     const createdContent = await prisma.content.create({
         data: {
             title,
@@ -96,9 +123,9 @@ export async function POST(req: NextRequest) {
     });
 
     // 태그 연결
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
+    if (validatedTagIds.length > 0) {
         await prisma.contentTag.createMany({
-            data: tagIds.map((tagId: string) => ({
+            data: validatedTagIds.map((tagId) => ({
                 contentId: createdContent.id,
                 tagId,
             })),

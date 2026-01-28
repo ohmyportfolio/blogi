@@ -7,6 +7,7 @@ import { BackButton } from "@/components/ui/back-button";
 import { FileText } from "lucide-react";
 import { buildContentHref } from "@/lib/contents";
 import { getRestrictedCategoryIdsFromMenu } from "@/lib/category-auth";
+import { formatPrice } from "@/lib/utils";
 
 interface SearchPageProps {
     searchParams: Promise<{
@@ -111,7 +112,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                                     {content.price && (
                                         <>
                                             <span>·</span>
-                                            <span className="text-sky-700 font-medium">{content.price}</span>
+                                            <span className="text-sky-700 font-medium">{formatPrice(content.price)}</span>
                                         </>
                                     )}
                                 </div>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { buildContentHref } from "@/lib/contents";
+import { formatPrice } from "@/lib/utils";
 
 interface ContentCardProps {
     id: string;
@@ -62,7 +63,7 @@ export const ContentCard = ({
                 {price && (
                     <CardFooter className="p-2.5 md:p-4 pt-0">
                         <p className="font-semibold text-sky-700 text-sm md:text-base">
-                            {price}
+                            {formatPrice(price)}
                         </p>
                     </CardFooter>
                 )}
