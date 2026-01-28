@@ -272,6 +272,7 @@ const CategorySettingsItem = ({
               thumbnailUrl={category.thumbnailUrl ?? ""}
               description={category.description ?? ""}
               disabled={isPending}
+              previewLabel={category.name}
               onUpdate={onUpdateMeta}
             />
           </div>

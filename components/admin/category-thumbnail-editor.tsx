@@ -12,6 +12,7 @@ interface CategoryThumbnailEditorProps {
   description: string;
   disabled: boolean;
   onUpdate: (data: { thumbnailUrl?: string; description?: string }) => void;
+  previewLabel?: string;
 }
 
 export const CategoryThumbnailEditor = ({
@@ -20,6 +21,7 @@ export const CategoryThumbnailEditor = ({
   description,
   disabled,
   onUpdate,
+  previewLabel,
 }: CategoryThumbnailEditorProps) => {
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +30,7 @@ export const CategoryThumbnailEditor = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const previewTitle = previewLabel?.trim() || "카테고리";
 
   useEffect(() => {
     setLocalThumbnail(thumbnailUrl);
@@ -194,6 +197,48 @@ export const CategoryThumbnailEditor = ({
           onCancel={() => setCropperImage(null)}
         />
       )}
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-600">미리보기 (1/2/3열)</span>
+          <span className="text-[11px] text-gray-400">모바일 홈 그리드 기준</span>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((cols) => (
+            <div key={cols} className="space-y-1">
+              <span className="text-[11px] text-gray-400">{cols}열</span>
+              <div
+                className={`grid gap-2 w-full max-w-sm ${
+                  cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-2" : "grid-cols-3"
+                }`}
+              >
+                {Array.from({ length: cols }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="relative w-full h-28 rounded-xl overflow-hidden border border-gray-200 bg-white"
+                  >
+                    {localThumbnail ? (
+                      <img
+                        src={localThumbnail}
+                        alt={`${previewTitle} 미리보기`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <span className="text-white text-xs font-semibold leading-tight block">
+                        {previewTitle}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div>
         <textarea
