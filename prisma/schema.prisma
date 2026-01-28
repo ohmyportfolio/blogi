@@ -52,7 +52,6 @@ model Category {
   // 메인 페이지 노출 설정
   showOnHome      Boolean    @default(false)
   homeItemCount   Int        @default(3)
-  cardColumns     Int        @default(3)
   // 태그 필터 설정
   tagFilterEnabled Boolean   @default(false)
   contents        Content[]  @relation("categoryRef")
