@@ -52,8 +52,11 @@ model Category {
   // 메인 페이지 노출 설정
   showOnHome      Boolean    @default(false)
   homeItemCount   Int        @default(3)
+  // 태그 필터 설정
+  tagFilterEnabled Boolean   @default(false)
   contents        Content[]  @relation("categoryRef")
   menuItems       MenuItem[]
+  tags            Tag[]
 }
 
 model Comment {
@@ -83,6 +86,7 @@ model Content {
   deletedAt       DateTime?
   isDeleted       Boolean   @default(false)
   categoryRef     Category  @relation("categoryRef", fields: [categoryId], references: [id])
+  tags            ContentTag[]
 }
 
 model Menu {
@@ -258,6 +262,32 @@ model User {
   posts      Post[]
   likes      PostLike[]
   scraps     PostScrap[]
+}
+
+model Tag {
+  id         String       @id @default(cuid())
+  name       String
+  slug       String
+  order      Int          @default(0)
+  categoryId String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  category   Category?    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  contents   ContentTag[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId, order])
+}
+
+model ContentTag {
+  id        String   @id @default(cuid())
+  contentId String
+  tagId     String
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, tagId])
 }
 
 enum MenuLinkType {

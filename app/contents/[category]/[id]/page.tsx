@@ -97,6 +97,10 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
         },
         include: {
             categoryRef: true,
+            tags: {
+                include: { tag: true },
+                orderBy: { tag: { order: "asc" } },
+            },
         },
     });
 
@@ -143,11 +147,29 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
                 </Link>
             </Button>
 
-            {/* Breadcrumb / Category */}
-            <div className="mb-4">
+            {/* Breadcrumb / Category & Tags */}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="text-sm uppercase">
                     {contentCategoryLabel}
                 </Badge>
+                {content.tags && content.tags.length > 0 &&
+                    content.tags.map((ct) => (
+                        <Link
+                            key={ct.tag.id}
+                            href={`/contents/${contentCategorySlug || category}?tag=${ct.tag.slug}`}
+                        >
+                            <Badge
+                                variant="secondary"
+                                className={`text-xs cursor-pointer hover:opacity-80 ${
+                                    ct.tag.categoryId === null
+                                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                        : "bg-blue-50 text-blue-700 border border-blue-200"
+                                }`}
+                            >
+                                {ct.tag.name}
+                            </Badge>
+                        </Link>
+                    ))}
             </div>
 
             {/* Title */}

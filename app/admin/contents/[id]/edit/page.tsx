@@ -36,6 +36,10 @@ export default function EditContentPage() {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState("");
     const [cropperImage, setCropperImage] = useState<string | null>(null);
+    const [availableTags, setAvailableTags] = useState<{ id: string; name: string; categoryId: string | null }[]>([]);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+    const [initialCategoryId, setInitialCategoryId] = useState<string | null>(null);
+    const [newTagName, setNewTagName] = useState("");
 
     const fetchContent = useCallback(async () => {
         if (!id) return;
@@ -50,6 +54,12 @@ export default function EditContentPage() {
                 setContent(data.content || "");
                 setContentMarkdown(data.contentMarkdown || "");
                 setIsVisible(Boolean(data.isVisible));
+                const loadedCategoryId = data.categoryId || data.categoryRef?.id || "";
+                setInitialCategoryId(loadedCategoryId);
+                // Preload existing tags
+                if (Array.isArray(data.tags)) {
+                    setSelectedTagIds(data.tags.map((ct: { tagId?: string; tag?: { id: string } }) => ct.tagId || ct.tag?.id).filter(Boolean));
+                }
             } else {
                 router.push("/admin/contents");
             }
@@ -86,6 +96,55 @@ export default function EditContentPage() {
         fetchCategories();
     }, [fetchCategories]);
 
+    // 카테고리 변경 시 태그 fetch
+    useEffect(() => {
+        if (!categoryId) {
+            setAvailableTags([]);
+            return;
+        }
+        const fetchTags = async () => {
+            try {
+                const res = await fetch(`/api/admin/tags?categoryId=${categoryId}&includeGlobal=true`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setAvailableTags(Array.isArray(data) ? data : []);
+                } else {
+                    setAvailableTags([]);
+                }
+            } catch {
+                setAvailableTags([]);
+            }
+        };
+        fetchTags();
+        // 카테고리가 변경되면 (초기 로드가 아닌 경우) 선택된 태그 초기화
+        if (initialCategoryId !== null && categoryId !== initialCategoryId) {
+            setSelectedTagIds([]);
+        }
+    }, [categoryId, initialCategoryId]);
+
+    const handleCreateTag = async (asGlobal = false) => {
+        const name = newTagName.trim();
+        if (!name || !categoryId) return;
+        try {
+            const res = await fetch("/api/admin/tags", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, categoryId: asGlobal ? undefined : categoryId }),
+            });
+            if (res.ok) {
+                const tag = await res.json();
+                setAvailableTags((prev) => [...prev, tag]);
+                setSelectedTagIds((prev) => [...prev, tag.id]);
+                setNewTagName("");
+            } else {
+                const data = await res.json().catch(() => ({}));
+                setError(data.error || "태그 생성에 실패했습니다.");
+            }
+        } catch {
+            setError("태그 생성 중 오류가 발생했습니다.");
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -108,6 +167,7 @@ export default function EditContentPage() {
                     content,
                     contentMarkdown,
                     isVisible,
+                    tagIds: selectedTagIds,
                 }),
             });
 
@@ -237,6 +297,80 @@ export default function EditContentPage() {
                             )}
                         </div>
                     </div>
+
+                    {categoryId && (
+                        <div className="space-y-2">
+                            <Label>태그 (선택)</Label>
+                            {availableTags.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {availableTags.map((tag) => {
+                                        const isSelected = selectedTagIds.includes(tag.id);
+                                        const isGlobal = tag.categoryId === null;
+                                        return (
+                                            <button
+                                                key={tag.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedTagIds((prev) =>
+                                                        isSelected
+                                                            ? prev.filter((tid) => tid !== tag.id)
+                                                            : [...prev, tag.id]
+                                                    )
+                                                }
+                                                disabled={saving}
+                                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                                    isSelected
+                                                        ? isGlobal
+                                                            ? "bg-amber-600 text-white"
+                                                            : "bg-blue-600 text-white"
+                                                        : isGlobal
+                                                            ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                }`}
+                                            >
+                                                {tag.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    value={newTagName}
+                                    onChange={(e) => setNewTagName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleCreateTag(false);
+                                        }
+                                    }}
+                                    placeholder="새 태그 입력"
+                                    className="max-w-[200px] h-8 text-sm"
+                                    disabled={saving}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCreateTag(false)}
+                                    disabled={saving || !newTagName.trim()}
+                                    className="h-8 text-xs"
+                                >
+                                    전용 추가
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCreateTag(true)}
+                                    disabled={saving || !newTagName.trim()}
+                                    className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
+                                >
+                                    글로벌 추가
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">

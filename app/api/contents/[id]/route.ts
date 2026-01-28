@@ -17,7 +17,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const isAdmin = session?.user?.role === "ADMIN";
     const content = await prisma.content.findUnique({
         where: { id },
-        include: { categoryRef: true },
+        include: {
+            categoryRef: true,
+            tags: {
+                include: { tag: true },
+                orderBy: { tag: { order: "asc" } },
+            },
+        },
     });
 
     if (!content) {
@@ -59,7 +65,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json();
-    const { title, content, contentMarkdown, categoryId, price, imageUrl, isVisible } = body;
+    const { title, content, contentMarkdown, categoryId, price, imageUrl, isVisible, tagIds } = body;
 
     if (!title || !content || !categoryId) {
         return NextResponse.json({ error: "필수 항목을 입력해주세요" }, { status: 400 });
@@ -98,6 +104,20 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         data: updateData,
         include: { categoryRef: true },
     });
+
+    // 태그 재할당
+    if (Array.isArray(tagIds)) {
+        await prisma.contentTag.deleteMany({ where: { contentId: id } });
+        if (tagIds.length > 0) {
+            await prisma.contentTag.createMany({
+                data: tagIds.map((tagId: string) => ({
+                    contentId: id,
+                    tagId,
+                })),
+                skipDuplicates: true,
+            });
+        }
+    }
 
     revalidatePath("/sitemap.xml");
     const existingMenuRequiresAuth = await getMenuCategoryRequiresAuth({

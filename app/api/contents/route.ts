@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, content, contentMarkdown, categoryId, price, imageUrl } = body;
+    const { title, content, contentMarkdown, categoryId, price, imageUrl, tagIds } = body;
 
     if (!title || !content || !categoryId) {
         return NextResponse.json({ error: "필수 항목을 입력해주세요" }, { status: 400 });
@@ -94,6 +94,17 @@ export async function POST(req: NextRequest) {
             imageUrl: imageUrl || null,
         },
     });
+
+    // 태그 연결
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+        await prisma.contentTag.createMany({
+            data: tagIds.map((tagId: string) => ({
+                contentId: createdContent.id,
+                tagId,
+            })),
+            skipDuplicates: true,
+        });
+    }
 
     revalidatePath("/sitemap.xml");
     if (

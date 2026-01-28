@@ -36,6 +36,9 @@ export default async function AdminLayout({
                         <Link href="/admin/categories/hidden" className="block rounded p-2 text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
                             숨김 카테고리
                         </Link>
+                        <Link href="/admin/tags" className="block rounded p-2 text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+                            태그 관리
+                        </Link>
                     </div>
 
                     <div className="space-y-2">

@@ -9,6 +9,7 @@ import { getMenuCategoryRequiresAuth } from "@/lib/category-auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { TagFilter } from "@/components/contents/tag-filter";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -17,6 +18,7 @@ interface CategoryPageProps {
     searchParams: Promise<{
         listPage?: string;
         cardPage?: string;
+        tag?: string;
     }>;
 }
 
@@ -76,7 +78,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
     const { category: categorySlug } = await params;
-    const { listPage: listPageParam, cardPage: cardPageParam } = await searchParams;
+    const { listPage: listPageParam, cardPage: cardPageParam, tag: tagSlug } = await searchParams;
     const session = await auth();
 
     const category = await prisma.category.findUnique({
@@ -150,7 +152,26 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         cardViewLabel,
         displayOrder,
         showDate,
+        tagFilterEnabled,
     } = category;
+
+    // 태그 데이터 fetch (tagFilterEnabled인 경우)
+    const categoryTags = tagFilterEnabled
+        ? await prisma.tag.findMany({
+            where: {
+                OR: [
+                    { categoryId: category.id },
+                    { categoryId: null },
+                ],
+            },
+            orderBy: [{ categoryId: "asc" }, { order: "asc" }],
+        })
+        : [];
+
+    // 태그 필터링 조건
+    const activeTag = tagFilterEnabled && tagSlug
+        ? categoryTags.find((t) => t.slug === tagSlug)
+        : null;
 
     // 전체 콘텐츠 조회
     const allContents = await prisma.content.findMany({
@@ -158,6 +179,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             categoryId: category.id,
             isVisible: true,
             isDeleted: false,
+            ...(activeTag
+                ? { tags: { some: { tagId: activeTag.id } } }
+                : {}),
         },
         orderBy: { createdAt: "desc" },
         include: { categoryRef: true },
@@ -176,6 +200,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 <h1 className="font-display text-3xl sm:text-4xl mb-8 capitalize">
                     {category.name}
                 </h1>
+
+                {tagFilterEnabled && categoryTags.length > 0 && (
+                    <TagFilter
+                        tags={categoryTags}
+                        categorySlug={categorySlug}
+                        activeTagSlug={tagSlug}
+                    />
+                )}
+
                 <div className="text-center py-20 bg-gray-50 rounded-lg">
                     <p className="text-gray-500 text-lg">콘텐츠가 없습니다.</p>
                 </div>
@@ -290,6 +323,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             <h1 className="font-display text-3xl sm:text-4xl mb-8 capitalize">
                 {category.name}
             </h1>
+
+            {tagFilterEnabled && categoryTags.length > 0 && (
+                <TagFilter
+                    tags={categoryTags}
+                    categorySlug={categorySlug}
+                    activeTagSlug={tagSlug}
+                />
+            )}
 
             <div>
                 {visibleSections.map((type, index) => renderSection(type, index))}

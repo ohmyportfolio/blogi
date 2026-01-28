@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     cardViewLabel,
     displayOrder,
     showDate,
+    tagFilterEnabled,
   } = body;
 
   // 유효성 검사: 둘 다 비활성화는 불가
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
     cardViewLabel: cardViewLabel?.trim() || null,
     displayOrder: displayOrder === "list" ? "list" : "card",
     showDate: showDate !== false, // 기본값 true
+    ...(tagFilterEnabled !== undefined && { tagFilterEnabled: Boolean(tagFilterEnabled) }),
   };
 
   // 전체 카테고리에 적용
