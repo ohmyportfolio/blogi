@@ -17,7 +17,6 @@ export default async function AdminHomeSettingsPage() {
         showOnHome: true,
         homeItemCount: true,
         requiresAuth: true,
-        cardColumns: true,
       },
     }),
     getMenuByKey("main"),

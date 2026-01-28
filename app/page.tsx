@@ -124,7 +124,6 @@ export default async function Home() {
       slug: true,
       homeItemCount: true,
       requiresAuth: true,
-      cardColumns: true,
     },
   });
 
@@ -437,12 +436,7 @@ export default async function Home() {
                     </Button>
                   </div>
 
-                  <div className={cn(
-                    "grid gap-2 md:gap-4",
-                    (category.cardColumns ?? 3) === 1 && "grid-cols-1",
-                    (category.cardColumns ?? 3) === 2 && "grid-cols-2",
-                    (category.cardColumns ?? 3) === 3 && "grid-cols-3",
-                  )}>
+                  <div className="grid grid-cols-3 gap-2 md:gap-4">
                     {isLocked
                       ? Array.from({ length: lockedCount }).map((_, index) => (
                           <ProtectedContentCard

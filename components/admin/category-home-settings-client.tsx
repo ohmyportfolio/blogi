@@ -14,7 +14,6 @@ interface CategoryData {
   showOnHome: boolean;
   homeItemCount: number;
   requiresAuth?: boolean;
-  cardColumns: number;
 }
 
 interface CategoryHomeSettingsClientProps {
@@ -92,16 +91,14 @@ const CategoryHomeSettingsItem = ({
   const [settings, setSettings] = useState({
     showOnHome: category.showOnHome,
     homeItemCount: category.homeItemCount,
-    cardColumns: category.cardColumns ?? 3,
   });
 
   useEffect(() => {
     setSettings({
       showOnHome: category.showOnHome,
       homeItemCount: category.homeItemCount,
-      cardColumns: category.cardColumns ?? 3,
     });
-  }, [category.showOnHome, category.homeItemCount, category.cardColumns]);
+  }, [category.showOnHome, category.homeItemCount]);
 
   return (
     <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50">
@@ -131,48 +128,23 @@ const CategoryHomeSettingsItem = ({
       </div>
 
       {settings.showOnHome && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-4 p-3 bg-white rounded-lg border border-emerald-100">
-            <span className="text-sm text-emerald-700">표시 개수:</span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={settings.homeItemCount}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    homeItemCount: Number(e.target.value),
-                  })
-                }
-                className="w-20 h-8 text-sm"
-              />
-              <span className="text-sm text-emerald-600">(최신 콘텐츠)</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 p-3 bg-white rounded-lg border border-emerald-100">
-            <span className="text-sm text-emerald-700">열 수:</span>
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1.5">
-                {[1, 2, 3].map((cols) => (
-                  <button
-                    key={cols}
-                    type="button"
-                    onClick={() => setSettings({ ...settings, cardColumns: cols })}
-                    className={`w-9 h-8 rounded-lg text-sm font-medium transition-colors ${
-                      settings.cardColumns === cols
-                        ? "bg-emerald-500 text-white"
-                        : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {cols}
-                  </button>
-                ))}
-              </div>
-              <span className="text-sm text-emerald-600">(카드/행)</span>
-            </div>
+        <div className="flex items-center justify-between gap-4 p-3 bg-white rounded-lg border border-emerald-100">
+          <span className="text-sm text-emerald-700">표시 개수:</span>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              value={settings.homeItemCount}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  homeItemCount: Number(e.target.value),
+                })
+              }
+              className="w-20 h-8 text-sm"
+            />
+            <span className="text-sm text-emerald-600">(최신 콘텐츠)</span>
           </div>
         </div>
       )}
