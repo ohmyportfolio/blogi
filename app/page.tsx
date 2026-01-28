@@ -351,7 +351,7 @@ export default async function Home() {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-3">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4">
                     {isLocked
                       ? Array.from({ length: lockedCount }).map((_, index) => (
                           <ProtectedContentCard

@@ -40,7 +40,7 @@ export const ContentCardSection = ({
       {label && (
         <h2 className="font-display text-xl md:text-2xl mb-4">{label}</h2>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+      <div className="grid grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
         {contents.map((content) => (
           <ContentCard
             key={content.id}

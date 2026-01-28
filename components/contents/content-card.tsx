@@ -51,7 +51,7 @@ export const ContentCard = ({
                     <Badge variant="outline" className="mb-2 md:mb-3 uppercase text-[10px] md:text-xs">
                         {categoryLabel}
                     </Badge>
-                    <h3 className="font-display text-sm md:text-lg leading-tight line-clamp-2 mb-1.5 md:mb-2">
+                    <h3 className="font-display text-sm md:text-lg leading-tight mb-1.5 md:mb-2">
                         {title}
                     </h3>
                     {showDate && (
