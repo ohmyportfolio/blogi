@@ -2,37 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { CategorySettingsClient } from "@/components/admin/category-settings-client";
 
 export default async function AdminCategorySettingsPage() {
-  const [categories, globalTags] = await Promise.all([
-    prisma.category.findMany({
-      where: { isVisible: true },
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        thumbnailUrl: true,
-        description: true,
-        listViewEnabled: true,
-        listViewCount: true,
-        listViewLabel: true,
-        cardViewEnabled: true,
-        cardViewCount: true,
-        cardViewLabel: true,
-        displayOrder: true,
-        showDate: true,
-        tagFilterEnabled: true,
-        tags: {
-          orderBy: { order: "asc" },
-          select: { id: true, name: true, slug: true, order: true, categoryId: true },
-        },
-      },
-    }),
-    prisma.tag.findMany({
-      where: { categoryId: null },
-      orderBy: { order: "asc" },
-      select: { id: true, name: true, slug: true, order: true, categoryId: true },
-    }),
-  ]);
+  const categories = await prisma.category.findMany({
+    where: { isVisible: true },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      thumbnailUrl: true,
+      description: true,
+      listViewEnabled: true,
+      listViewCount: true,
+      listViewLabel: true,
+      cardViewEnabled: true,
+      cardViewCount: true,
+      cardViewLabel: true,
+      displayOrder: true,
+      showDate: true,
+    },
+  });
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -56,7 +44,7 @@ export default async function AdminCategorySettingsPage() {
           </p>
         </div>
       ) : (
-        <CategorySettingsClient initialCategories={categories} globalTags={globalTags} />
+        <CategorySettingsClient initialCategories={categories} />
       )}
     </div>
   );

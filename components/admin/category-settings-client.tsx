@@ -14,9 +14,7 @@ import {
   ChevronUp,
   Settings2,
   Calendar,
-  Tag as TagIcon,
 } from "lucide-react";
-import { TagManager, type TagData } from "@/components/admin/tag-manager";
 
 interface CategoryData {
   id: string;
@@ -32,18 +30,14 @@ interface CategoryData {
   cardViewLabel: string | null;
   displayOrder: string;
   showDate: boolean;
-  tagFilterEnabled: boolean;
-  tags: TagData[];
 }
 
 interface CategorySettingsClientProps {
   initialCategories: CategoryData[];
-  globalTags: TagData[];
 }
 
 export const CategorySettingsClient = ({
   initialCategories,
-  globalTags,
 }: CategorySettingsClientProps) => {
   const { showToast } = useToast();
   const [categories, setCategories] = useState(initialCategories);
@@ -190,7 +184,6 @@ export const CategorySettingsClient = ({
         <CategorySettingsItem
           key={category.id}
           category={category}
-          globalTags={globalTags}
           isPending={isPending}
           onSave={(settings) => handleSaveCategory(category.id, settings)}
           onUpdateMeta={(data) => handleUpdateCategoryMeta(category.id, data)}
@@ -203,19 +196,16 @@ export const CategorySettingsClient = ({
 // 개별 카테고리 아이템
 const CategorySettingsItem = ({
   category,
-  globalTags,
   isPending,
   onSave,
   onUpdateMeta,
 }: {
   category: CategoryData;
-  globalTags: TagData[];
   isPending: boolean;
   onSave: (settings: Partial<CategoryData>) => void;
   onUpdateMeta: (data: { thumbnailUrl?: string | null; description?: string | null }) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [tagFilterEnabled, setTagFilterEnabled] = useState(category.tagFilterEnabled);
   const [settings, setSettings] = useState({
     listViewEnabled: category.listViewEnabled,
     listViewCount: category.listViewCount,
@@ -239,7 +229,6 @@ const CategorySettingsItem = ({
       displayOrder: category.displayOrder,
       showDate: category.showDate,
     });
-    setTagFilterEnabled(category.tagFilterEnabled);
   }, [category]);
 
   return (
@@ -290,41 +279,10 @@ const CategorySettingsItem = ({
             settings={settings}
             onChange={setSettings}
             isPending={isPending}
-            onSave={() => onSave({ ...settings, tagFilterEnabled })}
+            onSave={() => onSave(settings)}
             saveLabel="저장"
             bgVariant="muted"
           />
-
-          {/* 태그 필터 설정 */}
-          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TagIcon className="w-4 h-4 text-orange-600" />
-                <span className="font-medium text-sm">태그 필터</span>
-                <span className="text-xs text-gray-400">(카테고리 페이지 필터 UI)</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTagFilterEnabled(!tagFilterEnabled)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  tagFilterEnabled ? "bg-orange-500" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    tagFilterEnabled ? "translate-x-5" : ""
-                  }`}
-                />
-              </button>
-            </div>
-            {tagFilterEnabled && (
-              <TagManager
-                categoryId={category.id}
-                initialCategoryTags={category.tags}
-                initialGlobalTags={globalTags}
-              />
-            )}
-          </div>
         </div>
       )}
     </div>
