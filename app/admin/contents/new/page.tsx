@@ -9,7 +9,7 @@ import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import Link from "next/link";
 import { ArrowLeft, Crop } from "lucide-react";
 import Image from "next/image";
-import { lexicalJsonToPlainText } from "@/lib/lexical";
+import { lexicalHasContent } from "@/lib/lexical";
 import { ImageCropper } from "@/components/admin/image-cropper";
 import { formatPriceInput, formatPrice } from "@/lib/utils";
 
@@ -108,7 +108,7 @@ export default function NewContentPage() {
         e.preventDefault();
         setError("");
 
-        if (!title.trim() || !categoryId || !lexicalJsonToPlainText(content)) {
+        if (!title.trim() || !categoryId || !lexicalHasContent(content)) {
             setError("제목, 카테고리, 내용을 모두 입력해주세요.");
             return;
         }
