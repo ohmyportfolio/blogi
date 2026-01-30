@@ -15,6 +15,7 @@ interface ContentCardProps {
     price: string | null;
     createdAt: Date;
     showDate?: boolean;
+    isPinned?: boolean;
 }
 
 export const ContentCard = ({
@@ -25,7 +26,8 @@ export const ContentCard = ({
     imageUrl,
     price,
     createdAt,
-    showDate = true
+    showDate = true,
+    isPinned = false,
 }: ContentCardProps) => {
     return (
         <Link href={buildContentHref(categorySlug, id, title)}>
@@ -52,6 +54,7 @@ export const ContentCard = ({
                         {categoryLabel}
                     </Badge>
                     <h3 className="font-display text-sm md:text-lg leading-tight mb-1.5 md:mb-2">
+                        {isPinned && <span className="text-orange-500 font-bold mr-1">[공지]</span>}
                         {title}
                     </h3>
                     {showDate && (

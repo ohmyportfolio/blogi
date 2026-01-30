@@ -8,6 +8,7 @@ interface Content {
   title: string;
   imageUrl: string | null;
   createdAt: Date;
+  isPinned?: boolean;
 }
 
 interface ContentListSectionProps {
@@ -46,6 +47,7 @@ export const ContentListSection = ({
             imageUrl={content.imageUrl}
             createdAt={content.createdAt}
             showDate={showDate}
+            isPinned={content.isPinned}
           />
         ))}
       </div>

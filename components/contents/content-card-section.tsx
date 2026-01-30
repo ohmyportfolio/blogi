@@ -9,6 +9,7 @@ interface Content {
   imageUrl: string | null;
   price: string | null;
   createdAt: Date;
+  isPinned?: boolean;
   categoryRef?: { slug: string; name: string } | null;
 }
 
@@ -52,6 +53,7 @@ export const ContentCardSection = ({
             price={content.price}
             createdAt={content.createdAt}
             showDate={showDate}
+            isPinned={content.isPinned}
           />
         ))}
       </div>

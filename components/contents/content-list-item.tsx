@@ -10,6 +10,7 @@ interface ContentListItemProps {
   imageUrl: string | null;
   createdAt: Date;
   showDate?: boolean;
+  isPinned?: boolean;
 }
 
 export const ContentListItem = ({
@@ -19,6 +20,7 @@ export const ContentListItem = ({
   imageUrl,
   createdAt,
   showDate = true,
+  isPinned = false,
 }: ContentListItemProps) => {
   return (
     <Link
@@ -46,6 +48,7 @@ export const ContentListItem = ({
       {/* 제목 + 날짜 */}
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-sm line-clamp-2 text-gray-900">
+          {isPinned && <span className="text-orange-500 font-bold mr-1">[공지]</span>}
           {title}
         </h3>
         {showDate && (
