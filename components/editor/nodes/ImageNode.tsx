@@ -18,6 +18,8 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
 import { mergeRegister } from "@lexical/utils";
+import { createPortal } from "react-dom";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 export type ImagePayload = {
   src: string;
@@ -50,6 +52,8 @@ function ImageComponent({
   const imageRef = useRef<HTMLImageElement>(null);
   const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
   const [isFocused, setIsFocused] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const isEditable = editor.isEditable();
 
   const onDelete = useCallback(
     (event: KeyboardEvent) => {
@@ -71,11 +75,15 @@ function ImageComponent({
         CLICK_COMMAND,
         (event) => {
           if (imageRef.current && imageRef.current.contains(event.target as Node)) {
-            if (!event.shiftKey) {
-              clearSelection();
+            if (isEditable) {
+              if (!event.shiftKey) {
+                clearSelection();
+              }
+              setSelected(true);
+              setIsFocused(true);
+            } else {
+              setShowLightbox(true);
             }
-            setSelected(true);
-            setIsFocused(true);
             return true;
           }
           return false;
@@ -85,7 +93,7 @@ function ImageComponent({
       editor.registerCommand(KEY_DELETE_COMMAND, onDelete, COMMAND_PRIORITY_LOW),
       editor.registerCommand(KEY_BACKSPACE_COMMAND, onDelete, COMMAND_PRIORITY_LOW)
     );
-  }, [editor, clearSelection, setSelected, onDelete]);
+  }, [editor, clearSelection, setSelected, onDelete, isEditable]);
 
   useEffect(() => {
     setIsFocused(isSelected);
@@ -99,13 +107,17 @@ function ImageComponent({
         alt={altText}
         className={`max-w-full h-auto rounded-lg cursor-pointer transition-all ${
           isFocused ? "ring-2 ring-blue-500 ring-offset-2" : ""
-        }`}
+        } ${!isEditable ? "hover:opacity-90" : ""}`}
         draggable={false}
       />
-      {isFocused && (
+      {isFocused && isEditable && (
         <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/75 text-white text-xs rounded whitespace-nowrap">
           Delete 키로 삭제
         </span>
+      )}
+      {showLightbox && createPortal(
+        <ImageLightbox src={src} alt={altText} onClose={() => setShowLightbox(false)} />,
+        document.body
       )}
     </span>
   );

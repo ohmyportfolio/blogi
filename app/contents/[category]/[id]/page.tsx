@@ -14,6 +14,7 @@ import { markdownToHtml } from "@/lib/markdown";
 import type { Metadata } from "next";
 import { getMenuCategoryRequiresAuth } from "@/lib/category-auth";
 import { formatPrice } from "@/lib/utils";
+import { HtmlContentWithLightbox } from "@/components/contents/html-content-with-lightbox";
 
 interface ContentDetailPageProps {
     params: Promise<{
@@ -206,9 +207,9 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
             {/* Content (Rich Text) */}
             {canViewCategory ? (
                 !preferLexical && htmlContent ? (
-                    <div
+                    <HtmlContentWithLightbox
+                        html={htmlContent}
                         className="blog-content min-h-[220px] rounded-3xl border border-black/5 bg-white/90 px-5 sm:px-8 py-6 sm:py-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.45)]"
-                        dangerouslySetInnerHTML={{ __html: htmlContent }}
                     />
                 ) : (
                     <RichTextViewer content={content.content} />
