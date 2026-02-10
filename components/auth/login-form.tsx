@@ -18,10 +18,10 @@ import {
 import { CardWrapper } from "@/components/auth/card-wrapper";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { login } from "@/actions/login";
+import { login, demoLogin } from "@/actions/login";
 import { Eye, EyeOff } from "lucide-react";
 
-export const LoginForm = ({ siteName }: { siteName?: string }) => {
+export const LoginForm = ({ siteName, demoMode }: { siteName?: string; demoMode?: boolean }) => {
     const { showToast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [showPassword, setShowPassword] = useState(false);
@@ -129,6 +129,35 @@ export const LoginForm = ({ siteName }: { siteName?: string }) => {
                     </Button>
                 </form>
             </Form>
+            {demoMode && (
+                <div className="mt-6 rounded-lg border-2 border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+                    <div className="mb-3 text-center">
+                        <span className="inline-block rounded-full bg-blue-500 px-3 py-0.5 text-xs font-semibold text-white">
+                            DEMO MODE
+                        </span>
+                        <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                            체험용 데모 환경입니다. 아래 버튼을 눌러 관리자 기능을 체험해보세요.
+                        </p>
+                    </div>
+                    <Button
+                        disabled={isPending}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => {
+                            startTransition(async () => {
+                                const result = await demoLogin(callbackUrl);
+                                if (result?.error) {
+                                    showToast(result.error, "error");
+                                    return;
+                                }
+                                showToast(result?.success ?? "로그인 성공!", "success");
+                                window.location.href = result?.redirectTo ?? callbackUrl;
+                            });
+                        }}
+                    >
+                        관리자 계정으로 로그인
+                    </Button>
+                </div>
+            )}
         </CardWrapper>
     );
 };

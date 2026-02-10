@@ -6,7 +6,7 @@ const LoginPage = async () => {
     const settings = await getSiteSettings();
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <LoginForm siteName={settings.siteName || undefined} />
+            <LoginForm siteName={settings.siteName || undefined} demoMode={process.env.DEMO_MODE === "true"} />
         </Suspense>
     );
 }
