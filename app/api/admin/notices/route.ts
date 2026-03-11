@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { noticeTickerEnabled, noticeItems } = body;
+  const { noticeTickerEnabled, noticeItems, noticeColorPreset } = body;
+
+  const validPresets = ["amber", "red", "green", "blue", "slate", "dark", "indigo", "coral", "teal"];
 
   // noticeItems 검증: { id: string; text: string; link?: string }[]
   const validatedItems = Array.isArray(noticeItems)
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
   const data = {
     noticeTickerEnabled: Boolean(noticeTickerEnabled),
     noticeItems: validatedItems,
+    noticeColorPreset: validPresets.includes(noticeColorPreset) ? noticeColorPreset : "amber",
   };
 
   const settings = await prisma.siteSettings.upsert({

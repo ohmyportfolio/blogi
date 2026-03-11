@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/ui/toast";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Check } from "lucide-react";
 
 interface NoticeItem {
   id: string;
@@ -10,10 +10,25 @@ interface NoticeItem {
   link?: string;
 }
 
+type ColorPreset = "amber" | "red" | "green" | "blue" | "slate" | "dark" | "indigo" | "coral" | "teal";
+
+const presetOptions: { key: ColorPreset; label: string; colors: string; ring: string; textColor?: string }[] = [
+  { key: "amber", label: "골드", colors: "bg-amber-50 border-2 border-amber-300", ring: "ring-amber-400" },
+  { key: "red", label: "레드", colors: "bg-red-50 border-2 border-red-300", ring: "ring-red-400" },
+  { key: "green", label: "그린", colors: "bg-emerald-50 border-2 border-emerald-300", ring: "ring-emerald-400" },
+  { key: "blue", label: "블루", colors: "bg-sky-50 border-2 border-sky-300", ring: "ring-sky-400" },
+  { key: "slate", label: "그레이", colors: "bg-slate-100 border-2 border-slate-300", ring: "ring-slate-400" },
+  { key: "dark", label: "다크", colors: "bg-neutral-900 border-2 border-neutral-700", ring: "ring-neutral-500", textColor: "text-neutral-300" },
+  { key: "indigo", label: "인디고", colors: "bg-gradient-to-r from-indigo-600 to-violet-600 border-2 border-indigo-400", ring: "ring-indigo-400", textColor: "text-white" },
+  { key: "coral", label: "코럴다크", colors: "bg-slate-900 border-2 border-orange-400/50", ring: "ring-orange-400", textColor: "text-orange-400" },
+  { key: "teal", label: "틸", colors: "bg-teal-600 border-2 border-teal-400", ring: "ring-teal-400", textColor: "text-amber-100" },
+];
+
 interface NoticeSettingsFormProps {
   initialData: {
     noticeTickerEnabled: boolean;
     noticeItems: NoticeItem[];
+    noticeColorPreset: string;
   };
 }
 
@@ -25,6 +40,9 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [enabled, setEnabled] = useState(initialData.noticeTickerEnabled);
+  const [colorPreset, setColorPreset] = useState<ColorPreset>(
+    (initialData.noticeColorPreset as ColorPreset) || "amber"
+  );
   const [items, setItems] = useState<NoticeItem[]>(
     initialData.noticeItems.length > 0
       ? initialData.noticeItems
@@ -48,7 +66,6 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 텍스트가 비어있는 항목 필터링
     const validItems = items.filter((item) => item.text.trim().length > 0);
 
     startTransition(async () => {
@@ -58,6 +75,7 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             noticeTickerEnabled: enabled,
+            noticeColorPreset: colorPreset,
             noticeItems: validItems.map((item) => ({
               id: item.id,
               text: item.text.trim(),
@@ -103,6 +121,40 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
             }`}
           />
         </button>
+      </div>
+
+      <hr className="border-gray-100" />
+
+      {/* 색상 팔레트 */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-gray-900">색상 테마</h3>
+        <div className="flex flex-wrap gap-3">
+          {presetOptions.map((preset) => (
+            <button
+              key={preset.key}
+              type="button"
+              onClick={() => setColorPreset(preset.key)}
+              className={`relative flex flex-col items-center gap-1.5 rounded-xl p-3 w-[72px] transition-all ${
+                preset.colors
+              } ${
+                colorPreset === preset.key
+                  ? `ring-2 ${preset.ring} ring-offset-2`
+                  : "opacity-70 hover:opacity-100"
+              }`}
+            >
+              {colorPreset === preset.key && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
+                  <Check className="h-3 w-3" />
+                </span>
+              )}
+              <span className={`text-[11px] font-semibold ${
+                preset.textColor ?? "text-gray-700"
+              }`}>
+                {preset.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <hr className="border-gray-100" />

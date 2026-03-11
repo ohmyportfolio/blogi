@@ -17,19 +17,23 @@ interface SplashScreenProps {
   logoSize: SplashLogoSize;
 }
 
+function shouldShowSplash(enabled: boolean): boolean {
+  if (!enabled) return false;
+  if (typeof window === "undefined") return false;
+  if (window.innerWidth >= 768) return false;
+  if (sessionStorage.getItem("splash_shown")) return false;
+  return true;
+}
+
 export const SplashScreen = ({ enabled, backgroundColor, logoUrl, logoSize }: SplashScreenProps) => {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(() => shouldShowSplash(enabled));
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    // 비활성화 상태면 표시하지 않음
-    if (!enabled) return;
+    if (!show) return;
 
-    // 데스크탑에서는 표시하지 않음 (768px 이상)
-    if (typeof window !== "undefined" && window.innerWidth >= 768) return;
-
-    // 스플래시 표시
-    setShow(true);
+    // 표시되는 경우에만 세션 마킹
+    sessionStorage.setItem("splash_shown", "1");
 
     // 1.5초 후 페이드아웃 시작
     const fadeTimer = setTimeout(() => {
@@ -45,7 +49,7 @@ export const SplashScreen = ({ enabled, backgroundColor, logoUrl, logoSize }: Sp
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
-  }, [enabled]);
+  }, [show]);
 
   if (!show) return null;
 

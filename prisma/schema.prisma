@@ -254,6 +254,7 @@ model SiteSettings {
   // 공지사항 설정
   noticeTickerEnabled      Boolean @default(false)
   noticeItems              Json?   // Array of { id: string; text: string; link?: string }
+  noticeColorPreset        String  @default("amber")
 }
 
 model User {

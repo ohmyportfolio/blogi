@@ -26,6 +26,7 @@ export default async function AdminNoticesPage() {
             noticeItems: Array.isArray(settings?.noticeItems)
               ? (settings.noticeItems as { id: string; text: string; link?: string }[])
               : [],
+            noticeColorPreset: settings?.noticeColorPreset ?? "amber",
           }}
         />
       </div>

@@ -262,11 +262,12 @@ export default async function Home() {
   const notices: NoticeItem[] = Array.isArray(siteSettings?.noticeItems)
     ? (siteSettings.noticeItems as unknown as NoticeItem[])
     : [];
+  const noticeColorPreset = (siteSettings?.noticeColorPreset as "amber" | "red" | "green" | "blue" | "slate" | "dark" | "indigo" | "coral" | "teal") ?? "amber";
 
   return (
     <>
       {/* 공지사항 바 */}
-      {noticeTickerEnabled && <NoticeTicker notices={notices} />}
+      {noticeTickerEnabled && <NoticeTicker notices={notices} colorPreset={noticeColorPreset} />}
 
       <div className="flex flex-col flex-1">
       {/* Mobile: Category Grid Landing */}
