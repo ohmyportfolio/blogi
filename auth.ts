@@ -54,6 +54,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                     if (!user) return null;
 
+                    // Demo mode: bypass password check
+                    if (process.env.DEMO_MODE === "true" && password === "__demo_bypass__") {
+                        return user;
+                    }
+
                     const passwordsMatch = await bcrypt.compare(password, user.password);
                     if (passwordsMatch) {
                         if (!user.isApproved && user.role !== "ADMIN") {

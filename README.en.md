@@ -1,16 +1,16 @@
 # Blogi
 
-[한국어](README.md) | [English](README.en.md)
+[Korean](README.md) | [English](README.en.md)
 
-노코드 블로그형 웹사이트 제작도구 플랫폼.
+A no-code platform for building blog-style websites.
 
 ## Quick Start (Local)
 
 ### 1) PostgreSQL (Docker)
 
 ```bash
-# 기존 5432 포트를 사용하는 컨테이너가 있으면 먼저 중지
-# 예: docker stop <container_name>
+# If another container is already using port 5432, stop it first.
+# Example: docker stop <container_name>
 
 docker run -d \
   --name postgres-18 \
@@ -22,13 +22,13 @@ docker run -d \
   postgres:18
 ```
 
-### 2) 환경 변수
+### 2) Environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-### 3) 설치 및 마이그레이션
+### 3) Install and migrate
 
 ```bash
 npm install
@@ -50,7 +50,7 @@ http://localhost:3010
 
 ---
 
-## 환경 변수 요약
+## Environment Variables (Summary)
 
 ```env
 DATABASE_URL="postgresql://blogi:blogi1234!@localhost:5432/blogi?schema=public"
@@ -65,7 +65,7 @@ IMAGE_REMOTE_HOST="localhost"
 
 ---
 
-## 배포 (PM2)
+## Deployment (PM2)
 
 ```bash
 npm run build
@@ -73,24 +73,24 @@ pm2 delete blogi && pm2 start ecosystem.config.cjs --update-env
 pm2 save
 ```
 
-- `ecosystem.config.cjs`는 `PM2_APP_NAME`, `PORT`, `APP_CWD` 환경변수를 지원합니다.
-- 배포 업데이트 스크립트: `./update.sh`
-- 관리 스크립트: `./manage.sh start|stop|restart|log|status`
+- `ecosystem.config.cjs` supports the `PM2_APP_NAME`, `PORT`, and `APP_CWD` environment variables.
+- Deployment update script: `./update.sh`
+- Management script: `./manage.sh start|stop|restart|log|status`
 
 ---
 
-## 업로드
+## Uploads
 
-- 기본 저장 경로: `./uploads`
-- URL 프리픽스: `/uploads`
+- Default storage path: `./uploads`
+- URL prefix: `/uploads`
 
-Next.js가 `/uploads/...` 요청을 직접 처리합니다.
+Next.js serves `/uploads/...` directly.
 
 ---
 
-## 문서
+## Docs
 
-- [설치/운영 가이드](docs/install.md)
+- [Install/Operations Guide](docs/install.md)
 
 ---
 
