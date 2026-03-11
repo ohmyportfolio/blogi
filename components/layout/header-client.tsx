@@ -127,13 +127,13 @@ const getDefaultBannerHeightPx = (size: LogoSize = "medium") => {
   }
 };
 
-// 모바일 헤더 오프셋 계산 (상단바 ~60px + 배너 영역 패딩 24px + 배너 높이)
+// 모바일 헤더 오프셋 계산 (상단바 ~60px + 배너 영역 패딩 12px + 배너 높이)
 const getMobileHeaderOffsetPx = (
   bannerSize: LogoSize,
   bannerMaxHeight: string,
   measuredBannerHeight: number
 ) => {
-  const BASE_OFFSET = 84; // 상단바(~60px) + 배너 영역 패딩(~24px)
+  const BASE_OFFSET = 72; // 상단바(~60px) + 배너 영역 패딩(~12px)
 
   // 실제 측정된 배너 높이가 있으면 그것을 사용 (가장 정확)
   if (measuredBannerHeight > 0) {
@@ -179,12 +179,18 @@ export const HeaderClient = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const [bannerHeight, setBannerHeight] = useState<number>(0);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState<number>(0);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const mobileHeaderRef = useRef<HTMLDivElement>(null);
 
   // 배너 컨테이너 높이 측정
   const measureBannerHeight = useCallback(() => {
     if (bannerContainerRef.current) {
       setBannerHeight(bannerContainerRef.current.offsetHeight);
+    }
+    // 모바일 헤더 전체 높이도 함께 측정
+    if (mobileHeaderRef.current) {
+      setMobileHeaderHeight(mobileHeaderRef.current.offsetHeight);
     }
   }, []);
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
@@ -749,6 +755,7 @@ export const HeaderClient = ({
 
       {/* Mobile Header Bar */}
       <div
+        ref={mobileHeaderRef}
         className="md:hidden fixed top-0 left-0 right-0 z-50 shadow-lg pt-2"
         style={{ backgroundColor: "var(--theme-header-bg)", color: "var(--theme-header-text)" }}
       >
@@ -804,7 +811,7 @@ export const HeaderClient = ({
           </div>
 
           {/* Row 2: Banner Image (image only) */}
-          <div ref={bannerContainerRef} className="flex items-center justify-center py-3">
+          <div ref={bannerContainerRef} className="flex items-center justify-center pt-3 pb-0">
             <Link href="/" className={cn("flex items-center", getBannerWidthClass(bannerWidth))}>
                 <Image
                   src={siteBannerUrl}
@@ -825,7 +832,7 @@ export const HeaderClient = ({
           </div>
         </>
       </div>
-      <div className="md:hidden" style={{ height: mobileHeaderOffset }} aria-hidden />
+      <div className="md:hidden" style={{ height: mobileHeaderHeight > 0 ? mobileHeaderHeight : mobileHeaderOffset }} aria-hidden />
 
       {isSearchOpen && (
         <div

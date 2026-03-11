@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { ProtectedCategoryLink, ProtectedCommunityLink } from "@/components/home/protected-category-link";
 import { ProtectedContentCard } from "@/components/home/protected-content-card";
 import { needsAdminSetup } from "@/lib/admin-setup";
+import { NoticeTicker } from "@/components/home/notice-ticker";
+import type { NoticeItem } from "@/components/home/notice-ticker";
 
 // 항상 동적으로 렌더링 (사용자 수 체크를 위해)
 export const dynamic = "force-dynamic";
@@ -255,8 +257,19 @@ export default async function Home() {
     return boardKey.split("__")[0];
   }
 
+  // 공지사항 (추후 DB 연동 예정)
+  const notices: NoticeItem[] = [
+    { id: "1", text: "환영합니다! 새로운 콘텐츠가 매주 업데이트됩니다." },
+    { id: "2", text: "회원가입 시 모든 프리미엄 콘텐츠를 이용하실 수 있습니다." },
+    { id: "3", text: "커뮤니티 게시판이 오픈되었습니다. 자유롭게 소통하세요!" },
+  ];
+
   return (
-    <div className="flex flex-col flex-1">
+    <>
+      {/* 공지사항 띠 */}
+      <NoticeTicker notices={notices} />
+
+      <div className="flex flex-col flex-1">
       {/* Mobile: Category Grid Landing */}
       <section className="md:hidden flex-1 flex items-center justify-center px-3 py-2 bg-[var(--theme-content-bg)]">
         {(() => {
@@ -550,5 +563,6 @@ export default async function Home() {
         </div>
       </section>
     </div>
+    </>
   );
 }
