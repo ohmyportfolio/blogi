@@ -37,6 +37,13 @@ export default async function Home() {
 
   const siteName = siteSettings?.siteName || "사이트";
   const siteTagline = siteSettings?.siteTagline || "";
+  const newBadgeDays = siteSettings?.newBadgeDays ?? 7;
+
+  const isNewContent = (createdAt: Date) => {
+    if (newBadgeDays <= 0) return false;
+    const diff = Date.now() - new Date(createdAt).getTime();
+    return diff < newBadgeDays * 24 * 60 * 60 * 1000;
+  };
 
   const menuCategories = menu.items
     .filter((item) => item.linkType === "category" && item.href)
@@ -75,7 +82,7 @@ export default async function Home() {
           imageUrl: { not: null },
         },
         orderBy: { createdAt: "desc" },
-        select: { categoryId: true, imageUrl: true },
+        select: { categoryId: true, imageUrl: true, createdAt: true },
       })
     : [];
   const imageByCategoryId = new Map<string, string>();
@@ -85,6 +92,22 @@ export default async function Home() {
       imageByCategoryId.set(content.categoryId, content.imageUrl);
     }
   });
+
+  // 카테고리별 새글 여부 (메뉴 카테고리 카드용)
+  const newContentCategoryIds = new Set<string>();
+  if (newBadgeDays > 0 && categoryIds.length > 0) {
+    const recentContents = await prisma.content.findMany({
+      where: {
+        categoryId: { in: categoryIds },
+        isVisible: true,
+        isDeleted: false,
+        createdAt: { gte: new Date(Date.now() - newBadgeDays * 24 * 60 * 60 * 1000) },
+      },
+      select: { categoryId: true },
+      distinct: ["categoryId"],
+    });
+    recentContents.forEach((c) => newContentCategoryIds.add(c.categoryId));
+  }
 
   const categories = menuCategories.map((item) => {
     const category = categoryBySlug.get(item.slug);
@@ -98,6 +121,7 @@ export default async function Home() {
       imageUrl,
       thumbnailPositionY: category?.thumbnailPositionY ?? 50,
       shortLabel: item.slug.replace(/-/g, " ").toUpperCase(),
+      hasNew: category?.id ? newContentCategoryIds.has(category.id) : false,
     };
   });
 
@@ -300,6 +324,7 @@ export default async function Home() {
                       variant="mobile"
                       mobileColumns={3}
                       imagePositionY={item.data.thumbnailPositionY}
+                      hasNew={item.data.hasNew}
                     />
                   ) : (
                     <ProtectedCommunityLink
@@ -363,6 +388,7 @@ export default async function Home() {
                         variant="mobile"
                         mobileColumns={row.cols as 1 | 2 | 3}
                         imagePositionY={item.data.thumbnailPositionY}
+                        hasNew={item.data.hasNew}
                       />
                     ) : (
                       <ProtectedCommunityLink
@@ -398,6 +424,7 @@ export default async function Home() {
                   requiresAuth={category.requiresAuth}
                   variant="desktop"
                   imagePositionY={category.thumbnailPositionY}
+                  hasNew={category.hasNew}
                 />
               </div>
             ))}
@@ -429,6 +456,7 @@ export default async function Home() {
               const isLocked = display?.type === "locked";
               const contents = display?.type === "contents" ? display.items : [];
               const lockedCount = display?.type === "locked" ? display.count : 0;
+              const hasNewContent = contents.some((c) => isNewContent(c.createdAt));
               const menuRequiresAuth = menuAuthBySlug.get(category.slug) ?? false;
               const effectiveRequiresAuth = Boolean(category.requiresAuth || menuRequiresAuth);
               const canViewCategory = !effectiveRequiresAuth || canViewRestricted || isAdmin;
@@ -444,6 +472,9 @@ export default async function Home() {
                       </p>
                       <h2 className="font-display text-lg md:text-2xl lg:text-3xl">
                         {category.name}
+                        {hasNewContent && (
+                          <span className="inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-bold bg-rose-500 text-white align-middle">NEW</span>
+                        )}
                       </h2>
                     </div>
                     <Button variant="accent" size="sm" className="text-xs md:text-sm h-7 md:h-9 px-2 md:px-4" asChild>
@@ -473,6 +504,7 @@ export default async function Home() {
                             href={buildContentHref(category.slug, content.id, content.title)}
                             requiresAuth={effectiveRequiresAuth}
                             isLoggedIn={canViewRestricted}
+                            isNew={isNewContent(content.createdAt)}
                           />
                         ))}
                   </div>

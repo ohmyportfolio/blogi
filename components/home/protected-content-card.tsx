@@ -13,6 +13,7 @@ interface ProtectedContentCardProps {
   requiresAuth?: boolean;
   isLoggedIn?: boolean;
   lockedLabel?: string;
+  isNew?: boolean;
 }
 
 export function ProtectedContentCard({
@@ -23,6 +24,7 @@ export function ProtectedContentCard({
   requiresAuth = false,
   isLoggedIn = false,
   lockedLabel = "회원 전용",
+  isNew = false,
 }: ProtectedContentCardProps) {
   // 비로그인 상태에서 로그인 필요 콘텐츠인 경우 비공개 표시
   const isLocked = requiresAuth && !isLoggedIn;
@@ -70,7 +72,10 @@ export function ProtectedContentCard({
         )}
       </div>
       <div className="p-2 md:p-4">
-        <h3 className="font-medium text-xs md:text-base line-clamp-2">{title || "콘텐츠"}</h3>
+        <h3 className="font-medium text-xs md:text-base line-clamp-2">
+          {isNew && <span className="inline-flex items-center px-1 py-0.5 mr-1 rounded text-[9px] md:text-[10px] font-bold bg-rose-500 text-white align-middle">NEW</span>}
+          {title || "콘텐츠"}
+        </h3>
         {createdAt && (
           <p className="text-[10px] md:text-xs text-muted-foreground mt-1 md:mt-2">
             {format(createdAt, "yyyy.MM.dd")}

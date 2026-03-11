@@ -255,6 +255,8 @@ model SiteSettings {
   noticeTickerEnabled      Boolean @default(false)
   noticeItems              Json?   // Array of { id: string; text: string; link?: string }
   noticeColorPreset        String  @default("amber")
+  // 새글 뱃지 설정 (0 = 비활성, 1~365 = N일 이내 새글 표시)
+  newBadgeDays             Int     @default(7)
 }
 
 model User {

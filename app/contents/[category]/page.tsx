@@ -88,9 +88,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     } = await searchParams;
     const session = await auth();
 
-    const category = await prisma.category.findUnique({
-        where: { slug: categorySlug },
-    });
+    const [category, siteSettings] = await Promise.all([
+        prisma.category.findUnique({ where: { slug: categorySlug } }),
+        prisma.siteSettings.findUnique({ where: { key: "default" }, select: { newBadgeDays: true } }),
+    ]);
+    const newBadgeDays = siteSettings?.newBadgeDays ?? 7;
 
     const menuRequiresAuth = await getMenuCategoryRequiresAuth({
         categoryId: category?.id,
@@ -293,6 +295,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                             showPagination={showListPagination}
                             label={listViewLabel}
                             showDate={showDate}
+                            newBadgeDays={newBadgeDays}
                         />
                     </Suspense>
                 </div>
@@ -313,6 +316,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                             showPagination={showCardPagination}
                             label={cardViewLabel}
                             showDate={showDate}
+                            newBadgeDays={newBadgeDays}
                         />
                     </Suspense>
                 </div>

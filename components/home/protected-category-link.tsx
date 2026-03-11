@@ -15,6 +15,7 @@ interface ProtectedCategoryLinkProps {
   variant?: "mobile" | "desktop";
   mobileColumns?: 1 | 2 | 3;
   imagePositionY?: number;
+  hasNew?: boolean;
 }
 
 const getMobileSizes = (columns?: number) => {
@@ -31,6 +32,7 @@ export function ProtectedCategoryLink({
   variant = "mobile",
   mobileColumns,
   imagePositionY = 50,
+  hasNew = false,
 }: ProtectedCategoryLinkProps) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -66,6 +68,9 @@ export function ProtectedCategoryLink({
             <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          {hasNew && (
+            <span className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold bg-rose-500 text-white leading-none shadow-sm">NEW</span>
+          )}
           <div className="absolute bottom-0 left-0 right-0 p-2">
             <span className="text-white text-xs font-semibold leading-tight block">
               {label}
@@ -94,6 +99,9 @@ export function ProtectedCategoryLink({
           <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        {hasNew && (
+          <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500 text-white leading-none shadow-sm">NEW</span>
+        )}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <span className="text-white text-sm font-semibold leading-tight block">
             {label}

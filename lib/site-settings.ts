@@ -51,6 +51,8 @@ export type SiteSettingsSnapshot = {
   // 공지사항 설정
   noticeTickerEnabled: boolean;
   noticeItems: { id: string; text: string; link?: string }[];
+  // 새글 뱃지 설정
+  newBadgeDays: number;
 };
 
 export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
@@ -159,6 +161,8 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
     noticeItems: Array.isArray(settings?.noticeItems)
       ? (settings.noticeItems as { id: string; text: string; link?: string }[])
       : [],
+    // 새글 뱃지 설정
+    newBadgeDays: settings?.newBadgeDays ?? 7,
   };
 };
 

@@ -45,6 +45,7 @@ export default async function AdminSiteSettingsPage() {
             siteNamePosition: settings?.siteNamePosition ?? "logo",
             showMobileTopSiteName: settings?.showMobileTopSiteName ?? true,
             showMobileTopSiteNameSize: settings?.showMobileTopSiteNameSize ?? "md",
+            newBadgeDays: settings?.newBadgeDays ?? 7,
           }}
         />
       </div>

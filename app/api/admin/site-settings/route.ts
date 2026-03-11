@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     siteNamePosition,
     showMobileTopSiteName,
     showMobileTopSiteNameSize,
+    newBadgeDays,
   } = body;
 
   const resolvedLogoFallback =
@@ -143,6 +144,9 @@ export async function POST(req: NextRequest) {
     ["top", "center", "bottom"].includes(bannerPosition)
   ) {
     data.bannerPosition = bannerPosition;
+  }
+  if (typeof newBadgeDays === "number" && Number.isInteger(newBadgeDays) && newBadgeDays >= 0 && newBadgeDays <= 365) {
+    data.newBadgeDays = newBadgeDays;
   }
 
   const settings = await prisma.siteSettings.upsert({

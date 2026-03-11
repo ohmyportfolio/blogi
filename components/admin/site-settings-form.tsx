@@ -83,6 +83,7 @@ interface SiteSettingsFormProps {
     siteNamePosition?: string | null;
     showMobileTopSiteName?: boolean | null;
     showMobileTopSiteNameSize?: string | null;
+    newBadgeDays?: number | null;
   };
 }
 
@@ -146,6 +147,9 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
   );
   const [hideSearch, setHideSearch] = useState(
     typeof initialData.hideSearch === "boolean" ? initialData.hideSearch : false
+  );
+  const [newBadgeDays, setNewBadgeDays] = useState(
+    typeof initialData.newBadgeDays === "number" ? initialData.newBadgeDays : 7
   );
   const [logoSize, setLogoSize] = useState<LogoSize>(
     (initialData.logoSize as LogoSize) || "medium"
@@ -451,6 +455,7 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
         logoSize,
         showMobileTopSiteName: showTopSiteName,
         showMobileTopSiteNameSize: showTopSiteNameSize,
+        newBadgeDays,
       };
       const res = await fetch("/api/admin/site-settings", {
         method: "POST",
@@ -1273,6 +1278,37 @@ export const SiteSettingsForm = ({ initialData }: SiteSettingsFormProps) => {
           }}
         />
       )}
+
+      {/* 새글 뱃지 설정 */}
+      <div className="rounded-xl border border-black/5 bg-white shadow-sm p-4 md:p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Tag className="w-5 h-5 text-rose-500" />
+          <h3 className="font-semibold text-lg">새글 뱃지</h3>
+        </div>
+        <p className="text-sm text-gray-500">
+          콘텐츠 목록과 메인 화면에서 최근 등록된 글에 NEW 뱃지를 표시합니다.
+        </p>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium whitespace-nowrap">표시 기간</label>
+          <select
+            value={newBadgeDays}
+            onChange={(e) => setNewBadgeDays(Number(e.target.value))}
+            className="border rounded-md px-3 py-2 text-sm"
+          >
+            <option value={0}>사용 안함</option>
+            <option value={1}>1일</option>
+            <option value={3}>3일</option>
+            <option value={7}>7일</option>
+            <option value={14}>14일</option>
+            <option value={30}>30일</option>
+          </select>
+          {newBadgeDays > 0 && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white">
+              NEW
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* 하단 저장 버튼 */}
       <div className="flex justify-end pt-2">

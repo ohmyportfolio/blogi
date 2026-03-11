@@ -11,6 +11,7 @@ interface ContentListItemProps {
   createdAt: Date;
   showDate?: boolean;
   isPinned?: boolean;
+  isNew?: boolean;
 }
 
 export const ContentListItem = ({
@@ -21,6 +22,7 @@ export const ContentListItem = ({
   createdAt,
   showDate = true,
   isPinned = false,
+  isNew = false,
 }: ContentListItemProps) => {
   return (
     <Link
@@ -49,6 +51,7 @@ export const ContentListItem = ({
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-sm line-clamp-2 text-gray-900">
           {isPinned && <span className="text-orange-500 font-bold mr-1">[공지]</span>}
+          {isNew && !isPinned && <span className="inline-flex items-center px-1 py-0.5 mr-1 rounded text-[9px] font-bold bg-rose-500 text-white align-middle">NEW</span>}
           {title}
         </h3>
         {showDate && (

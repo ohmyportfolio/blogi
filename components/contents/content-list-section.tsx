@@ -19,6 +19,14 @@ interface ContentListSectionProps {
   showPagination?: boolean;
   label?: string | null;
   showDate?: boolean;
+  newBadgeDays?: number;
+}
+
+function isNewContent(createdAt: Date, days: number): boolean {
+  if (days <= 0) return false;
+  const now = new Date();
+  const diff = now.getTime() - new Date(createdAt).getTime();
+  return diff < days * 24 * 60 * 60 * 1000;
 }
 
 export const ContentListSection = ({
@@ -29,6 +37,7 @@ export const ContentListSection = ({
   showPagination = false,
   label,
   showDate = true,
+  newBadgeDays = 0,
 }: ContentListSectionProps) => {
   if (contents.length === 0) return null;
 
@@ -48,6 +57,7 @@ export const ContentListSection = ({
             createdAt={content.createdAt}
             showDate={showDate}
             isPinned={content.isPinned}
+            isNew={isNewContent(content.createdAt, newBadgeDays)}
           />
         ))}
       </div>
