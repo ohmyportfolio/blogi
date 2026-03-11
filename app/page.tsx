@@ -257,17 +257,16 @@ export default async function Home() {
     return boardKey.split("__")[0];
   }
 
-  // 공지사항 (추후 DB 연동 예정)
-  const notices: NoticeItem[] = [
-    { id: "1", text: "환영합니다! 새로운 콘텐츠가 매주 업데이트됩니다." },
-    { id: "2", text: "회원가입 시 모든 프리미엄 콘텐츠를 이용하실 수 있습니다." },
-    { id: "3", text: "커뮤니티 게시판이 오픈되었습니다. 자유롭게 소통하세요!" },
-  ];
+  // 공지사항 (DB에서 가져오기)
+  const noticeTickerEnabled = siteSettings?.noticeTickerEnabled ?? false;
+  const notices: NoticeItem[] = Array.isArray(siteSettings?.noticeItems)
+    ? (siteSettings.noticeItems as unknown as NoticeItem[])
+    : [];
 
   return (
     <>
-      {/* 공지사항 띠 */}
-      <NoticeTicker notices={notices} />
+      {/* 공지사항 바 */}
+      {noticeTickerEnabled && <NoticeTicker notices={notices} />}
 
       <div className="flex flex-col flex-1">
       {/* Mobile: Category Grid Landing */}

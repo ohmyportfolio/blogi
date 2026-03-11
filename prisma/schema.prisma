@@ -251,6 +251,9 @@ model SiteSettings {
   customAccent             String?
   customContentBg          String?
   customButtonText         String?
+  // 공지사항 설정
+  noticeTickerEnabled      Boolean @default(false)
+  noticeItems              Json?   // Array of { id: string; text: string; link?: string }
 }
 
 model User {

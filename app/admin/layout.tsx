@@ -59,6 +59,13 @@ export default async function AdminLayout({
                     </div>
 
                     <div className="space-y-2">
+                        <span className="block text-xs uppercase tracking-widest text-slate-400">공지</span>
+                        <Link href="/admin/notices" className="block rounded p-2 text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
+                            공지사항 관리
+                        </Link>
+                    </div>
+
+                    <div className="space-y-2">
                         <span className="block text-xs uppercase tracking-widest text-slate-400">디자인/노출</span>
                         <Link href="/admin/theme-settings" className="block rounded p-2 text-slate-200 hover:text-white hover:bg-white/10 transition-colors">
                             테마 설정

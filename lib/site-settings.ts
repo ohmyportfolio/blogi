@@ -48,6 +48,9 @@ export type SiteSettingsSnapshot = {
   splashLogoSize: SplashLogoSize;
   // 테마 설정
   themeColors: ThemeColors;
+  // 공지사항 설정
+  noticeTickerEnabled: boolean;
+  noticeItems: { id: string; text: string; link?: string }[];
 };
 
 export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
@@ -151,6 +154,11 @@ export const getSiteSettings = async (): Promise<SiteSettingsSnapshot> => {
       : "medium") as SplashLogoSize,
     // 테마 설정
     themeColors: getThemeColors(settings),
+    // 공지사항 설정
+    noticeTickerEnabled: settings?.noticeTickerEnabled ?? false,
+    noticeItems: Array.isArray(settings?.noticeItems)
+      ? (settings.noticeItems as { id: string; text: string; link?: string }[])
+      : [],
   };
 };
 

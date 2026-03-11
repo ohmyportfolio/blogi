@@ -16,9 +16,13 @@ interface NoticeTickerProps {
 export function NoticeTicker({ notices }: NoticeTickerProps) {
   if (!notices || notices.length === 0) return null;
 
-  const renderItems = () =>
-    notices.map((notice, idx) => (
-      <span key={notice.id} className="inline-flex items-center shrink-0">
+  // 충분한 길이를 위해 최소 4번 반복
+  const repeatCount = Math.max(4, Math.ceil(20 / notices.length));
+  const repeatedNotices = Array.from({ length: repeatCount }, () => notices).flat();
+
+  const renderItems = (keyPrefix: string) =>
+    repeatedNotices.map((notice, idx) => (
+      <span key={`${keyPrefix}-${idx}`} className="inline-flex items-center shrink-0">
         {idx > 0 && (
           <span className="mx-3 md:mx-4 text-muted-foreground/40 select-none">·</span>
         )}
@@ -52,18 +56,10 @@ export function NoticeTicker({ notices }: NoticeTickerProps) {
         <div className="overflow-hidden flex-1 py-2 md:py-2.5">
           <div className="animate-ticker flex text-xs md:text-sm text-muted-foreground">
             <div className="flex items-center shrink-0 pl-4">
-              {renderItems()}
+              {renderItems("a")}
             </div>
-            <div className="flex items-center shrink-0 pl-4" aria-hidden="true">
-              {/* Duplicate for seamless loop */}
-              {notices.map((notice, idx) => (
-                <span key={`dup-${notice.id}`} className="inline-flex items-center shrink-0">
-                  {idx > 0 && (
-                    <span className="mx-3 md:mx-4 text-muted-foreground/40 select-none">·</span>
-                  )}
-                  <span className="whitespace-nowrap">{notice.text}</span>
-                </span>
-              ))}
+            <div className="flex items-center shrink-0 pl-4">
+              {renderItems("b")}
             </div>
           </div>
         </div>
