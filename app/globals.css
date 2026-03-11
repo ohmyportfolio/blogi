@@ -209,8 +209,23 @@
   animation-play-state: paused;
 }
 
+@keyframes notice-ring {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-12deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-8deg); }
+  40% { transform: rotate(6deg); }
+  50% { transform: rotate(0deg); }
+}
+
+.animate-notice-icon {
+  animation: notice-ring 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-ticker {
+  .animate-ticker,
+  .animate-notice-icon {
     animation: none;
   }
 }

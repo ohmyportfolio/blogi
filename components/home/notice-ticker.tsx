@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { Megaphone, X } from "lucide-react";
 
 export interface NoticeItem {
   id: string;
   text: string;
   link?: string;
+  isNew?: boolean;
 }
 
 export type NoticeColorPreset = "amber" | "red" | "green" | "blue" | "slate" | "dark" | "indigo" | "coral" | "teal";
@@ -20,6 +22,12 @@ const colorPresets: Record<NoticeColorPreset, {
   dot: string;
   text: string;
   hover: string;
+  progressBar: string;
+  closeBtn: string;
+  newBadgeBg: string;
+  newBadgeText: string;
+  counterText: string;
+  iconColor: string;
 }> = {
   amber: {
     bg: "bg-amber-50",
@@ -30,6 +38,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-amber-500",
     text: "text-neutral-600",
     hover: "hover:text-amber-700",
+    progressBar: "bg-amber-400",
+    closeBtn: "text-amber-400 hover:text-amber-600",
+    newBadgeBg: "bg-red-500",
+    newBadgeText: "text-white",
+    counterText: "text-amber-500/70",
+    iconColor: "text-amber-500",
   },
   red: {
     bg: "bg-red-50",
@@ -40,6 +54,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-red-500",
     text: "text-neutral-600",
     hover: "hover:text-red-700",
+    progressBar: "bg-red-400",
+    closeBtn: "text-red-400 hover:text-red-600",
+    newBadgeBg: "bg-red-600",
+    newBadgeText: "text-white",
+    counterText: "text-red-500/70",
+    iconColor: "text-red-500",
   },
   green: {
     bg: "bg-emerald-50",
@@ -50,6 +70,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-emerald-500",
     text: "text-neutral-600",
     hover: "hover:text-emerald-700",
+    progressBar: "bg-emerald-400",
+    closeBtn: "text-emerald-400 hover:text-emerald-600",
+    newBadgeBg: "bg-red-500",
+    newBadgeText: "text-white",
+    counterText: "text-emerald-500/70",
+    iconColor: "text-emerald-500",
   },
   blue: {
     bg: "bg-sky-50",
@@ -60,6 +86,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-sky-500",
     text: "text-neutral-600",
     hover: "hover:text-sky-700",
+    progressBar: "bg-sky-400",
+    closeBtn: "text-sky-400 hover:text-sky-600",
+    newBadgeBg: "bg-red-500",
+    newBadgeText: "text-white",
+    counterText: "text-sky-500/70",
+    iconColor: "text-sky-500",
   },
   slate: {
     bg: "bg-slate-100",
@@ -70,6 +102,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-slate-500",
     text: "text-slate-600",
     hover: "hover:text-slate-900",
+    progressBar: "bg-slate-400",
+    closeBtn: "text-slate-400 hover:text-slate-600",
+    newBadgeBg: "bg-red-500",
+    newBadgeText: "text-white",
+    counterText: "text-slate-400",
+    iconColor: "text-slate-500",
   },
   dark: {
     bg: "bg-neutral-900",
@@ -80,6 +118,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-amber-400",
     text: "text-neutral-300",
     hover: "hover:text-amber-300",
+    progressBar: "bg-amber-400/80",
+    closeBtn: "text-white/30 hover:text-white/60",
+    newBadgeBg: "bg-amber-500",
+    newBadgeText: "text-neutral-900",
+    counterText: "text-white/30",
+    iconColor: "text-amber-400",
   },
   indigo: {
     bg: "bg-gradient-to-r from-indigo-600 to-violet-600",
@@ -90,6 +134,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-indigo-300",
     text: "text-white/90",
     hover: "hover:text-indigo-200",
+    progressBar: "bg-indigo-300/80",
+    closeBtn: "text-white/30 hover:text-white/60",
+    newBadgeBg: "bg-yellow-400",
+    newBadgeText: "text-indigo-900",
+    counterText: "text-white/30",
+    iconColor: "text-indigo-300",
   },
   coral: {
     bg: "bg-slate-900",
@@ -100,6 +150,12 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-orange-400",
     text: "text-stone-300",
     hover: "hover:text-orange-300",
+    progressBar: "bg-orange-400/80",
+    closeBtn: "text-white/30 hover:text-white/60",
+    newBadgeBg: "bg-orange-500",
+    newBadgeText: "text-white",
+    counterText: "text-white/30",
+    iconColor: "text-orange-400",
   },
   teal: {
     bg: "bg-teal-600",
@@ -110,8 +166,17 @@ const colorPresets: Record<NoticeColorPreset, {
     dot: "bg-amber-300",
     text: "text-amber-50",
     hover: "hover:text-amber-200",
+    progressBar: "bg-amber-300/80",
+    closeBtn: "text-white/30 hover:text-white/60",
+    newBadgeBg: "bg-yellow-400",
+    newBadgeText: "text-teal-900",
+    counterText: "text-white/30",
+    iconColor: "text-amber-300",
   },
 };
+
+const SLIDE_DURATION = 3500;
+const TRANSITION_MS = 400;
 
 interface NoticeTickerProps {
   notices: NoticeItem[];
@@ -119,98 +184,129 @@ interface NoticeTickerProps {
 }
 
 export function NoticeTicker({ notices, colorPreset = "amber" }: NoticeTickerProps) {
-  if (!notices || notices.length === 0) return null;
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("notice_dismissed")) {
+      setDismissed(true);
+    }
+  }, []);
+
+  if (!notices || notices.length === 0 || dismissed) return null;
 
   const c = colorPresets[colorPreset] ?? colorPresets.amber;
 
+  const handleDismiss = () => {
+    sessionStorage.setItem("notice_dismissed", "1");
+    setDismissed(true);
+  };
+
   return (
     <div
-      className={`w-full flex-none ${c.bg} ${c.border}`}
+      className={`w-full flex-none ${c.bg} ${c.border} relative`}
       aria-label="공지사항"
     >
       <div className="flex items-center">
+        {/* Label */}
         <div className={`shrink-0 flex items-center gap-1.5 px-3 md:px-4 py-2 md:py-2.5 ${c.labelBg} ${c.labelBorder}`}>
-          <span className="relative flex h-1.5 w-1.5">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${c.dot} opacity-75`} />
-            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${c.dot}`} />
-          </span>
+          <Megaphone className={`h-3 w-3 md:h-3.5 md:w-3.5 ${c.iconColor} animate-notice-icon`} />
           <span className={`text-xs md:text-sm font-bold ${c.labelText} tracking-wide`}>공지</span>
         </div>
 
+        {/* Ticker content */}
         <div className="overflow-hidden flex-1 py-2 md:py-2.5">
           <SlideUpTicker notices={notices} c={c} />
         </div>
+
+        {/* Close button */}
+        <button
+          onClick={handleDismiss}
+          className={`shrink-0 px-2 md:px-3 ${c.closeBtn} transition-colors`}
+          aria-label="공지 닫기"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );
 }
 
+
 function SlideUpTicker({ notices, c }: { notices: NoticeItem[]; c: typeof colorPresets.amber }) {
   const [currentIdx, setCurrentIdx] = useState(0);
-  // phase: "idle" = showing current, "sliding" = animating up, "reset" = instantly repositioning
   const [phase, setPhase] = useState<"idle" | "sliding" | "reset">("idle");
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Start slide up
-      setPhase("sliding");
+  const advance = useCallback(() => {
+    setPhase("sliding");
 
-      setTimeout(() => {
-        // Transition done: instantly reset positions (no transition) and advance index
-        setPhase("reset");
-        setCurrentIdx((prev) => (prev + 1) % notices.length);
+    setTimeout(() => {
+      setPhase("reset");
+      setCurrentIdx((prev) => (prev + 1) % notices.length);
 
-        // Next frame: back to idle (re-enables transition for next slide)
-        requestAnimationFrame(() => {
-          setPhase("idle");
-        });
-      }, 400);
-    }, 3500);
-
-    return () => clearInterval(interval);
+      requestAnimationFrame(() => {
+        setPhase("idle");
+      });
+    }, TRANSITION_MS);
   }, [notices.length]);
+
+  useEffect(() => {
+    const interval = setInterval(advance, SLIDE_DURATION);
+    return () => clearInterval(interval);
+  }, [advance]);
 
   const current = notices[currentIdx];
   const next = notices[(currentIdx + 1) % notices.length];
   const noTransition = phase === "reset";
 
   return (
-    <div className="relative overflow-hidden h-5 flex items-center justify-center">
+    <div className="relative overflow-hidden h-5">
       {/* Current item */}
       <div
-        className={`absolute inset-x-0 flex items-center justify-center text-xs md:text-sm ${c.text} font-medium ${
+        className={`absolute inset-x-0 top-0 h-full flex items-center justify-center text-xs md:text-sm ${c.text} font-medium ${
           noTransition ? "" : "transition-transform duration-400 ease-in-out"
-        } ${
-          phase === "sliding" ? "-translate-y-full" : "translate-y-0"
         }`}
+        style={{ transform: phase === "sliding" ? "translateY(-100%)" : "translateY(0)" }}
       >
-        <NoticeContent notice={current} hover={c.hover} />
+        <NoticeContent notice={current} c={c} />
       </div>
 
-      {/* Next item (slides up from below) */}
+      {/* Next item */}
       <div
-        className={`absolute inset-x-0 flex items-center justify-center text-xs md:text-sm ${c.text} font-medium ${
+        className={`absolute inset-x-0 top-0 h-full flex items-center justify-center text-xs md:text-sm ${c.text} font-medium ${
           noTransition ? "" : "transition-transform duration-400 ease-in-out"
-        } ${
-          phase === "sliding" ? "translate-y-0" : "translate-y-full"
         }`}
+        style={{ transform: phase === "sliding" ? "translateY(0)" : "translateY(100%)" }}
       >
-        <NoticeContent notice={next} hover={c.hover} />
+        <NoticeContent notice={next} c={c} />
       </div>
     </div>
   );
 }
 
-function NoticeContent({ notice, hover }: { notice: NoticeItem; hover: string }) {
-  if (notice.link) {
-    return (
-      <Link
-        href={notice.link}
-        className={`truncate max-w-full px-3 ${hover} transition-colors duration-200`}
-      >
-        {notice.text}
-      </Link>
-    );
-  }
-  return <span className="truncate max-w-full px-3">{notice.text}</span>;
+function NoticeContent({
+  notice,
+  c,
+}: {
+  notice: NoticeItem;
+  c: typeof colorPresets.amber;
+}) {
+  return (
+    <span className={`inline-flex items-center max-w-full px-3 ${notice.isNew ? "gap-2" : ""}`}>
+      {notice.isNew && (
+        <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${c.newBadgeBg} ${c.newBadgeText} leading-none uppercase tracking-wider`}>
+          N
+        </span>
+      )}
+      {notice.link ? (
+        <Link
+          href={notice.link}
+          className={`truncate ${c.hover} transition-colors duration-200`}
+        >
+          {notice.text}
+        </Link>
+      ) : (
+        <span className="truncate">{notice.text}</span>
+      )}
+    </span>
+  );
 }

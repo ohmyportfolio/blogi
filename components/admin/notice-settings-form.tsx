@@ -8,6 +8,7 @@ interface NoticeItem {
   id: string;
   text: string;
   link?: string;
+  isNew?: boolean;
 }
 
 type ColorPreset = "amber" | "red" | "green" | "blue" | "slate" | "dark" | "indigo" | "coral" | "teal";
@@ -50,7 +51,7 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
   );
 
   const addItem = () => {
-    setItems((prev) => [...prev, { id: generateId(), text: "", link: "" }]);
+    setItems((prev) => [...prev, { id: generateId(), text: "", link: "", isNew: false }]);
   };
 
   const removeItem = (id: string) => {
@@ -60,6 +61,12 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
   const updateItem = (id: string, field: "text" | "link", value: string) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const toggleIsNew = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isNew: !item.isNew } : item))
     );
   };
 
@@ -80,6 +87,7 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
               id: item.id,
               text: item.text.trim(),
               ...(item.link?.trim() ? { link: item.link.trim() } : {}),
+              ...(item.isNew ? { isNew: true } : {}),
             })),
           }),
         });
@@ -214,6 +222,22 @@ export function NoticeSettingsForm({ initialData }: NoticeSettingsFormProps) {
                         placeholder="/contents/casino 또는 /community/reviews"
                         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
                       />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleIsNew(item.id)}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition-colors ${
+                          item.isNew
+                            ? "bg-red-500 text-white"
+                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                        }`}
+                      >
+                        N
+                      </button>
+                      <span className="text-[11px] text-gray-400">
+                        {item.isNew ? "NEW 뱃지 표시됨" : "NEW 뱃지 숨김"}
+                      </span>
                     </div>
                   </div>
                   <button

@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
           ...(typeof item.link === "string" && item.link.trim()
             ? { link: item.link.trim() }
             : {}),
+          ...(item.isNew === true ? { isNew: true } : {}),
         }))
         .slice(0, 20)
     : [];

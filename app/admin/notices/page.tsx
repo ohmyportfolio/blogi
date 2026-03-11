@@ -24,7 +24,7 @@ export default async function AdminNoticesPage() {
           initialData={{
             noticeTickerEnabled: settings?.noticeTickerEnabled ?? false,
             noticeItems: Array.isArray(settings?.noticeItems)
-              ? (settings.noticeItems as { id: string; text: string; link?: string }[])
+              ? (settings.noticeItems as { id: string; text: string; link?: string; isNew?: boolean }[])
               : [],
             noticeColorPreset: settings?.noticeColorPreset ?? "amber",
           }}
